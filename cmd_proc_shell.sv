@@ -53,14 +53,10 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
                    bit_cntr; // Otherwise hold current value.
   end
 
-  ///////////////////////////////////////////////
-  // Determine if cntrlIR is on a rising edge //
-  /////////////////////////////////////////////
-
 
   ////////////////////////////////////
-  // Implement State Machine Logic //
-  //////////////////////////////////
+	// Implement State Machine Logic //
+	//////////////////////////////////
 
   // Implements state machine register, holding current state or next state, accordingly.
   always_ff @(posedge clk, negedge rst_n) begin
@@ -71,10 +67,10 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
   end
 
   // Implements the combinational state transition and output logic of the state machine.
-  always_comb begin
-  /////////////////////////////////////////
+	always_comb begin
+	/////////////////////////////////////////
   // Default all SM outputs & nxt_state //
-  ///////////////////////////////////////
+	///////////////////////////////////////
     case (state)
       default : begin 
         
@@ -87,4 +83,5 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
       end
     endcase
   end
+  
 endmodule
