@@ -36,7 +36,7 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
         if (init)
             dur_cnt <= 24'h000000;
         else 
-            generate
+            generate // Increment duration by different amounts based on whether FAST_SIM is enabled
                 if (FAST_SIM)
                     dur_cnt <= dur_cnt + 16;
                 else
