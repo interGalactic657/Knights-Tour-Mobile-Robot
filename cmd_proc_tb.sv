@@ -6,60 +6,68 @@
 ///////////////////////////////////////////////////////////////
 module cmd_proc_tb();
   
-  // Common signals used across multiple DUTs
+  // Common signals for all DUTs
   logic clk;                    // System clock signal.
   logic rst_n;                  // Asynchronous active low reset.
 
-  // Signals for the RemoteComm instance
-  logic snd_cmd;                // Signal to send a command.
-  logic cmd_sent;               // Command sent status.
-  logic cmd_rx;                 // Command receive line (from UART).
-  logic cmd_tx;                 // Command transmit line (to UART).
-  logic cmd_snt;                // Command sent indicator.
+  ///////////////////////////////
+  // RemoteComm signals
+  ///////////////////////////////
+  logic snd_cmd;
+  logic [15:0] cmd_sent;
+  logic cmd_rx;
+  logic cmd_tx;
+  logic cmd_snt;
+  logic resp_rdy;
 
-  // Signals for the UART_wrapper instance
-  logic clr_cmd_rdy;            // Clears command ready signal.
-  logic cmd_received;           // Command received from UART.
-  logic cmd_rdy;                // Command ready status.
+  ///////////////////////////////
+  // UART_wrapper signals
+  ///////////////////////////////
+  logic clr_cmd_rdy;
+  logic [15:0] cmd_received;
+  logic cmd_rdy;
+  logic send_resp;
+  logic resp;
+  logic trmt;
 
-  // Signals for the inert_intf (iINERT) module
-  logic strt_cal;               // Start calibration signal.
-  logic cal_done;               // Calibration complete signal.
-  logic signed [11:0] heading;  // 12-bit signed heading value.
-  logic rdy;                    // Ready signal.
-  logic lftIR;                  // Left IR sensor status.
-  logic rghtIR;                 // Right IR sensor status.
-  logic SS_n;                   // Active low serf select signal.
-  logic SCLK;                   // SPI serial clock signal.
-  logic MOSI;                   // SPI Master Out Serf In.
-  logic MISO;                   // SPI Master In Serf Out.
-  logic INT;                    // SPI interrupt line.
-  logic moving;                 // Indicates whether the Knight is moving.
+  ///////////////////////////////
+  // inert_intf signals
+  ///////////////////////////////
+  logic strt_cal;
+  logic cal_done;
+  logic [11:0] heading;
+  logic heading_rdy;
+  logic lftIR;
+  logic rghtIR;
+  logic SS_n;
+  logic SCLK;
+  logic MOSI;
+  logic MISO;
+  logic INT;
 
-  // Signals for the cmd_proc instance
-  logic send_resp;              // Send response signal.
-  logic heading_rdy;            // Heading ready signal.
-  logic cntrIR;                 // Center IR sensor status.
-  logic signed [11:0] error;    // Signed 12-bit error term.
-  logic signed [9:0] frwrd;     // Forward speed value for motor speed calculation.
-  logic tour_go;                // Start knight’s tour signal.
-  logic fanfare_go;             // Signal to trigger fanfare.
-
-  // Additional signals for response
-  logic signed [10:0] lft_spd;  // Left motor speed.
-  logic signed [10:0] rght_spd; // Right motor speed.
+  ///////////////////////////////
+  // cmd_proc signals
+  ///////////////////////////////
+  logic moving;
+  logic [11:0] error;
+  logic [9:0] frwrd;
+  logic [10:0] lft_spd;
+  logic [10:0] rght_spd;
+  logic tour_go;
+  logic fanfare_go;
+  logic cntrIR;
 
   // Memory to hold stimulus and expected response vectors
   logic [24:0] stim[0:1999];    // 2000 stimulus vectors, 25-bits wide.
   logic [21:0] resp[0:1999];    // 2000 expected responses, 22-bits wide.
-
+  
   integer i;                    // Loop variable to iterate through stimulus vectors.
 
-  ///////////////////////////////////////////////////////////////////////
-  // Instantiate the Command Processor (DUT) and simulate its inputs   //
-  ///////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////
+  // Instantiate the Command Processor (DUT) and simulate its inputs //
+  //////////////////////////////////////////////////////////////////////
 
-  // Instantiate RemoteComm
+  // Instantiate RemoteComm. 
   RemoteComm iRemoteComm (
     .clk(clk), 
     .rst_n(rst_n), 
@@ -68,42 +76,56 @@ module cmd_proc_tb();
     .RX(cmd_rx), 
     .TX(cmd_tx), 
     .resp(),
-    .resp_rdy(), 
+    .resp_rdy(resp_rdy), 
     .cmd_snt(cmd_snt)
   );
 
-  // Instantiate UART_wrapper
+  // Instantiate UART_wrapper. 
   UART_wrapper iUART_wrapper(
     .clk(clk), 
     .rst_n(rst_n), 
     .clr_cmd_rdy(clr_cmd_rdy), 
-    .trmt(1'b0), 
+    .trmt(trmt), 
     .RX(cmd_tx), 
     .TX(cmd_rx), 
-    .resp(8'h00), 
+    .resp(8'hA5), 
     .cmd(cmd_received), 
     .cmd_rdy(cmd_rdy), 
     .tx_done()
   );
 
-  // Instantiate the inertial interface (iINERT) module
+  // Instantiate the inertial interface (iINERT) module.
   inert_intf iINERT(
-    .clk(clk), .rst_n(rst_n), .strt_cal(strt_cal), .cal_done(cal_done), 
-    .heading(heading), .rdy(rdy), .lftIR(lftIR), .rghtIR(rghtIR), 
-    .SS_n(SS_n), .SCLK(SCLK), .MOSI(MOSI), .MISO(MISO), .INT(INT),
+    .clk(clk), 
+    .rst_n(rst_n), 
+    .strt_cal(strt_cal), 
+    .cal_done(cal_done), 
+    .heading(heading), 
+    .rdy(heading_rdy), 
+    .lftIR(1'b0), 
+    .rghtIR(1'b0), 
+    .SS_n(SS_n), 
+    .SCLK(SCLK), 
+    .MOSI(MOSI), 
+    .MISO(MISO), 
+    .INT(INT),
     .moving(moving)
   );
 
-  // Instantiate the NEMO gyro sensor (iNEMO)
+  // Instantiate the NEMO gyro sensor (iNEMO).
   SPI_iNEMO3 iNEMO(
-    .SS_n(SS_n), .SCLK(SCLK), .MISO(MISO), .MOSI(MOSI), .INT(INT)
+    .SS_n(SS_n), 
+    .SCLK(SCLK), 
+    .MISO(MISO), 
+    .MOSI(MOSI), 
+    .INT(INT)
   );
 
-  // Instantiate the command processor module (iCMD_PROC)
+  // Instantiate the command processor module.
   cmd_proc iCMD_PROC (
     .clk(clk),
     .rst_n(rst_n),
-    .cmd(cmd_received),
+    .cmd(cmd_sent),
     .cmd_rdy(cmd_rdy),
     .clr_cmd_rdy(clr_cmd_rdy),
     .send_resp(send_resp),
@@ -111,9 +133,9 @@ module cmd_proc_tb();
     .cal_done(cal_done),
     .heading(heading),
     .heading_rdy(heading_rdy),
-    .lftIR(lftIR),
+    .lftIR(1'b0),
     .cntrIR(cntrIR),
-    .rghtIR(rghtIR),
+    .rghtIR(1'b0),
     .error(error),
     .frwrd(frwrd),
     .moving(moving),
@@ -121,11 +143,45 @@ module cmd_proc_tb();
     .fanfare_go(fanfare_go)
   );
 
-  ///////////////////////////////////////////////////////////////////
-  // Test procedure to apply stimulus and check responses          //
-  ///////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////
+  // Test procedure to apply stimulus and check responses //
+  /////////////////////////////////////////////////////////
   initial begin
-    // Initialize signals and load stimulus here
+    clk = 1'b0; // initially clock is low
+	rst_n = 1'b0; // reset the machines
+    snd_cmd = 1'b0; // initially is low, i.e. inactive
+    cmd_sent = 16'h2000; // Command to start the calibration of the Knight's gyro.
+    trmt = 1'b0; // Initially we are not transmitting the response back to the bluetooth module.
+    cntrIR = 1'b0; // Initially the Knight doesn't see any guard rail.
+
+    ////////////////////////////////////////////////////////////////////////
+    // TEST 1: Test whether the calibrate command is processed correctly //
+    //////////////////////////////////////////////////////////////////////
+    fork
+      begin : timeout_cal
+        // Wait for a million clock cycles for cal_done to be asserted.
+        repeat(1000000) @(posedge clk);
+        // If cal_done is not asserted, display error.
+        $display("ERROR: cal_done not getting asserted and/or held at its value.");
+        $stop(); // Stop simulation on error.
+      end : timeout_cal
+      begin : timeout_resp
+        // Wait for a million clock cycles for response to be ready.
+        repeat(1000000) @(posedge clk);
+        // If resp_rdy is not asserted, display error.
+        $display("ERROR: resp_rdy not getting asserted and/or held at its value.");
+        $stop(); // Stop simulation on error.
+      end : timeout_resp
+      begin
+        // Wait for the cal_done signal to be asserted to indicate calibration completion.
+        @(posedge cal_done)
+          disable timeout_cal; // Disable timeout if cal_done is asserted.
+        // Wait for the resp_rdy signal to be asserted to indicate an acknowledge from the processor.
+        @(posedge resp_rdy)
+          disable timeout_resp; // Disable timeout if resp_rdy is asserted.
+      end
+    join
+
   end
 
   always
