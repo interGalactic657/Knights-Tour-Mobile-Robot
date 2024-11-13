@@ -213,6 +213,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
     nxt_state = state; // By default, assume we are in the current state.
     strt_cal = 1'b0;   // Start calibration signal (disabled by default)
     move_cmd = 1'b0;   // Move command signal (disabled by default)
+    moving = 1'b0;     // Indicates that the Knight is moving (disbaled by default)
     clr_frwrd = 1'b0;  // Clear forward speed register (disabled by default)
     inc_frwrd = 1'b0;  // Increment forward speed register command (disabled by default)
     dec_frwrd = 1'b0;  // Decrement forward speed register (disabled by default)
@@ -247,9 +248,10 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
     end
 
     MOVE : begin // State to start moving process
+      move_cmd = 1'b1; // Command to move
       if (error < $signed(12'h02C) || error < $signed(12'hFFD4)) begin
-        move_cmd = 1'b1; // Command to move
-        clr_frwrd = 1'b1; // Clear forward command
+        moving = 1'b1;    // We only move when the error is within the threshold
+        clr_frwrd = 1'b1; // Clear forward register
         nxt_state = INCR; // Move to increment state
       end
     end
@@ -264,7 +266,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
           fanfare_go = 1'b1; // Turn on fanfare for special move
         nxt_state = DECR; // Go to decrement state
       end else 
-        move_cmd = 1'b1; // Continue moving
+        moving = 1'b1; // Continue moving
     end
 
     DECR : begin // State to decrement speed
@@ -272,7 +274,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
         send_resp = 1'b1; // Send acknowledgment to Bluetooth
         nxt_state = IDLE; // Return to IDLE
       end else
-        move_cmd = 1'b1; // Continue moving if not zero
+        moving = 1'b1; // Continue moving if not zero
     end
   endcase
   end
