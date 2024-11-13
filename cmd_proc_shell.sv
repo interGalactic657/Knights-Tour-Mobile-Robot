@@ -38,14 +38,17 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
   ///////////////////////////////////
   // Declare any internal signals //
   /////////////////////////////////
-  ///////////////////////// Square Count ///////////////////////////////////////////
+  ////////////////////////////// Forward Register Logic ////////////////////////////////////
+  logic zero;  // The forward register is zero when cleared or decremented all the way.
+  logic max_spd; // The forward register has reached its max speed when the 2 most significant bits are ones.
+  ///////////////////////// Square Count Logic ///////////////////////////////////////////
   logic [3:0] pulse_cnt;     // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
   logic [2:0] square_cnt;    // The number of squares the Knight moved on the board.
   logic move_done;           // Indicates that a move is completed by the Knight.
   logic cntrIR_step;         // Metastable cntrIR signal from the IR sensor.
 	logic cntrIR_stable_prev;  // Stabilized cntrIR signal from the IR sensor.
   logic cntrIR_stable_curr;  // Used to detect rising edge on the cntrIR signal.
-  ////////////////////////////// PID Interface ////////////////////////////////////
+  ////////////////////////////// PID Interface Logic ////////////////////////////////////
   logic lftIR_step;       // Metastable lftIR signal from the inertial sensor.
   logic lftIR_stable;     // Stabilized lftIR signal from the inertial sensor.
   logic rghtIR_step;       // Metastable rghtIR signal from the inertial sensor.
@@ -54,50 +57,56 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
   logic signed [11:0] err_nudge; // An error offset term to correct for when the robot wanders.
   ///////////////////////////// State Machine //////////////////////////////////////
   logic move_cmd;            // The command that tells Knight to move from the state machine.
+  logic clr_frwrd;           // Tells the Knight to ramp up its speed starting from 0.
+  logic inc_frwrd;           // Tells the Knight to ramp up its speed.
+  logic dec_frwrd;           // Tells the Knight to decrease up its speed.
   state_t state;             // Holds the current state.
 	state_t nxt_state;         // Holds the next state.
   //////////////////////////////////////////////////////////////////////////////
- 
-  ///////////////////////////////////////////////////////////////
-  // Implements square count logic when Knight is told to move /
-  /////////////////////////////////////////////////////////////
-  // Implement rising edge detector to check when cntrIR pulse goes high.
-  always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n) begin
-      cntrIR_step <= 1'b0;          // Reset the cntrIR metastable value.
-      cntrIR_stable_prev <= 1'b0;   // Reset the cntrIR stable value.
-      cntrIR_stable_curr <= 1'b0;   // Reset the cntrIR edge detection flop.
-    end else begin
-      cntrIR_step <= cntrIR;                    // Flop the cntrIR signal to correct metastability.
-      cntrIR_stable_prev <= cntrIR_step;        // The synchronized cntrIR signal with the system clock.
-      cntrIR_stable_curr <= cntrIR_stable_prev; // Used to detect rising edge on cntrIR pulse.
-    end
-  end
-
-  // A pulse is detected from the cntrIR sensor when the previous value was low and current value is high.
-  assign pulse_detected = ~cntrIR_stable_prev & cntrIR_stable_curr;
-
-  // Implement counter to count number squares moved by the Knight.
-  always_ff @(posedge clk) begin
-    // Load in the number of squares to move when the command is asserted, else hold current value.
-    square_cnt <= (move_cmd) ? cmd[2:0] : square_cnt;  
-  end
-
-  // Implement counter to count number of times the cntrIR pulse went high. 
-  always_ff @(posedge clk) begin
-    pulse_cnt <= (move_cmd)       ? 4'h0           : // Reset to 0 initially when begining a move.
-                 (pulse_detected) ? pulse_cnt + 1  : // Increment the pulse count whenever we detect that cntrIR went high.
-                 pulse_cnt;                          // Otherwise hold current value.
-  end
-
-  // Compare whether the pulse count detected is 2 times the number of sqaures requested to move,
-  // to indicate that a move is complete.
-	assign move_done = (pulse_cnt == {square_cnt, 1'b0});
-  //////////////////////////////////////////////////////////////////////////
 
   //////////////////////////////////////////////////////////
   // Implements forward speed register to move the Knight /
   ////////////////////////////////////////////////////////
+  // The forward register is zero when cleared.
+  assign zero = (frwrd == 10'h000);
+
+  // The forward register has reached its max speed 
+  // when the 2 most significant bits are ones.
+  assign max_spd = &frwrd[9:8];
+
+  // Implement the forward speed register of the Knight to move it forward or slow down.
+  always_ff @(posedge clk, negedge rst_n) begin
+    if(!rst_n)
+      frwrd <= 10'h000; // Clear the register asynchronously.
+    else if (clr_frwrd)
+      frwrd <= 10'h000; // Clear the register when we are done with a movement.
+    else if (heading_rdy) begin // Only increment or decrement the forward register when a new heading is ready.
+      if (inc_frwrd) begin
+        if (!max_spd) begin // Only increment the register if we are not at the max speed.
+        generate // Increment frwrd by different amounts based on whether FAST_SIM is enabled.
+          if (FAST_SIM)
+            frwrd <= frwrd + 10'h020;
+          else 
+            frwrd <= frwrd + 10'h003;
+        endgenerate
+        end
+      end else if (dec_frwrd) begin
+        if (!zero) begin // Only decrement the register if we are not at the minimum speed. 
+          generate // Decrement frwrd by different amounts based on whether FAST_SIM is enabled.
+          if (FAST_SIM)
+            frwrd <= frwrd - 10'h040;
+          else 
+            frwrd <= frwrd - 10'h006;
+          endgenerate
+        end
+      end
+    end
+  end
+  //////////////////////////////////////////////////////////////////////////
+ 
+  ///////////////////////////////////////////////////////////////
+  // Implements square count logic when Knight is told to move /
+  /////////////////////////////////////////////////////////////
   // Implement rising edge detector to check when cntrIR pulse goes high.
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n) begin
@@ -157,13 +166,15 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
     end
   end
 
-  // Generate a different nudge factor when FAST_SIM is enabled.
+  // Form the nudge factor based on whether the Knight veers too much to the left or right. 
   generate
-    // Form the nudge factor based on whether the Knight veers too much to the left or right. 
+    // Generate a different nudge factor when FAST_SIM is enabled.
     if (FAST_SIM)
+      // Whenever lftIR goes high we add a positive nudge factor, and whenever rghtIR goes high,
+      // we add a negative nudge factor.
       assign err_nudge = (lftIR_stable)  ? 12'h05F : 
-                        (rghtIR_stable) ? 12'hFA1 : 
-                        12'h000;
+                         (rghtIR_stable) ? 12'hFA1 : 
+                         12'h000;
     else
       assign err_nudge = (lftIR_stable)  ? 12'h1FF : 
                          (rghtIR_stable) ? 12'hE00 : 
