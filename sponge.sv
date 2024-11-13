@@ -41,7 +41,7 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
 
     assign dur_done = (dur_cnt == note_dur); // Indicate desired duration has been accomplished
 
-    // state types for the state machine
+    // State types for the state machine
     typedef enum logic [3:0] {
         IDLE,
         D7,
