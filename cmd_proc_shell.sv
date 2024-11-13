@@ -273,6 +273,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
       INCR : begin // State to increment speed
         inc_frwrd = 1'b1; // Increment forward speed
         if (move_done) begin // If movement is complete
+          moving = 1'b1;    // Continue moving
           dec_frwrd = 1'b1; // Decrement speed
           if (opcode == FANFARE)
             fanfare_go = 1'b1; // Turn on fanfare for special move
