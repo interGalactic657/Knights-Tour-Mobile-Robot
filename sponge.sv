@@ -35,8 +35,13 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
     always_ff @(posedge clk) begin
         if (init)
             dur_cnt <= 24'h000000;
-        else
-            dur_cnt++;
+        else 
+            generate
+                if (FAST_SIM)
+                    dur_cnt <= dur_cnt + 16;
+                else
+                    dur_cnt++;
+            endgenerate
     end
 
     assign dur_done = (dur_cnt == note_dur); // Indicate desired duration has been accomplished
