@@ -153,6 +153,14 @@ module cmd_proc_tb();
     cmd_sent = 16'h2000; // Command to start the calibration of the Knight's gyro.
     trmt = 1'b0; // Initially we are not transmitting the response back to the bluetooth module.
     cntrIR = 1'b0; // Initially the Knight doesn't see any guard rail.
+    //// wait 1.5 clocks for reset ////
+	@(posedge clk);
+	@(negedge clk) begin 
+	    rst_n = 1'b1; // Deassert reset on a negative edge of clock.
+		snd_cmd = 1'b1; // // assert snd_cmd and begin transmission
+	end
+
+	@(negedge clk) snd_cmd = 1'b0; // deassert snd_cmd after one clock cycle
 
     ////////////////////////////////////////////////////////////////////////
     // TEST 1: Test whether the calibrate command is processed correctly //
@@ -165,6 +173,39 @@ module cmd_proc_tb();
         $display("ERROR: cal_done not getting asserted and/or held at its value.");
         $stop(); // Stop simulation on error.
       end : timeout_cal
+      begin : timeout_resp
+        // Wait for a million clock cycles for response to be ready.
+        repeat(1000000) @(posedge clk);
+        // If resp_rdy is not asserted, display error.
+        $display("ERROR: resp_rdy not getting asserted and/or held at its value.");
+        $stop(); // Stop simulation on error.
+      end : timeout_resp
+      begin
+        // Wait for the cal_done signal to be asserted to indicate calibration completion.
+        @(posedge cal_done)
+          disable timeout_cal; // Disable timeout if cal_done is asserted.
+        // Wait for the resp_rdy signal to be asserted to indicate an acknowledge from the processor.
+        @(posedge resp_rdy)
+          disable timeout_resp; // Disable timeout if resp_rdy is asserted.
+      end
+    join
+
+    ////////////////////////////////////////////////////////////////////////
+    // TEST 2: Test whether the calibrate command is processed correctly //
+    //////////////////////////////////////////////////////////////////////
+    cmd_sent = 16'h4001; // Command to move the Knight by 1 square to the north.
+    @(negedge clk) snd_cmd = 1'b1; // // assert snd_cmd and begin transmission
+	// Deassert snd_cmd after one clock cycle.
+	@(negedge clk) snd_cmd = 1'b0;
+
+    fork
+      begin : timeout_cmd_snt
+        // Wait 60000 clock cycles, and ensure that 2 bytes are transmitted.
+        repeat(60000) @(posedge clk);
+        // If cal_done is not asserted, display error.
+        $display("ERROR: cal_done not getting asserted and/or held at its value.");
+        $stop(); // Stop simulation on error.
+      end : timeout_cmd_snt
       begin : timeout_resp
         // Wait for a million clock cycles for response to be ready.
         repeat(1000000) @(posedge clk);
