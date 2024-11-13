@@ -174,8 +174,8 @@ module cmd_proc_tb();
         $stop(); // Stop simulation on error.
       end : timeout_cal
       begin : timeout_resp
-        // Wait for a million clock cycles for response to be ready.
-        repeat(1000000) @(posedge clk);
+        // Wait for slightly more than a million clock cycles for response to be ready.
+        repeat(1000050) @(posedge clk);
         // If resp_rdy is not asserted, display error.
         $display("ERROR: resp_rdy not getting asserted and/or held at its value.");
         $stop(); // Stop simulation on error.
@@ -191,7 +191,7 @@ module cmd_proc_tb();
     join
 
     ////////////////////////////////////////////////////////////////////////
-    // TEST 2: Test whether the calibrate command is processed correctly //
+    // TEST 2: Test whether the move command is processed correctly //
     //////////////////////////////////////////////////////////////////////
     cmd_sent = 16'h4001; // Command to move the Knight by 1 square to the north.
     @(negedge clk) snd_cmd = 1'b1; // // assert snd_cmd and begin transmission
@@ -202,27 +202,153 @@ module cmd_proc_tb();
       begin : timeout_cmd_snt
         // Wait 60000 clock cycles, and ensure that 2 bytes are transmitted.
         repeat(60000) @(posedge clk);
-        // If cal_done is not asserted, display error.
-        $display("ERROR: cal_done not getting asserted and/or held at its value.");
-        $stop(); // Stop simulation on error.
+        // If cmd_snt is not asserted, display error.
+        $display("ERROR: A transmission was complete but was not indicated by the RemoteComm.");
+		$stop();
       end : timeout_cmd_snt
       begin : timeout_resp
-        // Wait for a million clock cycles for response to be ready.
-        repeat(1000000) @(posedge clk);
+        // Wait for slightly more than a million clock cycles for response to be ready.
+        repeat(1000050) @(posedge clk);
         // If resp_rdy is not asserted, display error.
         $display("ERROR: resp_rdy not getting asserted and/or held at its value.");
         $stop(); // Stop simulation on error.
       end : timeout_resp
       begin
-        // Wait for the cal_done signal to be asserted to indicate calibration completion.
-        @(posedge cal_done)
-          disable timeout_cal; // Disable timeout if cal_done is asserted.
+        // Wait till 2 bytes are sent.
+        @(posedge cmd_snt) disable timeout_cmd_snt; // Disable timeout if cmd_snt is asserted.
+        
         // Wait for the resp_rdy signal to be asserted to indicate an acknowledge from the processor.
-        @(posedge resp_rdy)
-          disable timeout_resp; // Disable timeout if resp_rdy is asserted.
+        @(posedge resp_rdy) disable timeout_resp; // Disable timeout if resp_rdy is asserted.
+
+        // The forward speed register should be cleared to 0 initially right after the command was sent.
+        if (frwrd !== 10'h000) begin
+            $display("ERROR: frwrd should have been cleared to 10'h000 but was 0x%h", frwrd);
+            $stop();
+        end
+
+        // Wait for 10 positive edges on heading ready, indicating 10 new readings. 
+        repeat(10) @(posedge heading_rdy);
+
+        // After 10 positive edges on heading ready, frwrd speed should be incremented accordingly.
+        if (frwrd !== 10'h140) begin
+            $display("ERROR: frwrd speed should have been incremented to 10'h140 but was 0x%h", frwrd);
+            $stop();
+        end
+
+        // The moving signal should be asserted at this time as the Knight is moving.
+        if (moving !== 1'b1) begin
+            $display("ERROR: moving should have been asserted as the Knight was moving but was not.");
+            $stop();
+        end
+
+        // Wait for 20 more positive edges on heading ready, indicating 20 new readings. 
+        repeat(20) @(posedge heading_rdy);
+
+        // After 20 more positive edges on heading ready, frwrd speed should be saturated to the maximum speed.
+        if (frwrd !== 10'h300) begin
+            $display("ERROR: frwrd speed should have been saturated to the maximum speed but was 0x%h.", frwrd);
+            $stop();
+        end
+
+        // Give a pulse on the cntrIR sensor.
+        cntrIR = 1'b1;
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // Say it no longer sees the pulse on cntrIR.
+        cntrIR = 1'b0;
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // frwrd speed should still be saturated to the maximum speed.
+        if (frwrd !== 10'h300) begin
+            $display("ERROR: frwrd speed should still be saturated to the maximum speed but was 0x%h.",frwrd);
+            $stop();
+        end
+
+        // Give a second pulse on the cntrIR sensor indicating the Knight entered a square.
+        cntrIR = 1'b1;
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // Say it no longer sees the pulse on cntrIR.
+        cntrIR = 1'b0;
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // After 10 clock cycles, the forward speed register should have been decremented by 10'd640. 
+        if (frwrd !== 10'h080) begin
+            $display("ERROR: frwrd speed should have been decremented to 10'h080 but was %h", frwrd);
+            $stop();
+        end
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // The moving signal should be low as frwrd speed is zeroed out by now.
+        if (moving !== 1'b0) begin
+            $display("ERROR: moving should have been deasserted as the Knight completely slowed down but was not.");
+            $stop();
+        end
       end
     join
 
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // TEST 3: Test whether the move command is processed correctly along with a nudge factor //
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    cmd_sent = 16'h4001; // Command to move the Knight by 1 square to the north.
+    @(negedge clk) snd_cmd = 1'b1; // // assert snd_cmd and begin transmission
+	// Deassert snd_cmd after one clock cycle.
+	@(negedge clk) snd_cmd = 1'b0;
+
+    fork
+      begin : timeout_cmd_snt
+        // Wait 60000 clock cycles, and ensure that 2 bytes are transmitted.
+        repeat(60000) @(posedge clk);
+        // If cmd_snt is not asserted, display error.
+        $display("ERROR: A transmission was complete but was not indicated by the RemoteComm.");
+		$stop();
+      end : timeout_cmd_snt
+      begin : timeout_resp
+        // Wait for slightly more than a million clock cycles for response to be ready.
+        repeat(1000050) @(posedge clk);
+        // If resp_rdy is not asserted, display error.
+        $display("ERROR: resp_rdy not getting asserted and/or held at its value.");
+        $stop(); // Stop simulation on error.
+      end : timeout_resp
+      begin
+        // Wait till 2 bytes are sent.
+        @(posedge cmd_snt) disable timeout_cmd_snt; // Disable timeout if cmd_snt is asserted.
+        
+        // Wait for the resp_rdy signal to be asserted to indicate an acknowledge from the processor.
+        @(posedge resp_rdy) disable timeout_resp; // Disable timeout if resp_rdy is asserted.
+
+        // Wait for the Knight to be moving. 
+        @(posedge moving);
+
+        // Say the Knight was veering slightly more towards the left.
+        lftIR = 1'b1;
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // Say it no longer sees the pulse on lftIR.
+        lftIR = 1'b0;
+
+        // Wait a couple of clock cycles.
+        repeat(5) @(posedge clk);
+
+        // The error should have a large disturbance after tthe Knight veers too much to the left.
+        if (error > $signed(12'h02C) || error < $signed(12'h02C)) begin
+            $display("ERROR: the error term should have a great amount of disturbance but does not.");
+            $stop();
+        end
+      end
+    join
   end
 
   always
