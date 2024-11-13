@@ -73,7 +73,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
 	///////////////////////////////////////
     case (state)
       default : begin 
-        
+        nfgnng
       end
       ???? : begin 
         
