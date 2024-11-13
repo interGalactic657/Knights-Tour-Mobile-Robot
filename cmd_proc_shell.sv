@@ -31,9 +31,9 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
   ////////////////////////////////////////
   // Declare state types as enumerated //
   //////////////////////////////////////
-  // We have ? states
-  typedef enum logic [1:0] {IDLE, ???} state_t;
-
+  // We have 6 states in total.
+  typedef enum logic [2:0] {IDLE, START_TOUR, CALIBRATE, MOVE, INCR, DECR} state_t;
+  /////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////
   // Declare any internal signals //
@@ -56,6 +56,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
   logic signed [11:0] desired_heading;     // Compute the desired heading based on the command given.
   logic signed [11:0] err_nudge; // An error offset term to correct for when the robot wanders.
   ///////////////////////////// State Machine //////////////////////////////////////
+  logic strt_cal;            // Initiate claibration of yaw readings.
   logic move_cmd;            // The command that tells Knight to move from the state machine.
   logic clr_frwrd;           // Tells the Knight to ramp up its speed starting from 0.
   logic inc_frwrd;           // Tells the Knight to ramp up its speed.
@@ -64,9 +65,9 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
 	state_t nxt_state;         // Holds the next state.
   //////////////////////////////////////////////////////////////////////////////
 
-  //////////////////////////////////////////////////////////
-  // Implements forward speed register to move the Knight /
-  ////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////
+  // Implements forward speed register to move the Knight //
+  /////////////////////////////////////////////////////////
   // The forward register is zero when cleared.
   assign zero = (frwrd == 10'h000);
 
@@ -104,9 +105,9 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
   end
   //////////////////////////////////////////////////////////////////////////
  
-  ///////////////////////////////////////////////////////////////
-  // Implements square count logic when Knight is told to move /
-  /////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////
+  // Counts the number of squares the Knight has moved //
+  //////////////////////////////////////////////////////
   // Implement rising edge detector to check when cntrIR pulse goes high.
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n) begin
@@ -192,9 +193,9 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
 	assign error = heading - desired_heading + err_nudge;
   //////////////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////
-	// Implements State Machine Logic /
-	//////////////////////////////////
+  /////////////////////////////////////
+	// Implements State Machine Logic //
+	///////////////////////////////////
 
   // Implements state machine register, holding current state or next state, accordingly.
   always_ff @(posedge clk, negedge rst_n) begin
@@ -209,17 +210,72 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
 	////////////////////////////////////////////////////////////////////////////////////////
 	always_comb begin
     /* Default all SM outputs & nxt_state */
+    nxt_state = state; // By default, assume we are in the current state.
+    strt_cal = 1'b0;   // Start calibration signal (disabled by default)
+    move_cmd = 1'b0;   // Move command signal (disabled by default)
+    clr_frwrd = 1'b0;  // Clear forward speed register (disabled by default)
+    inc_frwrd = 1'b0;  // Increment forward speed register command (disabled by default)
+    dec_frwrd = 1'b0;  // Decrement forward speed register (disabled by default)
+    tour_go = 1'b0;    // Start the Knight's tour (disabled by default)
+    send_resp = 1'b0;  // Send acknowledgment to the Bluetooth module (disabled by default)
+
     case (state)
-      default : begin 
-        
+    default : begin // IDLE state - waits for a command
+      if (cmd_rdy) begin // If a command is ready
+        if (cmd[15:12] == 4'b0010)
+          nxt_state = START_TOUR; // Command to start Knight's tour
+        else if (cmd[15:12] == 4'b0010) begin
+          nxt_state = CALIBRATE; // Command to start calibration
+          strt_cal = 1'b1; // Enable calibration
+        end
+        else if (cmd[15:12] == 4'b0100 || cmd[15:12] == 4'b0101)
+          nxt_state = MOVE; // Command to move forward or backward
+        clr_cmd_rdy = 1'b1; // Clear command ready signal
+      end        
+    end
+    
+    START_TOUR : begin // State to initiate Knight's tour
+      nxt_state = IDLE; // Return to IDLE after starting
+      tour_go = 1'b1; // Enable Knight's tour
+    end
+
+    CALIBRATE : begin // State for calibration process
+      if (cal_done) begin // Wait until calibration is complete
+        send_resp = 1'b1; // Send acknowledgment to Bluetooth
+        nxt_state = IDLE; // Return to IDLE
       end
-      ???? : begin 
-        
+    end
+
+    MOVE : begin // State to start moving process
+      if (error < $signed(12'h02C) || error < $signed(12'hFFD4)) begin
+        move_cmd = 1'b1; // Command to move
+        clr_frwrd = 1'b1; // Clear forward command
+        nxt_state = INCR; // Move to increment state
       end
-      ???? : begin
-        
-      end
-    endcase
+    end
+
+    INCR : begin // State to increment speed
+      inc_frwrd = 1'b1; // Increment forward speed
+      if (move_done) begin // If movement is complete
+        dec_frwrd = 1'b1; // Decrement speed
+        if (cmd[15:12] == 4'b0100)
+          fanfare_go = 1'b0; // Turn off fanfare for normal move
+        else if (cmd[15:12] == 4'b0101)
+          fanfare_go = 1'b1; // Turn on fanfare for special move
+        nxt_state = DECR; // Go to decrement state
+      end else 
+        move_cmd = 1'b1; // Continue moving
+    end
+
+    DECR : begin // State to decrement speed
+      if (zero) begin // If forward speed reaches zero
+        send_resp = 1'b1; // Send acknowledgment to Bluetooth
+        nxt_state = IDLE; // Return to IDLE
+      end else
+        move_cmd = 1'b1; // Continue moving if not zero
+    end
+  endcase
   end
+
   
 endmodule
