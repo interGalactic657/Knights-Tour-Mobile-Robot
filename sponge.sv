@@ -9,13 +9,39 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
     // Intermediate signals
     logic [14:0] note_period_cnt; 
     logic [23:0] dur_cnt;
-    logic init, note_rst_n, dur_done;
+    logic init, note_cnt_rst, dur_done;
     
     // Note values set by the SM
-    logic [15:0] note_period;
+    logic [14:0] note_period;
     logic [23:0] note_dur;
 
-    //state types for the state machine
+    // Counter used to set the note frequency value
+    // by counting up to the desired waveform period
+    always_ff @(posedge clk) begin
+        if (init)
+            note_period_cnt <= 15'h0000;
+        else if (note_cnt_rst)
+            note_period_cnt <= 15'h0000;
+        else
+            note_period_cnt++;
+    end
+
+    assign note_rst = (note_period_cnt == note_period); // Reset note counter when reached desired frequency
+    assign piezo = (not_period_cnt < (note_period / 2)); // When note count has reached half of desired note period,
+                                                         // zero the output (50% duty cycle)
+
+    // Counter used to set the note duration value
+    // by counting up to the desired note 
+    always_ff @(posedge clk) begin
+        if (init)
+            dur_cnt <= 24'h000000;
+        else
+            dur_cnt++;
+    end
+
+    assign dur_done = (dur_cnt == note_dur); // Indicate desired duration has been accomplished
+
+    // state types for the state machine
     typedef enum logic [3:0] {
         IDLE,
         D7,
@@ -27,19 +53,14 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
         A6,
         D7_3,
     } state_t;
+    state_t state, nxt_state;
 
-    state_t state, next_state;
-
-    //Sequential logic for the state machine
+    // Sequential logic for the state machine
     always_ff @(posedge clk, negedge rst_n) begin
-      if(!rst_n)
-        begin
+      if(!rst_n) 
         state <= IDLE; // Reset into the idle state if machine is reset.
-        end
       else
-        begin
         state <= nxt_state; // Store the next state as the current state by default.
-        end
     end
 
     // Combinational logic for the state machine
@@ -47,99 +68,84 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
     begin 
         case (state)
             // Default all SM outputs & nxt_state
-            note_rst_n = 1'b1;
-            piezo = 1'b0;
-            piezo_n = 1'b1;
-            dur_done = 1'b0;
-            note_dur = 24'h800000;
-            next_state = state;
+            init = 1'b0;
+            note_dur = 24'h800000;  // Duration of first note (D7, 2^23 clocks)
+            note_period = 15'h5326; // Frequency of first note (D7, 2349Hz)
+            nxt_state = state;
             
-            IDLE: begin
-                if (go)
-                    begin
-                        next_state = D7;
-                        init = 1'b1;
-                        note_rst_n = 1'b0;
-                    end
+            D7: begin
+                if (dur_done) begin
+                    nxt_state = E7;
+                    init = 1'b1;
+                end
             end
 
-            D7: begin
-                note_dur = 24'h800000;
-                if (dur_done)
-                    begin
-                    next_state = E7;
-                    note_rst_n = 1'b0;
-                    end
-            end
             E7: begin
-                note_dur = 24'h800000;
-                if (dur_done)
-                    begin
-                    next_state = F7;
-                    note_rst_n = 1'b0;
-                    end
+                note_period = 15'h4A11; // Freq = 2637Hz
+                if (dur_done) begin
+                    nxt_state = F7;
+                    init = 1'b1;
+                end
             end
+
             F7: begin
-                note_dur = 24'h800000;
-                if (dur_done)
-                    begin
-                    next_state = E7_2;
-                    note_rst_n = 1'b0;
-                    end
+                note_period = 15'h45E7; // Freq = 2794Hz
+                if (dur_done) begin
+                    nxt_state = E7_2;
+                    init = 1'b1;
+                end
             end
+
             E7_2: begin
-                note_dur = 24'hC00000;
-                if (dur_done)
-                    begin
-                    next_state = F7_2;
-                    note_rst_n = 1'b0;
-                    end
+                note_dur = 24'hC00000;  // Duration = 2^23 + 2^22 clocks
+                note_period = 15'h4A11; // Freq = 2637Hz
+                if (dur_done) begin
+                    nxt_state = F7_2;
+                    init = 1'b1;
+                end
             end
 
             F7_2: begin
-                note_dur = 24'h400000;
-                if (dur_done)
-                    begin
-                    next_state = D7_2;
-                    note_rst_n = 1'b0;
-                    end
+                note_dur = 24'h400000;  // Duration = 2^22 clocks
+                note_period = 14'h45E7; // Freq = 2794Hz
+                if (dur_done) begin
+                    nxt_state = D7_2;
+                    init = 1'b1;
+                end
             end
 
             D7_2: begin
-                note_dur = 24'hC00000;
-                if (dur_done)
-                    next_state = A6;
-                    note_rst_n = 1'b0;
-          
+                note_dur = 24'hC00000; // Duration = 2^23 + 2^22 clocks
+                if (dur_done) begin
+                    nxt_state = A6;
+                    init = 1'b1;
+                end
             end
+
             A6: begin
-                note_dur = 24'h400000;
-                if (dur_done)
-                    next_state = D7_3;
-                    note_rst_n = 1'b0;
+                note_dur = 24'h400000;  // Duration = 2^22 clocks
+                note_period = 15'h6EF9; // Freq = 2349Hz
+                if (dur_done) begin
+                    nxt_state = D7_3;
+                    init = 1'b1;
+                end
             end
+
             D7_3: begin
-                note_dur = 24'h800000;
                 if (dur_done)
-                    next_state = IDLE;
-                    note_rst_n = 1'b0;
+                    nxt_state = IDLE;
             end
+
+            // Default Case = IDLE //
             default: begin
-                next_state = IDLE;
+                note_dur = 24'h000000; 
+                note_period = 15'h0000; // TODO: Figure out how to turn off the sound (or if this works)
+                if (go) begin
+                    nxt_state = D7;
+                    init = 1'b1;
+                end
             end
         endcase 
-    end
-
-    // Counter used to set the note frequency value
-    // by counting up to the desired waveform period
-    always_ff @(posedge clk or negedge note_rst_n) begin
-        if (init)
-            note_period_cnt <= 15'h0000;
-        else if (note_rst_n)
-            note_period_cnt <= 15'h0000;
-        else
-            note_period_cnt++;
-
     end
 
 endmodule
