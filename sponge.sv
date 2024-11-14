@@ -29,6 +29,7 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
     assign note_rst = (note_period_cnt == note_period); // Reset note counter when reached desired frequency
     assign piezo = (not_period_cnt < (note_period / 2)); // When note count has reached half of desired note period,
                                                          // zero the output (50% duty cycle)
+    assign piezo_n = ~piezo;
 
     // Counter used to set the note duration value
     // by counting up to the desired note 
@@ -152,5 +153,4 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
             end
         endcase 
     end
-
 endmodule
