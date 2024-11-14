@@ -203,6 +203,9 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
 
   // Form the error term as the difference of the actual and desired heading with the nudge factor.
   assign error = heading - desired_heading + err_nudge;
+
+  // Computes the absolute value of the error.
+  assign error_abs = (error < 0) ? -error : error;
   //////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////
@@ -263,7 +266,7 @@ module cmd_proc(clk,rst_n,cmd,cmd_rdy,clr_cmd_rdy,send_resp,strt_cal,
 
       MOVE : begin // State to start moving process
         move_cmd = 1'b1; // Command to move
-        if (error < $signed(12'h02C) || error > $signed(12'hFFD4)) begin
+        if (error_abs < $signed(12'h02C)) begin
           moving = 1'b1;    // We only move when the error is within the threshold
           clr_frwrd = 1'b1; // Clear forward register
           nxt_state = INCR; // Move to increment state
