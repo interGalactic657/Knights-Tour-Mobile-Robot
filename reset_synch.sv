@@ -5,7 +5,7 @@
 // to the system clock.                //
 ////////////////////////////////////////
 module reset_synch(
-    input logic clk, // // 50MHz system clock.
+    input logic clk, // 50MHz system clock.
     input logic RST_n, // Unsynchronized input from push button
     output logic rst_n // Synchronized global active low reset.
   );
