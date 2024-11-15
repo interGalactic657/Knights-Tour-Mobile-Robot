@@ -38,6 +38,7 @@ module sponge(
     logic [14:0] note_period;     // Period of the current note.
     logic [23:0] note_dur;        // Duration of the current note.
     logic clr_cnt;                // Asserted whenever we move to a new note, to clear the count.
+    logic note_cnt_rst;           // Asserted whenever we the note period count equals the note period.
     logic dur_done;               // Asserted whenever the duration of the note is done.
     logic [4:0] inc_amt;          // Amount to increment the duration counter by based on FAST_SIM.
     state_t state;                // Holds the current state.
@@ -51,9 +52,13 @@ module sponge(
             note_period_cnt <= 15'h0000;     // Reset the counter on reset.
         else if (clr_cnt)
             note_period_cnt <= 15'h0000;     // Clear the counter when clr_cnt is asserted.
+        else if (note_cnt_rst)
+            note_period_cnt <= 15'h0000;     // Clear the counter when note_cnt_rst is asserted.
         else
             note_period_cnt <= note_period_cnt + 1'b1; // Increment counter each clock cycle.
     end
+
+    assign note_cnt_rst = (note_period_cnt == note_period); // Reset note counter when reached desired frequency
 
     /************ Note Duration Counter ************/
     // This counter tracks the duration of the current note.

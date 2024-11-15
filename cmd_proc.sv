@@ -254,7 +254,7 @@ module cmd_proc(
 
       MOVE : begin // State to start moving.
         move_cmd = 1'b1; // Command to move.
-        if (error_abs < $signed(12'h02C)) begin
+        if (error_abs < 12'h02C) begin
           moving = 1'b1;    // We only move when the absolute value of the error is within the threshold.
           clr_frwrd = 1'b1; // Clear the forward register.
           nxt_state = INCR; // Move to the increment speed state.
