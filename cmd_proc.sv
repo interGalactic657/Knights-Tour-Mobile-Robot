@@ -245,24 +245,6 @@ module cmd_proc(
     clr_cmd_rdy = 1'b0;  // Clear command after reading (disabled by default)
 
     case (state)
-      default : begin // IDLE state - waits for a command
-        if (cmd_rdy) begin // If a command is ready split into the following states based on the opcode.
-          case (opcode)
-            TOUR : begin
-              tour_go = 1'b1; // Enable Knight's tour.
-            end
-            CAL : begin
-              nxt_state = CALIBRATE; // Command to start calibration.
-              strt_cal = 1'b1; // Enable calibration.
-            end
-            default : begin // MOVE and FANFARE opcodes.
-              nxt_state = MOVE; // Command to move forward and slow down.
-            end
-          endcase
-          clr_cmd_rdy = 1'b1; // Clear the command ready signal.
-        end      
-      end
-
       CALIBRATE : begin // State for calibration process.
         if (cal_done) begin // Wait until calibration is complete.
           send_resp = 1'b1; // Send acknowledgment to Bluetooth.
@@ -297,6 +279,24 @@ module cmd_proc(
           nxt_state = IDLE; // Return to IDLE.
         end else
           moving = 1'b1; // Continue moving if not zero.
+      end
+
+      default : begin // IDLE state - waits for a command
+        if (cmd_rdy) begin // If a command is ready split into the following states based on the opcode.
+          case (opcode)
+            TOUR : begin
+              tour_go = 1'b1; // Enable Knight's tour.
+            end
+            CAL : begin
+              nxt_state = CALIBRATE; // Command to start calibration.
+              strt_cal = 1'b1; // Enable calibration.
+            end
+            default : begin // MOVE and FANFARE opcodes.
+              nxt_state = MOVE; // Command to move forward and slow down.
+            end
+          endcase
+          clr_cmd_rdy = 1'b1; // Clear the command ready signal.
+        end      
       end
     endcase
   end
