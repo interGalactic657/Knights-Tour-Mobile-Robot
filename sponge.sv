@@ -1,10 +1,10 @@
 module sponge(clk, rst_n, go, piezo, piezo_n);
 
-    parameter FAST_SIM = 1;      // Speeds up incrementing of duration for faster simulation
+    parameter FAST_SIM = 1;      // Speeds up incrementing of duration for faster simulation.
 
-    input logic clk, rst_n;      // 50Mhz clock and asynchronous reset
-    input logic go;              // Signal that initiates tune
-    output logic piezo, piezo_n; // Output music to the piezo buzzer
+    input logic clk, rst_n;      // 50 Mhz clock and asynchronous active low reset.
+    input logic go;              // Signal that initiates tune.
+    output logic piezo, piezo_n; // Output music to the piezo buzzer.
 
     // Intermediate signals
     logic [14:0] note_period_cnt; 
@@ -23,7 +23,7 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
         else if (note_cnt_rst)
             note_period_cnt <= 15'h0000;
         else
-            note_period_cnt++;
+            note_period_cnt <= note_period_cnt + 1'b1;
     end
 
     assign note_rst = (note_period_cnt == note_period); // Reset note counter when reached desired frequency
@@ -39,9 +39,9 @@ module sponge(clk, rst_n, go, piezo, piezo_n);
         else 
             generate // Increment duration by different amounts based on whether FAST_SIM is enabled
                 if (FAST_SIM)
-                    dur_cnt <= dur_cnt + 16;
+                    dur_cnt <= dur_cnt + 5'h10;
                 else
-                    dur_cnt++;
+                    dur_cnt <= dur_cnt + 1'b1;
             endgenerate
     end
 
