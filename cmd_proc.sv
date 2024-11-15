@@ -4,80 +4,78 @@
 // the Knight robot dictating how it should      //
 // respond given a command from a Bluetooth      //
 // module.                                       //
-//////////////////////////////////////////////////
+///////////////////////////////////////////////////
 module cmd_proc(
     clk, rst_n, cmd, cmd_rdy, clr_cmd_rdy, send_resp, strt_cal,
     cal_done, heading, heading_rdy, lftIR, cntrIR, rghtIR, error,
     frwrd, moving, tour_go, fanfare_go
 );
-                
-  parameter FAST_SIM = 1;              // speeds up incrementing of frwrd register for faster simulation
-                
-  input clk,rst_n;                     // 50MHz clock and asynch active low reset
 
-  input [15:0] cmd;                    // command from BLE
-  input cmd_rdy;                       // command ready
-  output logic clr_cmd_rdy;            // mark command as consumed
-  output logic send_resp;              // command finished, send_response via UART_wrapper/BT
+  parameter FAST_SIM = 1;                 // speeds up incrementing of frwrd register for faster simulation
 
-  output logic strt_cal;               // initiate calibration of gyro
-  input cal_done;                      // calibration of gyro done
-  input signed [11:0] heading;         // heading from gyro
-  input heading_rdy;                   // pulses high 1 clk for valid heading reading
+  input         clk, rst_n;               // 50MHz clock and asynch active low reset
+  input [15:0]  cmd;                      // command from BLE
+  input         cmd_rdy;                  // command ready
+  output logic  clr_cmd_rdy;              // mark command as consumed
+  output logic  send_resp;                // command finished, send_response via UART_wrapper/BT
 
-  output logic moving;                 // asserted when moving (allows yaw integration)
+  output logic  strt_cal;                 // initiate calibration of gyro
+  input         cal_done;                 // calibration of gyro done
+  input signed [11:0] heading;            // heading from gyro
+  input         heading_rdy;              // pulses high 1 clk for valid heading reading
 
-  output reg signed [11:0] error;      // error to PID (heading - desired_heading)
-  output reg [9:0] frwrd;              // forward speed register
+  output logic  moving;                   // asserted when moving (allows yaw integration)
+
+  output reg signed [11:0] error;         // error to PID (heading - desired_heading)
+  output reg [9:0] frwrd;                 // forward speed register
   
-  input lftIR;                         // nudge error +
-  input cntrIR;                        // center IR reading (have I passed a line)
-  input rghtIR;                        // nudge error -
+  input         lftIR;                    // nudge error +
+  input         cntrIR;                   // center IR reading (have I passed a line)
+  input         rghtIR;                   // nudge error -
 
-  output logic tour_go;                // pulse to initiate TourCmd block
-  output logic fanfare_go;             // kick off the "Charge!" fanfare on piezo
+  output logic  tour_go;                  // pulse to initiate TourCmd block
+  output logic  fanfare_go;               // kick off the "Charge!" fanfare on piezo
 
-   ////////////////////////////////////////
-    // Declare state types as enumerated //
-    ////////////////////////////////////////
-    typedef enum logic [2:0] {IDLE, CALIBRATE, MOVE, INCR, DECR} state_t;
+  ////////////////////////////////////////
+  // Declare state types as enumerated //
+  //////////////////////////////////////
+  typedef enum logic [2:0] {IDLE, CALIBRATE, MOVE, INCR, DECR} state_t;
 
-    ///////////////////////////////////////////
-    // Declare command opcode as enumerated //
-    ///////////////////////////////////////////
-    typedef enum logic [3:0] {CAL = 4'b0010, MOVE = 4'b0100, FANFARE = 4'b0101, TOUR = 4'b0110} op_t;
+  ////////////////////////////////////////////
+  // Declare command opcodes as enumerated //
+  //////////////////////////////////////////
+  typedef enum logic [3:0] {CAL = 4'b0010, MOVE = 4'b0100, FANFARE = 4'b0101, TOUR = 4'b0110} op_t;
 
-    ///////////////////////////////////
-    // Declare any internal signals //
-    ///////////////////////////////////
-
-    ////////////////////////////// Forward Register Logic ////////////////////////////////////
-    logic zero;                             // The forward register is zero when cleared or decremented all the way.
-    logic max_spd;                          // The forward register has reached its max speed when the 2 most significant bits are ones.
-    ///////////////////////// Square Count Logic ///////////////////////////////////////////
-    logic [4:0] pulse_cnt;                  // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
-    logic [3:0] square_cnt;                 // The number of squares the Knight moved on the board.
-    logic move_done;                        // Indicates that a move is completed by the Knight.
-    logic cntrIR_step;                      // Metastable cntrIR signal from the IR sensor.
-    logic cntrIR_stable_prev;               // Stabilized cntrIR signal from the IR sensor.
-    logic cntrIR_stable_curr;               // Used to detect rising edge on the cntrIR signal.
-    ////////////////////////////// PID Interface Logic ////////////////////////////////////
-    logic lftIR_step;                       // Metastable lftIR signal from the inertial sensor.
-    logic lftIR_stable;                     // Stabilized lftIR signal from the inertial sensor.
-    logic rghtIR_step;                      // Metastable rghtIR signal from the inertial sensor.
-    logic rghtIR_stable;                    // Stabilized rghtIR signal from the inertial sensor.
-    logic signed [11:0] desired_heading;    // Compute the desired heading based on the command given.
-    logic signed [11:0] err_nudge;          // An error offset term to correct for when the robot wanders.
-    ///////////////////////////// State Machine ////////////////////////////////////////////
-    logic strt_cal;                         // Initiate claibration of yaw readings.
-    logic move_cmd;                         // The command that tells Knight to move from the state machine.
-    logic clr_frwrd;                        // Tells the Knight to ramp up its speed starting from 0.
-    logic inc_frwrd;                        // Tells the Knight to ramp up its speed.
-    logic dec_frwrd;                        // Tells the Knight to decrease up its speed.
-    state_t state;                          // Holds the current state.
-    state_t nxt_state;                      // Holds the next state.
-    op_t opcode;                            // Opcode held in cmd[15:12].
-    //////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////
+  // Declare any internal signals //
+  ///////////////////////////////////
+  ////////////////////////////// Forward Register Logic ////////////////////////////////////
+  logic zero;                             // The forward register is zero when cleared or decremented all the way.
+  logic max_spd;                          // The forward register has reached its max speed when the 2 most significant bits are ones.
+  ///////////////////////// Square Count Logic ///////////////////////////////////////////
+  logic [4:0] pulse_cnt;                  // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
+  logic [3:0] square_cnt;                 // The number of squares the Knight moved on the board.
+  logic move_done;                        // Indicates that a move is completed by the Knight.
+  logic cntrIR_step;                      // Metastable cntrIR signal from the IR sensor.
+  logic cntrIR_stable_prev;               // Stabilized cntrIR signal from the IR sensor.
+  logic cntrIR_stable_curr;               // Used to detect rising edge on the cntrIR signal.
+  ////////////////////////////// PID Interface Logic ////////////////////////////////////
+  logic lftIR_step;                       // Metastable lftIR signal from the inertial sensor.
+  logic lftIR_stable;                     // Stabilized lftIR signal from the inertial sensor.
+  logic rghtIR_step;                      // Metastable rghtIR signal from the inertial sensor.
+  logic rghtIR_stable;                    // Stabilized rghtIR signal from the inertial sensor.
+  logic signed [11:0] desired_heading;    // Compute the desired heading based on the command given.
+  logic signed [11:0] err_nudge;          // An error offset term to correct for when the robot wanders.
+  ///////////////////////////// State Machine ////////////////////////////////////////////
+  logic strt_cal;                         // Initiate claibration of yaw readings.
+  logic move_cmd;                         // The command that tells Knight to move from the state machine.
+  logic clr_frwrd;                        // Tells the Knight to ramp up its speed starting from 0.
+  logic inc_frwrd;                        // Tells the Knight to ramp up its speed.
+  logic dec_frwrd;                        // Tells the Knight to decrease up its speed.
+  state_t state;                          // Holds the current state.
+  state_t nxt_state;                      // Holds the next state.
+  op_t opcode;                            // Opcode held in cmd[15:12].
+  ////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////
   // Implements forward speed register to move the Knight //
