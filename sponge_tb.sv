@@ -34,8 +34,12 @@ module sponge_tb();
       go = 1'b1; // Signal the system to start the operation (e.g., waveform generation).
     end
 
+    // Deassert go after one clock cycle.
+    @(negedge clk) go = 1'b0;
+
     // Allow a couple of clock cycles for the system to generate waveforms and view the results.
-    repeat(1000) @(posedge clk); // Wait for 1000 clock cycles to observe the output waveforms.
+    repeat(1600000000) @(posedge clk); // Wait for 1000 clock cycles to observe the output waveforms.
+    $stop();
   end
 
   // Clock generation block to simulate clock signal.

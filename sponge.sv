@@ -39,6 +39,7 @@ module sponge(
     logic [23:0] note_dur;        // Duration of the current note.
     logic clr_cnt;                // Asserted whenever we move to a new note, to clear the count.
     logic dur_done;               // Asserted whenever the duration of the note is done.
+    logic [4:0] inc_amt;          // Amount to increment the duration counter by based on FAST_SIM.
     state_t state;                // Holds the current state.
     state_t nxt_state;            // Holds the next state.
     //////////////////////////////////////////////////////////////////////////
@@ -62,19 +63,21 @@ module sponge(
         else if (clr_cnt)
             dur_cnt <= 24'h000000;          // Clear the duration counter when clr_cnt is asserted.
         else
-            generate
-                if (FAST_SIM)
-                    dur_cnt <= dur_cnt + 5'h10; // Increment faster (by 16) in simulation mode for quicker testing.
-                else
-                    dur_cnt <= dur_cnt + 1'b1; // Increment normally in non-fast simulation mode.
-            endgenerate
+            dur_cnt <= dur_cnt + inc_amt;
     end
+
+    generate
+            if (FAST_SIM)
+                assign inc_amt = 5'h10; // Increment faster (by 16) in simulation mode for quicker testing.
+            else
+                assign inc_amt = 5'h01; // Increment normally in non-fast simulation mode.
+    endgenerate
 
     // When the duration counter reaches the desired duration, it indicates the note has finished.
     assign dur_done = (dur_cnt == note_dur);
 
     // Piezo buzzer output: when the counter reaches half the period, the output toggles (50% duty cycle).
-    assign piezo = (note_period_cnt < (note_period / 2));
+    assign piezo = (note_period_cnt < ({1'b0, note_period[14:1]}));
     assign piezo_n = ~piezo; // Complement of piezo signal.
     ///////////////////////////////////////////////////////////////////////////
 
