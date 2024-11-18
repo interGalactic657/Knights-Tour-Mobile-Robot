@@ -176,11 +176,11 @@ module cmd_proc_tb();
     ////////////////////////////////////////////////////////////////////////
     // TEST 1: Test whether the calibrate command is processed correctly //
     //////////////////////////////////////////////////////////////////////
-    // Wait for resp_rdy to be asserted, or timeout.
-    timeout_task(resp_rdy, 1000050, "resp_rdy");
-
     // Wait for cal_done to be asserted, or timeout after a 1000100 clocks.
-    timeout_task(cal_done, 1000100, "cal_done");
+    timeout_task(cal_done, 1000000, "cal_done");
+
+    // Wait for resp_rdy to be asserted, or timeout.
+    timeout_task(resp_rdy, 50, "resp_rdy");
 
     ////////////////////////////////////////////////////////////////////
     //// TEST 2: Test whether the move command is processed correctly //
@@ -279,7 +279,7 @@ module cmd_proc_tb();
         $display("ERROR: moving should have been deasserted as the Knight completely slowed down but was not.");
         $stop();
     end
-    
+
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //// TEST 3: Test whether the move command is processed correctly along with a nudge factor //
     /////////////////////////////////////////////////////////////////////////////////////////////
