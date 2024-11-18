@@ -59,7 +59,7 @@ module sponge(
     end
     
     // Reset note counter when reached desired frequency.
-    assign note_cnt_rst = (note_period_cnt == note_period); 
+    assign note_cnt_rst = (note_period_cnt >= note_period); 
 
     /************ Note Duration Counter ************/
     // This counter tracks the duration of the current note.
@@ -73,7 +73,7 @@ module sponge(
     end
 
     // When the duration counter reaches the desired duration, it indicates the note has finished.
-    assign dur_done = (dur_cnt == note_dur);
+    assign dur_done = (dur_cnt >= note_dur);
 
     generate
             if (FAST_SIM)
@@ -111,6 +111,15 @@ module sponge(
 
         case (state)
             // Note D7
+            IDLE: begin
+                note_dur = 24'h000000;
+                note_period = 15'h0000;
+                if (go) begin
+                    nxt_state = D7;     // Start the melody from D7 when the 'go' signal is active.
+                    clr_cnt = 1'b1;     // Clear the counter to start a new note.
+                end
+            end
+
             D7: begin
                 if (dur_done) begin
                     nxt_state = E7;      // Move to E7 when the duration is completed.
@@ -149,7 +158,7 @@ module sponge(
             // Note F7 (second time)
             F7_2: begin
                 note_dur = 24'h400000;  // Set duration to 2^22 clocks.
-                note_period = 14'h45E7; // Frequency for F7 second time.
+                note_period = 15'h45E7; // Frequency for F7 second time.
                 if (dur_done) begin
                     nxt_state = D7_2;    // Move to D7 second time when the duration is completed.
                     clr_cnt = 1'b1;      // Clear the counter to start a new note.
@@ -183,10 +192,7 @@ module sponge(
 
             // Default case (IDLE state)
             default: begin
-                if (go) begin
-                    nxt_state = D7;     // Start the melody from D7 when the 'go' signal is active.
-                    clr_cnt = 1'b1;     // Clear the counter to start a new note.
-                end
+                nxt_state = IDLE;
             end
         endcase
     end
