@@ -57,8 +57,9 @@ module sponge(
         else
             note_period_cnt <= note_period_cnt + 1'b1; // Increment counter each clock cycle.
     end
-
-    assign note_cnt_rst = (note_period_cnt == note_period); // Reset note counter when reached desired frequency
+    
+    // Reset note counter when reached desired frequency.
+    assign note_cnt_rst = (note_period_cnt == note_period); 
 
     /************ Note Duration Counter ************/
     // This counter tracks the duration of the current note.
@@ -71,15 +72,15 @@ module sponge(
             dur_cnt <= dur_cnt + inc_amt;
     end
 
+    // When the duration counter reaches the desired duration, it indicates the note has finished.
+    assign dur_done = (dur_cnt == note_dur);
+
     generate
             if (FAST_SIM)
                 assign inc_amt = 5'h10; // Increment faster (by 16) in simulation mode for quicker testing.
             else
                 assign inc_amt = 5'h01; // Increment normally in non-fast simulation mode.
     endgenerate
-
-    // When the duration counter reaches the desired duration, it indicates the note has finished.
-    assign dur_done = (dur_cnt == note_dur);
 
     // Piezo buzzer output: when the counter reaches half the period, the output toggles (50% duty cycle).
     assign piezo = (note_period_cnt < ({1'b0, note_period[14:1]}));
@@ -88,7 +89,7 @@ module sponge(
 
     ////////////////////////////////////
     // Implement State Machine Logic //
-    ////////////////////////////////////
+    //////////////////////////////////
 
     // Implements state machine register, holding current state or next state, accordingly.
     always_ff @(posedge clk, negedge rst_n) begin

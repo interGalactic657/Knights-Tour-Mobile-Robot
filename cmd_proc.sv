@@ -44,7 +44,7 @@ module cmd_proc(
   ////////////////////////////////////////////
   // Declare command opcodes as enumerated //
   //////////////////////////////////////////
-  typedef enum logic [3:0] {CAL = 4'b0010, MOVE = 4'b0100, FANFARE = 4'b0101, TOUR = 4'b0110} op_t;
+  typedef enum logic [3:0] {CAL = 4'b0010, MOV = 4'b0100, FANFARE = 4'b0101, TOUR = 4'b0110} op_t;
 
   ///////////////////////////////////
   // Declare any internal signals //
@@ -52,6 +52,8 @@ module cmd_proc(
   ////////////////////////////// Forward Register Logic ////////////////////////////////////
   logic zero;                             // The forward register is zero when cleared or decremented all the way.
   logic max_spd;                          // The forward register has reached its max speed when the 2 most significant bits are ones.
+  logic [9:0] inc_amt;                    // Amount of speed to increase/ramp up each clock cycle.
+  logic [9:0] dec_amt;                    // Amount of speed to decrease/ramp down each clock cycle.
   ///////////////////////// Square Count Logic ///////////////////////////////////////////
   logic [4:0] pulse_cnt;                  // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
   logic [3:0] square_cnt;                 // The number of squares the Knight moved on the board.
@@ -66,8 +68,8 @@ module cmd_proc(
   logic rghtIR_stable;                    // Stabilized rghtIR signal from the inertial sensor.
   logic signed [11:0] desired_heading;    // Compute the desired heading based on the command given.
   logic signed [11:0] err_nudge;          // An error offset term to correct for when the robot wanders.
+  logic [11:0] error_abs;                 // Absolute value of the error.
   ///////////////////////////// State Machine ////////////////////////////////////////////
-  logic strt_cal;                         // Initiate claibration of yaw readings.
   logic move_cmd;                         // The command that tells Knight to move from the state machine.
   logic clr_frwrd;                        // Tells the Knight to ramp up its speed starting from 0.
   logic inc_frwrd;                        // Tells the Knight to ramp up its speed.
@@ -95,26 +97,30 @@ module cmd_proc(
       frwrd <= 10'h000; // Clear the register when we are beginning a movement.
     else if (heading_rdy) begin // Only increment or decrement the forward register when a new heading is ready.
       if (inc_frwrd) begin
-        if (!max_spd) begin // Only increment the register if we are not at the max speed.
-          generate // Increment frwrd by different amounts based on whether FAST_SIM is enabled.
-            if (FAST_SIM)
-              frwrd <= frwrd + 10'h020;
-            else 
-              frwrd <= frwrd + 10'h003;
-          endgenerate
-        end
+        if (!max_spd) 
+          // Only increment the register if we are not at the max speed.  
+          frwrd <= frwrd + inc_amt;
       end else if (dec_frwrd) begin
-        if (!zero) begin // Only decrement the register if we are not at the minimum speed. 
-          generate // Decrement frwrd by different amounts based on whether FAST_SIM is enabled.
-            if (FAST_SIM)
-              frwrd <= frwrd - 10'h040;
-            else 
-              frwrd <= frwrd - 10'h006;
-          endgenerate
-        end
+        if (!zero)
+          // Only decrement the register if we are not at the minimum speed.  
+          frwrd <= frwrd - dec_amt;
       end
     end
   end
+
+  generate // Increment frwrd by different amounts based on whether FAST_SIM is enabled.
+    if (FAST_SIM)
+      assign inc_amt = 10'h020;
+    else 
+      assign inc_amt = 10'h003;
+  endgenerate
+
+  generate // Decrement frwrd by different amounts based on whether FAST_SIM is enabled.
+    if (FAST_SIM)
+      assign dec_amt = 10'h040;
+    else 
+      assign dec_amt = 10'h006;
+  endgenerate
   //////////////////////////////////////////////////////////////////////////
  
   ////////////////////////////////////////////////////////
@@ -146,7 +152,7 @@ module cmd_proc(
   // Implement counter to count number of times the cntrIR pulse went high. 
   always_ff @(posedge clk) begin
     pulse_cnt <= (move_cmd)       ? 5'h0           : // Reset to 0 initially when begining a move.
-                 (pulse_detected) ? pulse_cnt + 1  : // Increment the pulse count whenever we detect that cntrIR went high.
+                 (pulse_detected) ? pulse_cnt + 1'b1  : // Increment the pulse count whenever we detect that cntrIR went high.
                  pulse_cnt;                          // Otherwise hold current value.
   end
 
@@ -232,7 +238,7 @@ module cmd_proc(
   always_comb begin
     /* Default all SM outputs & nxt_state */
     nxt_state = state;   // By default, assume we are in the current state.
-    opcode = cmd[15:12]; // Grab opcode that is being held in cmd
+    opcode = op_t'(cmd[15:12]); // Grab opcode that is being held in cmd
     strt_cal = 1'b0;     // Start calibration signal (disabled by default)
     move_cmd = 1'b0;     // Move command signal (disabled by default)
     moving = 1'b0;       // Indicates that the Knight is moving (disbaled by default)
@@ -291,7 +297,7 @@ module cmd_proc(
               nxt_state = CALIBRATE; // Command to start calibration.
               strt_cal = 1'b1; // Enable calibration.
             end
-            default : begin // MOVE and FANFARE opcodes.
+            default : begin // MOV and FANFARE opcodes.
               nxt_state = MOVE; // Command to move forward and slow down.
             end
           endcase

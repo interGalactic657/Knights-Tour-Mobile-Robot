@@ -38,7 +38,7 @@ module sponge_tb();
     @(negedge clk) go = 1'b0;
 
     // Allow a couple of clock cycles for the system to generate waveforms and view the results.
-    repeat(1600000000) @(posedge clk); // Wait for 1000 clock cycles to observe the output waveforms.
+    repeat(100000000) @(posedge clk); // Wait for 10000000 clock cycles to observe the output waveforms.
     $stop();
   end
 
