@@ -28,14 +28,13 @@ module cmd_proc_tb();
   logic cmd_rdy;
   logic send_resp;
   logic resp;
-  logic trmt;
 
   ///////////////////////////////
   // inert_intf signals
   ///////////////////////////////
   logic strt_cal;
   logic cal_done;
-  logic [11:0] heading;
+  logic signed [11:0] heading;
   logic heading_rdy;
   logic lftIR;
   logic rghtIR;
@@ -49,10 +48,10 @@ module cmd_proc_tb();
   // cmd_proc signals
   ///////////////////////////////
   logic moving;
-  logic [11:0] error;
+  logic signed [11:0] error;
   logic [9:0] frwrd;
-  logic [10:0] lft_spd;
-  logic [10:0] rght_spd;
+  logic signed [10:0] lft_spd;
+  logic signed [10:0] rght_spd;
   logic tour_go;
   logic fanfare_go;
   logic cntrIR;
@@ -79,7 +78,7 @@ module cmd_proc_tb();
     .clk(clk), 
     .rst_n(rst_n), 
     .clr_cmd_rdy(clr_cmd_rdy), 
-    .trmt(trmt), 
+    .trmt(send_resp), 
     .RX(cmd_tx), 
     .TX(cmd_rx), 
     .resp(8'hA5), 
@@ -119,7 +118,7 @@ module cmd_proc_tb();
   cmd_proc iCMD_PROC (
     .clk(clk),
     .rst_n(rst_n),
-    .cmd(cmd_sent),
+    .cmd(cmd_received),
     .cmd_rdy(cmd_rdy),
     .clr_cmd_rdy(clr_cmd_rdy),
     .send_resp(send_resp),
@@ -159,7 +158,6 @@ module cmd_proc_tb();
     rst_n = 1'b0;               // Reset the machines
     snd_cmd = 1'b0;             // Initially is low, i.e., inactive
     cmd_sent = 16'h2000;        // Command to start the calibration of the Knight's gyro
-    trmt = 1'b0;                // Initially we are not transmitting the response back to the Bluetooth module
     lftIR = 1'b0;               // Initially the Knight doesn't veer to the left
     cntrIR = 1'b0;              // Initially the Knight doesn't see any guard rail
     rghtIR = 1'b0;              // Initially the Knight doesn't veer to the right
@@ -180,7 +178,7 @@ module cmd_proc_tb();
     timeout_task(cal_done, 1000000, "cal_done");
 
     // Wait for resp_rdy to be asserted, or timeout.
-    timeout_task(resp_rdy, 50, "resp_rdy");
+    timeout_task(resp_rdy, 60000, "resp_rdy");
 
     ////////////////////////////////////////////////////////////////////
     //// TEST 2: Test whether the move command is processed correctly //
@@ -194,7 +192,7 @@ module cmd_proc_tb();
     timeout_task(cmd_snt, 60000, "cmd_snt");
 
     // Wait for resp_rdy to be asserted, or timeout slightly after 1000000 clocks.
-    timeout_resp(resp_rdy, 1000050, "resp_rdy");
+    timeout_task(resp_rdy, 1000050, "resp_rdy");
 
     // The forward speed register should be cleared to 0 initially right after the command was sent.
     if (frwrd !== 10'h000) begin
@@ -292,7 +290,7 @@ module cmd_proc_tb();
     timeout_task(cmd_snt, 60000, "cmd_snt");
 
     // Wait for resp_rdy to be asserted, or timeout slightly after 1000000 clocks.
-    timeout_resp(resp_rdy, 1000050, "resp_rdy");
+    timeout_task(resp_rdy, 1000050, "resp_rdy");
 
     // Wait for the Knight to be moving. 
     @(posedge moving);
