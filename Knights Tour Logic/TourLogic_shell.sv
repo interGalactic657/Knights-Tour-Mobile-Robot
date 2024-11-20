@@ -5,8 +5,19 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   input go;						// initiate calculation of solution
   input [4:0] indx;				// used to specify index of move to read out
   output logic done;			// pulses high for 1 clock when solution complete
-  output [7:0] move;			// the move addressed by indx (1 of 24 moves)
-  
+  output [7:0] move;			// the onehot encoded move addressed by indx (1 of 24 moves)
+  //signal to zero the board
+  logic zero;
+  //signal to initialize the board
+  logic go;
+  //signal to indicate if the next position is visited already
+  logic not_visited;
+  //signal to indicate if the next move is possible
+  logic possible;
+  //signal to indicate that we want to make the next move
+  logic update_position;
+
+
   ////////////////////////////////////////
   // Declare needed internal registers //
   //////////////////////////////////////
@@ -19,10 +30,25 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   reg [7:0] move_try;				// one hot encoding of move we will try next
   reg [4:0] move_num;				// keeps track of move we are on
   reg [2:0] xx,yy;					// current x & y position  
- 
+
+  //Creating the states for the state machine
+  typedef enum logic [2:0] {
+    IDLE,
+    INIT,
+    POSSIBLE,
+    MAKE_MOVE,
+    BACKUP
+  } state_t;
+  
+
+
+  //We need a counter to keep track of order of moves to track where on the board the knight has visited
   << 2-D array of 5-bit vectors that keep track of where on the board the knight
      has visited.  Will be reduced to 1-bit boolean after debug phase >>
+
   << 1-D array (of size 24) to keep track of last move taken from each move index >>
+
+
   << 1-D array (of size 24) to keep track of possible moves from each move index >>
   << move_try ... not sure you need this.  I had this to hold move I would try next >>
   << move number...when you have moved 24 times you are done.  Decrement when backing up >>

@@ -86,11 +86,14 @@ while ($go) {
   # MAKE_MOVE State #
   ###################
   elsif ($state=~/MAKE_MOVE/) {
-	if (($poss_moves[$move_num] & $move_try) &&   ## move possible
-	    ($board[$xx+$xoff{$move_try}][$yy+$yoff{$move_try}]==0)) {
+  #If move is possible and the position is not visited yet
+	if (($poss_moves[$move_num] & $move_try) && 
+  ($board[$xx+$xoff{$move_try}][$yy+$yoff{$move_try}]==0)) {
 	  $board[$xx+$xoff{$move_try}][$yy+$yoff{$move_try}] = $move_num + 2;
+    #Update position of knight
 	  $xx = $xx+$xoff{$move_try};
 	  $yy = $yy+$yoff{$move_try};
+
 	  $last_move[$move_num] = $move_try;
       if ($move_num==23) {		# we are done!
         $go = 0;
