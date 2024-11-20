@@ -52,8 +52,8 @@ module cmd_proc(
   ////////////////////////////// Forward Register Logic ////////////////////////////////////
   logic zero;                             // The forward register is zero when cleared or decremented all the way.
   logic max_spd;                          // The forward register has reached its max speed when the 2 most significant bits are ones.
-  logic [9:0] inc_amt;                    // Amount of speed to increase/ramp up each clock cycle.
-  logic [9:0] dec_amt;                    // Amount of speed to decrease/ramp down each clock cycle.
+  logic [6:0] inc_amt;                    // Amount of speed to increase/ramp up each clock cycle.
+  logic [6:0] dec_amt;                    // Amount of speed to decrease/ramp down each clock cycle.
   ///////////////////////// Square Count Logic ///////////////////////////////////////////
   logic [4:0] pulse_cnt;                  // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
   logic [3:0] square_cnt;                 // The number of squares the Knight moved on the board.
@@ -68,9 +68,9 @@ module cmd_proc(
   logic clr_frwrd;                        // Tells the Knight to ramp up its speed starting from 0.
   logic inc_frwrd;                        // Tells the Knight to ramp up its speed.
   logic dec_frwrd;                        // Tells the Knight to decrease up its speed.
+  op_t opcode;                            // Opcode held in cmd[15:12].
   state_t state;                          // Holds the current state.
   state_t nxt_state;                      // Holds the next state.
-  op_t opcode;                            // Opcode held in cmd[15:12].
   ////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////
@@ -104,16 +104,16 @@ module cmd_proc(
 
   generate // Increment frwrd by different amounts based on whether FAST_SIM is enabled.
     if (FAST_SIM)
-      assign inc_amt = 10'h020;
+      assign inc_amt = 7'h20;
     else 
-      assign inc_amt = 10'h003;
+      assign inc_amt = 7'h03;
   endgenerate
 
   generate // Decrement frwrd by different amounts based on whether FAST_SIM is enabled.
     if (FAST_SIM)
-      assign dec_amt = 10'h040;
+      assign dec_amt = 7'h40;
     else 
-      assign dec_amt = 10'h006;
+      assign dec_amt = 7'h06;
   endgenerate
   //////////////////////////////////////////////////////////////////////////
  
@@ -122,11 +122,10 @@ module cmd_proc(
   //////////////////////////////////////////////////////
   // Implement rising edge detector to check when cntrIR pulse goes high.
   always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n) begin
+    if(!rst_n)
       cntrIR_prev <= 1'b0;   // Reset the cntrIR_prev value.
-    end else begin
+    else
       cntrIR_prev <= cntrIR; // Used to detect rising edge on cntrIR pulse.
-    end
   end
 
   // A pulse is detected from the cntrIR sensor when the previous value was low and current value is high.
@@ -141,9 +140,12 @@ module cmd_proc(
 
   // Implement counter to count number of times the cntrIR pulse went high. 
   always_ff @(posedge clk) begin
-    pulse_cnt <= (move_cmd)       ? 5'h0           : // Reset to 0 initially when begining a move.
-                 (pulse_detected) ? pulse_cnt + 1'b1  : // Increment the pulse count whenever we detect that cntrIR went high.
-                 pulse_cnt;                          // Otherwise hold current value.
+    // Reset to 0 initially when begining a move.
+    if (move_cmd)
+      pulse_cnt <= 5'h0;
+    else if (pulse_detected)
+    // Increment the pulse count whenever we detect that cntrIR went high.
+      pulse_cnt <= pulse_cnt + 1'b1;     
   end
 
   // Compare whether the pulse count detected is 2 times the number of sqaures requested to move,
@@ -206,7 +208,7 @@ module cmd_proc(
   always_comb begin
     /* Default all SM outputs & nxt_state */
     nxt_state = state;   // By default, assume we are in the current state.
-    opcode = op_t'(cmd[15:12]); // Grab opcode that is being held in cmd
+    opcode = op_t'(cmd[15:12]); // Grab opcode that is being held in cmd.
     strt_cal = 1'b0;     // Start calibration signal (disabled by default)
     move_cmd = 1'b0;     // Move command signal (disabled by default)
     moving = 1'b0;       // Indicates that the Knight is moving (disbaled by default)
@@ -237,13 +239,12 @@ module cmd_proc(
 
       INCR : begin // State to increment speed.
         inc_frwrd = 1'b1; // Increment forward speed.
+        moving = 1'b1; // Continue moving.
         if (move_done) begin // If movement is complete.
           if (opcode == FANFARE) // If we move with fanfare, play the tune.
             fanfare_go = 1'b1; // Turn on fanfare for special move.
           nxt_state = DECR; // Go to the decrement speed state.
-        end else begin
-          moving = 1'b1; // Continue moving
-        end   
+        end 
       end
 
       DECR : begin // State to decrement speed.
@@ -266,7 +267,7 @@ module cmd_proc(
               strt_cal = 1'b1; // Enable calibration.
             end
             default : begin // MOV and FANFARE opcodes.
-              nxt_state = MOVE; // Command to move forward and slow down.
+              nxt_state = MOVE; // Command to move forward and slow down (optionally with fanfare).
             end
           endcase
           clr_cmd_rdy = 1'b1; // Clear the command ready signal.

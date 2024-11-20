@@ -32,7 +32,7 @@ module sponge(
 
     /////////////////////////////////////////////////
     // Declare any internal signals as type logic //
-    /////////////////////////////////////////////////
+    ///////////////////////////////////////////////
     logic [14:0] note_period_cnt; // Signal to count the note period (frequency).
     logic [23:0] dur_cnt;         // Signal to count the duration of the note.    
     logic [14:0] note_period;     // Period of the current note.
@@ -53,13 +53,13 @@ module sponge(
         else if (clr_cnt)
             note_period_cnt <= 15'h0000;     // Clear the counter when clr_cnt is asserted.
         else if (note_cnt_rst)
-            note_period_cnt <= 15'h0000;     // Clear the counter when note_cnt_rst is asserted.
+            note_period_cnt <= 15'h0000;     // Clear the counter when note_cnt_rst to generate proper frequency of PWM.
         else
             note_period_cnt <= note_period_cnt + 1'b1; // Increment counter each clock cycle.
     end
     
     // Reset note counter when reached desired frequency.
-    assign note_cnt_rst = (note_period_cnt >= note_period); 
+    assign note_cnt_rst = (note_period_cnt == note_period); 
 
     /************ Note Duration Counter ************/
     // This counter tracks the duration of the current note.
@@ -73,7 +73,7 @@ module sponge(
     end
 
     // When the duration counter reaches the desired duration, it indicates the note has finished.
-    assign dur_done = (dur_cnt >= note_dur);
+    assign dur_done = (dur_cnt == note_dur);
 
     generate
             if (FAST_SIM)

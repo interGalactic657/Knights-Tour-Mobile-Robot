@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 // sponge_test.sv                        //
-// This testbench simulates playing the  //
+// This simulates playing the            //
 // SpongeBob last measure tune on the    //
 // DEO Nano FPGA with a piezo buzzer.    //
 ///////////////////////////////////////////
@@ -41,7 +41,7 @@ module sponge_test (
   );
 
   // Instantiate the sponge module (DUT).
-  // This module generates the sound based on the GO signal and drives the piezo buzzer.
+  // This module generates the sound based on the go signal and drives the piezo buzzer.
   sponge #(0) iSPONGE(
     .clk(clk),        // System clock input.
     .rst_n(rst_n),    // Synchronized reset input.

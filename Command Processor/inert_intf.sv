@@ -55,7 +55,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
   // and acceleration info and produces a heading reading.
   inertial_integrator #(FAST_SIM) iINT(.clk(clk), .rst_n(rst_n), .strt_cal(strt_cal),.vld(vld),
                            .rdy(rdy),.cal_done(cal_done), .yaw_rt(yaw_rt),.moving(moving),.lftIR(lftIR),
-                           .rghtIR(rghtIR),.heading(heading));
+                           .rghtIR(rghtIR),.heading(heading), .LED());
 
   // Instantiate SPI monarch to send and receive commands. 
   SPI_mnrch iSPI(.clk(clk), .rst_n(rst_n), .SS_n(SS_n), .SCLK(SCLK), .MOSI(MOSI), .MISO(MISO), .snd(snd),

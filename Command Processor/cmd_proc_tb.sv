@@ -8,36 +8,36 @@
 module cmd_proc_tb();
   
   // Common signals for all DUTs
-  logic clk;                    // System clock signal.
-  logic rst_n;                  // Asynchronous active low reset.
+  logic clk; // System clock signal.
+  logic rst_n; // Asynchronous active low reset.
 
-  ///////////////////////////////
-  // RemoteComm signals
-  ///////////////////////////////
-  logic snd_cmd;
+  /////////////////////////
+  // RemoteComm signals //
+  ///////////////////////
   logic [15:0] cmd_sent;
+  logic snd_cmd;
   logic cmd_rx;
   logic cmd_tx;
   logic cmd_snt;
   logic resp_rdy;
 
-  ///////////////////////////////
-  // UART_wrapper signals
-  ///////////////////////////////
-  logic clr_cmd_rdy;
+  ///////////////////////////
+  // UART_wrapper signals //
+  /////////////////////////
   logic [15:0] cmd_received;
+  logic clr_cmd_rdy;
   logic cmd_rdy;
   logic send_resp;
-  logic resp;
 
-  ///////////////////////////////
-  // inert_intf signals
-  ///////////////////////////////
+  /////////////////////////
+  // inert_intf signals //
+  ///////////////////////
   logic strt_cal;
   logic cal_done;
   logic signed [11:0] heading;
   logic heading_rdy;
   logic lftIR;
+  logic cntrIR;
   logic rghtIR;
   logic SS_n;
   logic SCLK;
@@ -45,17 +45,14 @@ module cmd_proc_tb();
   logic MISO;
   logic INT;
 
-  ///////////////////////////////
-  // cmd_proc signals
-  ///////////////////////////////
-  logic moving;
+  ///////////////////////
+  // cmd_proc signals //
+  /////////////////////
   logic signed [11:0] error;
   logic [9:0] frwrd;
-  logic signed [10:0] lft_spd;
-  logic signed [10:0] rght_spd;
   logic tour_go;
   logic fanfare_go;
-  logic cntrIR;
+  logic moving;
 
   /////////////////////////////////////////////////
   // Instantiate the (DUTs) and simulate inputs //
@@ -158,7 +155,7 @@ module cmd_proc_tb();
     clk = 1'b0;                 // Initially clock is low
     rst_n = 1'b0;               // Reset the machines
     snd_cmd = 1'b0;             // Initially is low, i.e., inactive
-    cmd_sent = 16'h2000;        // Command to start the calibration of the Knight's gyro
+    cmd_sent = 16'h2000;        // Command to start the calibration of the Knight's gyro.
     lftIR = 1'b0;               // Initially the Knight doesn't veer to the left
     cntrIR = 1'b0;              // Initially the Knight doesn't see any guard rail
     rghtIR = 1'b0;              // Initially the Knight doesn't veer to the right
@@ -166,8 +163,8 @@ module cmd_proc_tb();
     // Wait 1.5 clocks for reset
     @(posedge clk);
     @(negedge clk) begin 
-      rst_n = 1'b1;             // Deassert reset on a negative edge of clock
-      snd_cmd = 1'b1;           // Assert snd_cmd and begin transmission
+      rst_n = 1'b1;             // Deassert reset on a negative edge of clock.
+      snd_cmd = 1'b1;           // Assert snd_cmd and begin transmission.
     end
 
     @(negedge clk) snd_cmd = 1'b0; // Deassert snd_cmd after one clock cycle
@@ -175,7 +172,7 @@ module cmd_proc_tb();
     ////////////////////////////////////////////////////////////////////////
     // TEST 1: Test whether the calibrate command is processed correctly //
     //////////////////////////////////////////////////////////////////////
-    // Wait for cal_done to be asserted, or timeout after a 1000100 clocks.
+    // Wait for cal_done to be asserted, or timeout after a 1000000 clocks.
     timeout_task(cal_done, 1000000, "cal_done");
 
     // Wait 60000 clock cycles, and ensure that 2 bytes are received.
@@ -196,7 +193,7 @@ module cmd_proc_tb();
     // The forward speed register should be 10'h020 initially right after the command was sent.
     // As cmd_rdy is asserted before cmd_snt, it has already incremented once.
     if (frwrd !== 10'h020) begin
-      $display("ERROR: frwrd should have been cleared to 10'h020 but was 0x%h", frwrd);
+      $display("ERROR: frwrd should have been 10'h020 but was 0x%h", frwrd);
       $stop();
     end
 
@@ -299,7 +296,7 @@ module cmd_proc_tb();
     //// TEST 3: Test whether the move command is processed correctly along with a nudge factor //
     /////////////////////////////////////////////////////////////////////////////////////////////
     cmd_sent = 16'h4001;               // Command to move the Knight by 1 square to the north.
-    @(negedge clk) snd_cmd = 1'b1;     // Assert snd_cmd and begin transmission
+    @(negedge clk) snd_cmd = 1'b1;     // Assert snd_cmd and begin transmission.
     
     // Deassert snd_cmd after one clock cycle.
     @(negedge clk) snd_cmd = 1'b0;
