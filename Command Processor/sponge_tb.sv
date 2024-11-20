@@ -22,6 +22,7 @@ module sponge_tb();
   initial begin
     // Initialize signal values to ensure proper system startup.
     clk = 1'b0; // Initialize clock to low state.
+    go = 1'b0;  // Initially, we are not asserting the fanfare.
     rst_n = 1'b0; // Assert reset to initialize the system in a safe state.
     
     // Wait for one clock cycle to ensure stability before further changes.
