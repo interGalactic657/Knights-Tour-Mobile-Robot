@@ -50,27 +50,27 @@ module cmd_proc(
   // Declare any internal signals //
   ///////////////////////////////////
   ////////////////////////////// Forward Register Logic ////////////////////////////////////
-  logic zero;                             // The forward register is zero when cleared or decremented all the way.
-  logic max_spd;                          // The forward register has reached its max speed when the 2 most significant bits are ones.
-  logic [6:0] inc_amt;                    // Amount of speed to increase/ramp up each clock cycle.
-  logic [6:0] dec_amt;                    // Amount of speed to decrease/ramp down each clock cycle.
+  logic zero;                          // The forward register is zero when cleared or decremented all the way.
+  logic max_spd;                       // The forward register has reached its max speed when the 2 most significant bits are ones.
+  logic [6:0] inc_amt;                 // Amount of speed to increase/ramp up each clock cycle.
+  logic [6:0] dec_amt;                 // Amount of speed to decrease/ramp down each clock cycle.
   ///////////////////////// Square Count Logic ///////////////////////////////////////////
-  logic [4:0] pulse_cnt;                  // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
-  logic [3:0] square_cnt;                 // The number of squares the Knight moved on the board.
-  logic move_done;                        // Indicates that a move is completed by the Knight.
-  logic cntrIR_prev;                      // Previous cntrIR signal from the IR sensor.
+  logic [4:0] pulse_cnt;               // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
+  logic [3:0] square_cnt;              // The number of squares the Knight moved on the board.
+  logic move_done;                     // Indicates that a move is completed by the Knight.
+  logic cntrIR_prev;                   // Previous cntrIR signal from the IR sensor.
   ////////////////////////////// PID Interface Logic ////////////////////////////////////
-  logic signed [11:0] desired_heading;    // Compute the desired heading based on the command given.
-  logic signed [11:0] err_nudge;          // An error offset term to correct for when the robot wanders.
-  logic [11:0] error_abs;                 // Absolute value of the error.
+  logic signed [11:0] desired_heading; // Compute the desired heading based on the command given.
+  logic signed [11:0] err_nudge;       // An error offset term to correct for when the robot wanders.
+  logic [11:0] error_abs;              // Absolute value of the error.
   ///////////////////////////// State Machine ////////////////////////////////////////////
-  logic move_cmd;                         // The command that tells Knight to move from the state machine.
-  logic clr_frwrd;                        // Tells the Knight to ramp up its speed starting from 0.
-  logic inc_frwrd;                        // Tells the Knight to ramp up its speed.
-  logic dec_frwrd;                        // Tells the Knight to decrease up its speed.
-  op_t opcode;                            // Opcode held in cmd[15:12].
-  state_t state;                          // Holds the current state.
-  state_t nxt_state;                      // Holds the next state.
+  logic move_cmd;                      // The command that tells Knight to move from the state machine.
+  logic clr_frwrd;                     // Tells the Knight to ramp up its speed starting from 0.
+  logic inc_frwrd;                     // Tells the Knight to ramp up its speed.
+  logic dec_frwrd;                     // Tells the Knight to decrease up its speed.
+  op_t opcode;                         // Opcode held in cmd[15:12].
+  state_t state;                       // Holds the current state.
+  state_t nxt_state;                   // Holds the next state.
   ////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////
@@ -209,16 +209,16 @@ module cmd_proc(
     /* Default all SM outputs & nxt_state */
     nxt_state = state;   // By default, assume we are in the current state.
     opcode = op_t'(cmd[15:12]); // Grab opcode that is being held in cmd.
-    strt_cal = 1'b0;     // Start calibration signal (disabled by default)
-    move_cmd = 1'b0;     // Move command signal (disabled by default)
-    moving = 1'b0;       // Indicates that the Knight is moving (disbaled by default)
-    clr_frwrd = 1'b0;    // Clear forward speed register (disabled by default)
-    inc_frwrd = 1'b0;    // Increment forward speed register command (disabled by default)
-    dec_frwrd = 1'b0;    // Decrement forward speed register (disabled by default)
-    tour_go = 1'b0;      // Start the Knight's tour (disabled by default)
-    send_resp = 1'b0;    // Send acknowledgment to the Bluetooth module (disabled by default)
-    fanfare_go = 1'b0;   // Turns fanfare sound on (disabled by default)
-    clr_cmd_rdy = 1'b0;  // Clear command after reading (disabled by default)
+    strt_cal = 1'b0;     // By default, do not start calibration of the gyro.
+    move_cmd = 1'b0;     // By default, we are not processing a move command.
+    moving = 1'b0;       // By default, the Knight is not moving.
+    clr_frwrd = 1'b0;    // By default, the forward speed register is not cleared.
+    inc_frwrd = 1'b0;    // By default, we are not incrementing the forward speed register.
+    dec_frwrd = 1'b0;    // By default, we are not decrementing the forward speed register.
+    tour_go = 1'b0;      // By default, we are not starting the Knight's tour.
+    send_resp = 1'b0;    // By default, we are not sending an acknowledgment to the sender.
+    fanfare_go = 1'b0;   // By default, we are not moving the Knight with fanfare.
+    clr_cmd_rdy = 1'b0;  // By default, we are not clearing the command as read.
 
     case (state)
       CALIBRATE : begin // State for calibration process.
