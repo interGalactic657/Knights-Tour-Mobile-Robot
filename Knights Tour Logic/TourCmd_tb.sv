@@ -5,133 +5,37 @@
 // simulates various Bluetooth commands and    //
 // verifies the DUT's responses.               //
 /////////////////////////////////////////////////
-module cmd_proc_tb();
-  
-  // Common signals for all DUTs
-  logic clk; // System clock signal.
-  logic rst_n; // Asynchronous active low reset.
+module TourCmd_tb();
 
-  /////////////////////////
-  // RemoteComm signals //
-  ///////////////////////
-  logic [15:0] cmd_sent;
-  logic snd_cmd;
-  logic cmd_rx;
-  logic cmd_tx;
-  logic cmd_snt;
-  logic resp_rdy;
-
-  ///////////////////////////
-  // UART_wrapper signals //
-  /////////////////////////
-  logic [15:0] cmd_received;
-  logic clr_cmd_rdy;
-  logic cmd_rdy;
-  logic send_resp;
-
-  /////////////////////////
-  // inert_intf signals //
-  ///////////////////////
-  logic strt_cal;
-  logic cal_done;
-  logic signed [11:0] heading;
-  logic heading_rdy;
-  logic lftIR;
-  logic cntrIR;
-  logic rghtIR;
-  logic SS_n;
-  logic SCLK;
-  logic MOSI;
-  logic MISO;
-  logic INT;
-
-  ///////////////////////
-  // cmd_proc signals //
-  /////////////////////
-  logic signed [11:0] error;
-  logic [9:0] frwrd;
-  logic tour_go;
-  logic fanfare_go;
-  logic moving;
+  logic clk;               // System clock signal.
+  logic rst_n;             // Asynchronous active low reset.
+  logic start_tour;	       // from done signal from TourLogic
+  logic [7:0] move;	       // encoded 1-hot move to perform
+  logic cmd_rdy_UART;	     // cmd_rdy from UART_wrapper
+  logic send_resp;         // lets us know cmd_proc is done with the move command
+  logic [15:0] cmd;        // multiplexed cmd to cmd_proc
+  logic cmd_rdy;           // cmd_rdy signal to cmd_proc
+  logic [4:0] mv_indx;     // "address" to access next move
+  logic [7:0] resp;        // either 0xA5 (done) or 0x5A (in progress)
+  logic [7:0] moves[0:23]; // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
 
   /////////////////////////////////////////////////
   // Instantiate the (DUTs) and simulate inputs //
   ///////////////////////////////////////////////
-
-  // Instantiate RemoteComm. 
-  RemoteComm iRemoteComm (
-    .clk(clk), 
-    .rst_n(rst_n), 
-    .snd_cmd(snd_cmd), 
-    .cmd(cmd_sent),
-    .RX(cmd_rx), 
-    .TX(cmd_tx), 
-    .resp(), 
-    .resp_rdy(resp_rdy), 
-    .cmd_snt(cmd_snt)
-  );
-
-  // Instantiate UART_wrapper. 
-  UART_wrapper iUART_wrapper(
-    .clk(clk), 
-    .rst_n(rst_n), 
-    .clr_cmd_rdy(clr_cmd_rdy), 
-    .trmt(send_resp), 
-    .RX(cmd_tx), 
-    .TX(cmd_rx), 
-    .resp(8'hA5), 
-    .cmd(cmd_received), 
-    .cmd_rdy(cmd_rdy), 
-    .tx_done()
-  );
-
-  // Instantiate the inertial interface (iINERT) module.
-  inert_intf iINERT(
-    .clk(clk), 
-    .rst_n(rst_n), 
-    .strt_cal(strt_cal), 
-    .cal_done(cal_done), 
-    .heading(heading), 
-    .rdy(heading_rdy), 
-    .lftIR(lftIR), 
-    .rghtIR(rghtIR), 
-    .SS_n(SS_n), 
-    .SCLK(SCLK), 
-    .MOSI(MOSI), 
-    .MISO(MISO), 
-    .INT(INT),
-    .moving(moving)
-  );
-
-  // Instantiate the NEMO gyro sensor (iNEMO).
-  SPI_iNEMO3 iNEMO(
-    .SS_n(SS_n), 
-    .SCLK(SCLK), 
-    .MISO(MISO), 
-    .MOSI(MOSI), 
-    .INT(INT)
-  );
-
-  // Instantiate the command processor module.
-  cmd_proc iCMD_PROC (
-    .clk(clk),
-    .rst_n(rst_n),
-    .cmd(cmd_received),
-    .cmd_rdy(cmd_rdy),
-    .clr_cmd_rdy(clr_cmd_rdy),
-    .send_resp(send_resp),
-    .strt_cal(strt_cal),
-    .cal_done(cal_done),
-    .heading(heading),
-    .heading_rdy(heading_rdy),
-    .lftIR(lftIR),
-    .cntrIR(cntrIR),
-    .rghtIR(rghtIR),
-    .error(error),
-    .frwrd(frwrd),
-    .moving(moving),
-    .tour_go(tour_go),
-    .fanfare_go(fanfare_go)
+  // Instantiate the TourCmd (iTOUR) module
+  TourCmd iTOUR(
+      .clk(clk), 
+      .rst_n(rst_n), 
+      .start_tour(start_tour), 
+      .move(move), 
+      .mv_indx(mv_indx), 
+      .cmd_UART(16'h0000), 
+      .cmd(cmd), 
+      .cmd_rdy_UART(1'b0), 
+      .cmd_rdy(cmd_rdy), 
+      .clr_cmd_rdy(clr_cmd_rdy), 
+      .send_resp(send_resp), 
+      .resp(resp)
   );
 
   // Task to wait for a signal to be asserted, otherwise times out.
@@ -148,26 +52,45 @@ module cmd_proc_tb();
     join
   endtask
 
+  initial 
+
+  // Present the requested move on clock low.
+  always @(negedge clk) begin
+    move <= moves[mv_indx];
+  end
+
   ///////////////////////////////////////////////////////////
   // Test procedure to apply stimulus and check responses //
   /////////////////////////////////////////////////////////
   initial begin
-    clk = 1'b0;                 // Initially clock is low
-    rst_n = 1'b0;               // Reset the machines
-    snd_cmd = 1'b0;             // Initially is low, i.e., inactive
-    cmd_sent = 16'h2000;        // Command to start the calibration of the Knight's gyro.
-    lftIR = 1'b0;               // Initially the Knight doesn't veer to the left
-    cntrIR = 1'b0;              // Initially the Knight doesn't see any guard rail
-    rghtIR = 1'b0;              // Initially the Knight doesn't veer to the right
+    clk = 1'b0;          // Initially clock is low
+    rst_n = 1'b0;        // Reset the machines
+    $readmemh("sample_tour.hex",moves); // Read in a file containing a sample KnightsTour into the ROM.
+    start_tour = 1'b0;   // Initially is low, i.e., inactive
+    send_resp = 1'b0;    // Initially is low, i.e., inactive
+    clr_cmd_rdy = 1'b0;  // Initially is low, i.e., inactive
     
     // Wait 1.5 clocks for reset
     @(posedge clk);
     @(negedge clk) begin 
-      rst_n = 1'b1;             // Deassert reset on a negative edge of clock.
-      snd_cmd = 1'b1;           // Assert snd_cmd and begin transmission.
+      rst_n = 1'b1;               // Deassert reset on a negative edge of clock.
+      start_tour = 1'b1;          // Assert start_tour and begin move decoding.
     end
 
-    @(negedge clk) snd_cmd = 1'b0; // Deassert snd_cmd after one clock cycle
+    @(negedge clk) start_tour = 1'b0; // Deassert start_tour after one clock cycle.
+
+    @(posedge clk); // Wait for a positive edge to process a move command.
+    
+    @(negedge clk) clr_cmd_rdy = 1'b1; // Clear the command ready signal.
+    @(negedge clk) clr_cmd_rdy = 1'b0; // Deassert the signal.
+
+    repeat(50) @(posedge clk); // Wait a couple of clock cycles.
+
+    @(negedge clk) send_resp = 1'b1; // Assert send_resp as an acknowledgement.
+    @(negedge clk) send_resp = 1'b0; // Deassert send_resp.
+
+
+
 
     ////////////////////////////////////////////////////////////////////////
     // TEST 1: Test whether the calibrate command is processed correctly //
