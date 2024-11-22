@@ -7,20 +7,23 @@
 /////////////////////////////////////////////////
 module TourCmd_tb();
 
-  logic clk;                    // System clock signal.
-  logic rst_n;                  // Asynchronous active low reset.
-  logic start_tour;	            // from done signal from TourLogic
-  logic [7:0] move;	            // encoded 1-hot move to perform
-  logic cmd_rdy_UART;	          // cmd_rdy from UART_wrapper
-  logic send_resp;              // lets us know cmd_proc is done with the move command
-  logic [15:0] cmd;             // multiplexed cmd to cmd_proc
-  logic cmd_rdy;                // cmd_rdy signal to cmd_proc
-  logic clr_cmd_rdy;		        // from cmd_proc (goes to UART_wrapper too)
-  logic [4:0] mv_indx;          // "address" to access next move
-  logic [7:0] resp;             // either 0xA5 (done) or 0x5A (in progress)
-  logic [7:0] moves[0:23];      // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
-  logic [23:0] responses[0:47]; // 24-bit wide 48 entry array modelling the expected KnightsTour commands to be issued.
-  integer i;                    // Loop variable to iterate through response vectors.
+  logic clk;                             // System clock signal.
+  logic rst_n;                           // Asynchronous active low reset.
+  logic start_tour;	                     // from done signal from TourLogic
+  logic [7:0] move;	                     // encoded 1-hot move to perform
+  logic cmd_rdy_UART;	                   // cmd_rdy from UART_wrapper
+  logic send_resp;                       // lets us know cmd_proc is done with the move command
+  logic [15:0] cmd;                      // multiplexed cmd to cmd_proc
+  logic cmd_rdy;                         // cmd_rdy signal to cmd_proc
+  logic clr_cmd_rdy;		                 // from cmd_proc (goes to UART_wrapper too)
+  logic [4:0] mv_indx;                   // "address" to access next move
+  logic [7:0] resp;                      // either 0xA5 (done) or 0x5A (in progress)
+  logic [7:0] moves[0:23];               // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
+  logic [23:0] response_vectors[0:47];   // 24-bit wide 48 entry array modelling the expected KnightsTour commands to be issued.
+  logic [4:0] expected_mv_indx;          // the expected move index to perform
+  logic [7:0] expected_resp;             // expected response to receive from TourCmd
+  logic [15:0] expected_cmd;             // expected cmd to receive from TourCmd
+  integer i;                             // Loop variable to iterate through response vectors.
 
   /////////////////////////////////////////////////
   // Instantiate the (DUTs) and simulate inputs //
@@ -41,20 +44,6 @@ module TourCmd_tb();
       .resp(resp)
   );
 
-  // Task to wait for a signal to be asserted, otherwise times out.
-  task automatic timeout_task(ref sig, input int clks2wait, input string signal);
-    fork
-      begin : timeout
-        repeat(clks2wait) @(posedge clk);
-        $display("ERROR: %s not getting asserted and/or held at its value.", signal);
-        $stop(); // Stop simulation on error.
-      end : timeout
-      begin
-        @(posedge sig) disable timeout; // Disable timeout if sig is asserted.
-      end
-    join
-  endtask
-
   // Present the requested move on clock low.
   always @(negedge clk) begin
     move <= moves[mv_indx];
@@ -67,7 +56,7 @@ module TourCmd_tb();
     clk = 1'b0;          // Initially clock is low
     rst_n = 1'b0;        // Reset the machine
     $readmemh("sample_tour.hex",moves); // Read in a file containing a sample KnightsTour into the ROM.
-    $readmemh("expected_commands.hex",responses); // Read in a file containing the expected commands TourCmd must generate, given a move.
+    $readmemh("expected_commands.hex",response_vectors); // Read in a file containing the expected commands TourCmd must generate, given a move.
     start_tour = 1'b0;   // Initially is low, i.e., inactive
     send_resp = 1'b0;    // Initially is low, i.e., inactive
     clr_cmd_rdy = 1'b0;  // Initially is low, i.e., inactive
@@ -89,21 +78,19 @@ module TourCmd_tb();
       // Check expected output slightly after the rising edge of clock.
       #1
 
+      expected_mv_indx = i/2; // The expected move index of the KnightsTour.
+      expected_cmd = response_vectors[i][23:8]; // The expected command to receive from TourCmd.
+      expected_resp = response_vectors[i][7:0]; // The expected response to receive from TourCmd.
+      
       // Check if the correct move is being processed by TourCmd.
-      if (mv_indx !== i/2) begin
-        $display("ERROR: Incorrect move being processed expected: 0x%h\nactual: 0x%h.", i/2, mv_indx);
+      if (mv_indx !== expected_mv_indx) begin
+        $display("ERROR: Incorrect move being processed expected: 0x%h\nactual: 0x%h.", expected_mv_indx, mv_indx);
         $stop();
       end
 
       // Check if the cmd is processed correctly by TourCmd.
-      if (cmd !== responses[i][23:8]) begin
-        $display("ERROR: Incorrect command sent on move index %d\nexpected: 0x%h\nactual: 0x%h.", mv_indx, responses[i][23:8], cmd);
-        $stop();
-      end
-
-      // Check if correct response is sent back to the Bluetooth module for a given move.
-      if (resp !== responses[i][7:0]) begin
-        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, responses[i][7:0], resp);
+      if (cmd !== expected_cmd) begin
+        $display("ERROR: Incorrect command sent on move index %d\nexpected: 0x%h\nactual: 0x%h.", mv_indx, expected_cmd, cmd);
         $stop();
       end
 
@@ -114,6 +101,12 @@ module TourCmd_tb();
 
       @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module. 
       @(negedge clk) send_resp = 1'b0; // Deassert the send_resp signal.
+
+        // Check if correct response is sent back to the Bluetooth module for a given move.
+      if (resp !== expected_resp) begin
+        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, expected_resp, resp);
+        $stop();
+      end
     end
 
     // If we reached here, that means all test cases were successful.
