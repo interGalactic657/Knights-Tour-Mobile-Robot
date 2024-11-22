@@ -15,6 +15,10 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   //signal to indicate that we want to make the next move
   logic update_position;
 
+  //signal to start initliazation of the board?
+  //logic init;
+  //signal to backup if there are no other possible move
+  //logic backup;
 
   ////////////////////////////////////////
   // Declare needed internal registers //
