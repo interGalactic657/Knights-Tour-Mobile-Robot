@@ -94,6 +94,12 @@ module TourCmd_tb();
         $stop();
       end
 
+      // Check if correct response is sent back to the Bluetooth module for a given move.
+      if (resp !== expected_resp) begin
+        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, expected_resp, resp);
+        $stop();
+      end
+
       @(negedge clk) clr_cmd_rdy = 1'b1; // Assert clr_cmd_rdy indicating that the command is correct and has been received.
       @(negedge clk) clr_cmd_rdy = 1'b0; // Deassert clr_cmd_rdy on negative edge of clock.
 
@@ -101,12 +107,6 @@ module TourCmd_tb();
 
       @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module. 
       @(negedge clk) send_resp = 1'b0; // Deassert the send_resp signal.
-
-        // Check if correct response is sent back to the Bluetooth module for a given move.
-      if (resp !== expected_resp) begin
-        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, expected_resp, resp);
-        $stop();
-      end
     end
 
     // If we reached here, that means all test cases were successful.
