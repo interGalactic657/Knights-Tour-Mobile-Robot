@@ -72,7 +72,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         init = 1'b0;
         calc = 1'b0;
         nxt_move = 1'b0;
-
+        done = 1'b0;
+        update_position = 1'b0;
+        backup = 1'b0;
 
         case (state)
             IDLE: begin
@@ -105,11 +107,8 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
               end
               else if (!move_poss & !have_move) begin
                 next_state = BACKUP;
-                go_back = 1'b1;
+                backup = 1'b1;
               end
-
-
-
             end
             BACKUP: begin
               if(prev_have_move) begin
@@ -118,8 +117,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
               
               else begin
               next_state = BACKUP;
-              update_position = 1'b1;
-              
+              backup = 1'b1;
               end
             
             end
@@ -162,15 +160,35 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // For last move memory structure that ends up forming the solution  
   always_ff @(posedge clk)
     if (move_poss)
-        last_move[move_num] <= move_try;
+    last_move[move_num] <= move_try;
 
   // For possible moves memory structure used to calculate the possible mvoes
   // at the given position
   always_ff @(posedge clk)
-    if ()      
-  
-  << Your magic occurs here >>
-  
+    if (calc)
+    poss_moves[move_num] <= calc_poss(xx, yy);
+
+  // For the next move to try
+  always_ff @(posedge clk)
+    if (calc)
+    move_try <= 8'h01;
+  else if (have_move)
+    move_try <= {move_try[6:0], 1'b0};      
+  else if (go_back)
+    move_try <= {last_move[move_num][6:0], 1'b0};
+
+  // For move number
+  always_ff @(posedge clk)
+    if (zero)
+    move_num <= 5'h00;
+  else if (update_position)
+    move_num <= move_num + 1;
+  else if (backup)
+    move_num <= move_num - 1;
+
+  // For xx
+  always_ff @(posedge clk) 
+
 
   //We can create a set reset flop for the move count to prevent race conditions 
   
