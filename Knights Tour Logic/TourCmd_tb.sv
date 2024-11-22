@@ -64,7 +64,7 @@ module TourCmd_tb();
   /////////////////////////////////////////////////////////
   initial begin
     clk = 1'b0;          // Initially clock is low
-    rst_n = 1'b0;        // Reset the machines
+    rst_n = 1'b0;        // Reset the machine
     $readmemh("sample_tour.hex",moves); // Read in a file containing a sample KnightsTour into the ROM.
     start_tour = 1'b0;   // Initially is low, i.e., inactive
     send_resp = 1'b0;    // Initially is low, i.e., inactive

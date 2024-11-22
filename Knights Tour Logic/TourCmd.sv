@@ -74,10 +74,7 @@ module TourCmd(
   // Decode a move into horizontal and veritical components //
   ///////////////////////////////////////////////////////////
   always_comb begin
-    heading = 8'xx;    // Default heading: don't care when no case matches.
-    square_cnt = 4'hx; // Default square count: don't care when no case matches.
-
-    // Moves are one hot encoded, so only one case must be true.
+    // Moves are one hot encoded, so only one case must be true, otherwise, we don't move by default.
     unique case (1'b1) 
       // Case when move[0] is high
       // Vertical movement: 2 squares north.
@@ -181,6 +178,11 @@ module TourCmd(
             heading = EAST;    // Move east.
             square_cnt = 4'h2; // Move 2 squares horizontally.
         end
+      end
+
+      default: begin // Case when none of the bits are "hot", i.e., for the very first move.
+        heading = NORTH;   // By default, assume the Knight looks towards NORTH for the very first move.
+        square_cnt = 4'h0; // By default, no squares to move on the very first move.
       end
     endcase
   end
