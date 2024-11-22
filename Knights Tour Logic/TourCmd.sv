@@ -200,8 +200,10 @@ module TourCmd(
   // Form the command in TourCmd based on the opcode, heading and square count.
   assign cmd_TOUR = {opcode, heading, square_cnt};
 
-  // We send a response of 0x5A to the Bluetooth module after each move, else 0xA5 when done with the KnightsTour.
-  assign resp = (tour_done) ? 8'hA5 : 8'h5A;
+  // Implements the delay flop for the resp signal to hold it for UART_wrapper to process it.
+  always_ff @(posedge clk) begin
+    resp <= (tour_done & cap_horz) ? 8'hA5 : 8'h5A;
+  end
 
   // Usurp control of the command bus when cmd_control is asserted, otherwise UART_wrapper has control.
   assign cmd = (cmd_control) ? cmd_TOUR : cmd_UART;

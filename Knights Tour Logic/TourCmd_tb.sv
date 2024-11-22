@@ -72,15 +72,14 @@ module TourCmd_tb();
 
     // Loop through the 48 expected commands to check if TourCmd processes moves correctly. 
     for (i = 0; i < 48; i = i + 1) begin
-      // Wait for the PID controller to process the input and generate output.
+      expected_mv_indx = i/2; // The expected move index of the KnightsTour.
+      expected_cmd = response_vectors[i][23:8]; // The expected command to receive from TourCmd.
+      expected_resp = response_vectors[i][7:0]; // The expected response to receive from TourCmd.
+      // Wait for TourCmd to process the input and generate output.
       @(posedge clk);
 
       // Check expected output slightly after the rising edge of clock.
       #1
-
-      expected_mv_indx = i/2; // The expected move index of the KnightsTour.
-      expected_cmd = response_vectors[i][23:8]; // The expected command to receive from TourCmd.
-      expected_resp = response_vectors[i][7:0]; // The expected response to receive from TourCmd.
       
       // Check if the correct move is being processed by TourCmd.
       if (mv_indx !== expected_mv_indx) begin
@@ -94,12 +93,6 @@ module TourCmd_tb();
         $stop();
       end
 
-      // Check if correct response is sent back to the Bluetooth module for a given move.
-      if (resp !== expected_resp) begin
-        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, expected_resp, resp);
-        $stop();
-      end
-
       @(negedge clk) clr_cmd_rdy = 1'b1; // Assert clr_cmd_rdy indicating that the command is correct and has been received.
       @(negedge clk) clr_cmd_rdy = 1'b0; // Deassert clr_cmd_rdy on negative edge of clock.
 
@@ -107,6 +100,12 @@ module TourCmd_tb();
 
       @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module. 
       @(negedge clk) send_resp = 1'b0; // Deassert the send_resp signal.
+
+      // Check if correct response is sent back to the Bluetooth module for a given move.
+      if (resp !== expected_resp) begin
+        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, expected_resp, resp);
+        $stop();
+      end
     end
 
     // If we reached here, that means all test cases were successful.
