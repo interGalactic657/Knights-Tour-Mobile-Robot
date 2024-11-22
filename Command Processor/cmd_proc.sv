@@ -193,7 +193,6 @@ module cmd_proc(
   /////////////////////////////////////
   // Implements State Machine Logic //
   ///////////////////////////////////
-
   // Implements state machine register, holding current state or next state, accordingly.
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)

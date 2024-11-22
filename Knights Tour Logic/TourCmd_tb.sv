@@ -7,18 +7,20 @@
 /////////////////////////////////////////////////
 module TourCmd_tb();
 
-  logic clk;               // System clock signal.
-  logic rst_n;             // Asynchronous active low reset.
-  logic start_tour;	       // from done signal from TourLogic
-  logic [7:0] move;	       // encoded 1-hot move to perform
-  logic cmd_rdy_UART;	     // cmd_rdy from UART_wrapper
-  logic send_resp;         // lets us know cmd_proc is done with the move command
-  logic [15:0] cmd;        // multiplexed cmd to cmd_proc
-  logic cmd_rdy;           // cmd_rdy signal to cmd_proc
-  logic [4:0] mv_indx;     // "address" to access next move
-  logic [7:0] resp;        // either 0xA5 (done) or 0x5A (in progress)
-  logic [7:0] moves[0:23]; // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
-  logic [:0] moves[0:23]; // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
+  logic clk;                    // System clock signal.
+  logic rst_n;                  // Asynchronous active low reset.
+  logic start_tour;	            // from done signal from TourLogic
+  logic [7:0] move;	            // encoded 1-hot move to perform
+  logic cmd_rdy_UART;	          // cmd_rdy from UART_wrapper
+  logic send_resp;              // lets us know cmd_proc is done with the move command
+  logic [15:0] cmd;             // multiplexed cmd to cmd_proc
+  logic cmd_rdy;                // cmd_rdy signal to cmd_proc
+  logic clr_cmd_rdy;		        // from cmd_proc (goes to UART_wrapper too)
+  logic [4:0] mv_indx;          // "address" to access next move
+  logic [7:0] resp;             // either 0xA5 (done) or 0x5A (in progress)
+  logic [7:0] moves[0:23];      // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
+  logic [23:0] responses[0:47]; // 24-bit wide 48 entry array modelling the expected KnightsTour commands to be issued.
+  integer i;                    // Loop variable to iterate through response vectors.
 
   /////////////////////////////////////////////////
   // Instantiate the (DUTs) and simulate inputs //
@@ -53,8 +55,6 @@ module TourCmd_tb();
     join
   endtask
 
-  initial 
-
   // Present the requested move on clock low.
   always @(negedge clk) begin
     move <= moves[mv_indx];
@@ -67,7 +67,7 @@ module TourCmd_tb();
     clk = 1'b0;          // Initially clock is low
     rst_n = 1'b0;        // Reset the machine
     $readmemh("sample_tour.hex",moves); // Read in a file containing a sample KnightsTour into the ROM.
-    $readmemh("expected_commands.hex",resp); // Read in a file containing the expected commands TourCmd must generate, given a move.
+    $readmemh("expected_commands.hex",responses); // Read in a file containing the expected commands TourCmd must generate, given a move.
     start_tour = 1'b0;   // Initially is low, i.e., inactive
     send_resp = 1'b0;    // Initially is low, i.e., inactive
     clr_cmd_rdy = 1'b0;  // Initially is low, i.e., inactive
@@ -81,50 +81,39 @@ module TourCmd_tb();
 
     @(negedge clk) start_tour = 1'b0; // Deassert start_tour after one clock cycle.
 
-    for (i = 0; i < 24; i++) begin
-      // Check cmd is vertical component of move
-      if (cmd !== exp_vert) begin
-        $display("ERROR: incorrect vertical cmd on index %d\nexpected: %h\nactual: 0x%h", mv_indx, exp_vert, cmd);
+    // Loop through the 48 expected commands to check if TourCmd processes moves correctly. 
+    for (i = 0; i < 48; i = i + 1) begin
+      // Wait for the PID controller to process the input and generate output.
+      @(posedge clk);
+
+      // Check expected output slightly after the rising edge of clock.
+      #1
+
+      // Check if the correct move is being processed by TourCmd.
+      if (mv_indx !== i/2) begin
+        $display("ERROR: Incorrect move being processed expected: 0x%h\nactual: 0x%h.", i/2, mv_indx);
         $stop();
       end
 
-      clr_cmd_rdy = 1'b1; // cmd has been received and is correct
-      @(negedge clk);
-      clr_cmd_rdy = 1'b0; // deassert clr
-
-      repeat(10) @(negedge clk);
-
-      send_resp = 1'b1; // move finished, get 2nd part of move
-      @(negedge clk);
-      send_resp = 1'b0; // desassert resp
-
-      // Chck cmd is horizontal component of move
-      if (cmd !== exp_horz) begin
-        $display("ERROR: incorrect horizontal cmd on index %d\nexpected: %h\nactual: 0x%h", mv_indx, exp_horz, cmd);
+      // Check if the cmd is processed correctly by TourCmd.
+      if (cmd !== responses[i][23:8]) begin
+        $display("ERROR: Incorrect command sent on move index %d\nexpected: 0x%h\nactual: 0x%h.", mv_indx, responses[i][23:8], cmd);
         $stop();
       end
 
-      clr_cmd_rdy = 1'b1; // cmd has been received and is correct
-      @(negedge clk);
-      clr_cmd_rdy = 1'b0; // deassert clr
+      // Check if correct response is sent back to the Bluetooth module for a given move.
+      if (resp !== responses[i][7:0]) begin
+        $display("ERROR: Incorrect response sent back to Bluetooth module on move index %d\nexpected: 0x%h\nactual: 0x%h", mv_indx, responses[i][7:0], resp);
+        $stop();
+      end
 
-      repeat(10) @(negedge clk);
+      @(negedge clk) clr_cmd_rdy = 1'b1; // Assert clr_cmd_rdy indicating that the command is correct and has been received.
+      @(negedge clk) clr_cmd_rdy = 1'b0; // Deassert clr_cmd_rdy on negative edge of clock.
 
-      send_resp = 1'b1; // move finished, get next move
-      @(negedge clk);
-      send_resp = 1'b0; // desassert resp
+      repeat(10) @(posedge clk); // Wait for a couple clocks for the Knight to perform the move.
 
-      // check resp sent at end of move
-      if (mv_indx == 5'h17)
-        if (resp !== 8'hA5) begin
-          $display("ERROR: incorrect resp after all moves have finished\nexpected: 0xA5\nactual: 0x%h", resp);
-          $stop();
-        end
-      else
-        if (resp !== 8'h5A) begin
-          $display("ERROR: incorrect resp from intermdiate move\nexpected: 0x5A\nactual: 0x%h", resp);
-          $stop();
-        end
+      @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module. 
+      @(negedge clk) send_resp = 1'b0; // Deassert the send_resp signal.
     end
 
     // If we reached here, that means all test cases were successful.

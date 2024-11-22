@@ -50,7 +50,9 @@ module TourCmd(
   logic cap_vert;             // Used to capture the vertical component of the move.
   logic cap_horz;             // Used to capture the horizontal component of the move.
   logic fanfare_go;           // Kick off the "Charge!" fanfare on piezo when the Knight completes an L-shape.
-  logic set_cmd_rdy;          // Asserted whenever a command is done being processed.   
+  logic set_cmd_rdy;          // Asserted whenever a command is done being processed.
+  state_t state;                       // Holds the current state.
+  state_t nxt_state;                   // Holds the next state.   
   ////////////////////////////////////////////////////////////////////////////////////////
   
   /////////////////////////////////////////////////////////////
@@ -59,15 +61,15 @@ module TourCmd(
   // Implement counter to track the current move index of the KnightsTour trace.
   always_ff @(posedge clk, negedge rst_n) begin
     if (!rst_n)
-      move_indx <= 5'h0;  // Reset the counter on reset.
+      mv_indx <= 5'h0;  // Reset the counter on reset.
     else if (clr_index)
-      move_indx <= 5'h0;  // Clear the counter when starting the KnightsTour.
+      mv_indx <= 5'h0;  // Clear the counter when starting the KnightsTour.
     else if (inc_index)
-      move_indx <= move_indx + 1'b1;  // Increment the counter to get the next move.
+      mv_indx <= mv_indx + 1'b1;  // Increment the counter to get the next move.
   end
 
   // The KnightsTour has been completed after 24 moves, i.e., when move_indx is 23.
-  assign tour_done = (move_indx == 5'h17);
+  assign tour_done = (mv_indx == 5'h17);
   //////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////
@@ -181,7 +183,7 @@ module TourCmd(
       end
 
       default: begin // Case when none of the bits are "hot" which will not occur.
-        heading = 8'hxx;   // By default we don't care what the heading is otherwise.
+        heading = heading_t'(8'hxx); // By default we don't care what the heading is otherwise.
         square_cnt = 4'hx; // By default we don't care what the square count is otherwise.
       end
     endcase
