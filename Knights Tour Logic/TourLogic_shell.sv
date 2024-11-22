@@ -11,14 +11,25 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   //signal to initialize the board
   logic not_visited;
   //signal to indicate if the next move is possible
-  logic possible;
+  logic move_poss;
   //signal to indicate that we want to make the next move
   logic update_position;
-
-  //signal to start initliazation of the board?
-  //logic init;
-  //signal to backup if there are no other possible move
-  //logic backup;
+  // signal to start initliazation of the board?
+  logic init;
+  // signal to backup if there are no other possible move and we need to go back
+  logic backup;
+  // signal to calculate move_poss moves from current position
+  logic calc;
+  //signal to try the next move
+  logic nxt_move;
+  //signal to indicate that we are done
+  logic move_done;
+  //signal to go back to a previous move and check for other possible moves. SR Flopped as a function of backup
+  logic go_back;
+  // signal to validate if the previous move has other possible moves
+  logic prev_have_move;
+  // signal to indicate that we have more moves to try
+  logic have_move;
 
   ////////////////////////////////////////
   // Declare needed internal registers //
@@ -28,7 +39,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   << These match the variables used in knightsTourSM.pl >>
   reg [4:0] board[0:4][0:4];				// keeps track if position visited
   reg [7:0] last_move[0:23];		// last move tried from this spot
-  reg [7:0] poss_moves[0:23];		// stores possible moves from this position as 8-bit one hot
+  reg [7:0] poss_moves[0:23];		// stores move_poss moves from this position as 8-bit one hot
   reg [7:0] move_try;				// one hot encoding of move we will try next
   reg [4:0] move_num;				// keeps track of move we are on
   reg [2:0] xx,yy;					// current x & y position  
@@ -44,6 +55,78 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   } state_t;
 
   state_t state, next_state;
+
+  //Sequential logic for the state machine 
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (!rst_n)
+            state <= IDLE;   // Reset into the IDLE state if machine is reset.
+        else
+            state <= nxt_state; // Store the next state as the current state by default.
+    end
+
+    //Combinational logic for the state machine
+    always_comb begin
+        // Default all SM outputs & nxt_state
+        nxt_state = state;        
+        zero = 1'b0;
+        init = 1'b0;
+        calc = 1'b0;
+        nxt_move = 1'b0;
+
+
+        case (state)
+            IDLE: begin
+              if (go) begin
+                next_state = INIT;
+                zero = 1'b1;
+              end
+            end
+            INIT: begin
+              next_state = POSSIBLE;
+              init = 1'b1;
+            end
+            POSSIBLE: begin
+              next_state = MAKE_MOVE;
+              calc = 1'b1;
+            end
+            MAKE_MOVE: begin
+              if (move_poss & move_done) begin
+                next_state = IDLE;
+                update_position = 1'b1;
+                done = 1'b1;
+              end
+              else if (move_poss & !move_done) begin
+                next_state = POSSIBLE;
+                update_position = 1'b1;
+              end
+              else if (!move_poss & have_move) begin
+                next_state = MAKE_MOVE;
+                nxt_move = 1'b1;
+              end
+              else if (!move_poss & !have_move) begin
+                next_state = BACKUP;
+                go_back = 1'b1;
+              end
+
+
+
+            end
+            BACKUP: begin
+              if(prev_have_move) begin
+              next_state = MAKE_MOVE;
+              end
+              
+              else begin
+              next_state = BACKUP;
+              update_position = 1'b1;
+              
+              end
+            
+            end
+            default: next_state = IDLE;
+        endcase
+    end
+  
   
   //We need a counter to keep track of order of moves to track where on the board the knight has visited
   << 2-D array of 5-bit vectors that keep track of where on the board the knight
@@ -52,7 +135,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   << 1-D array (of size 24) to keep track of last move taken from each move index >>
 
 
-  << 1-D array (of size 24) to keep track of possible moves from each move index >>
+  << 1-D array (of size 24) to keep track of move_poss moves from each move index >>
   << move_try ... not sure you need this.  I had this to hold move I would try next >>
   << move number...when you have moved 24 times you are done.  Decrement when backing up >>
   << xx, yy couple of 3-bit vectors that represent the current x/y coordinates of the knight>>
@@ -75,21 +158,29 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	  board[nxt_xx][nxt_yy] <= move_num + 2;	// mark as visited
 	else if (backup)
 	  board[xx][yy] <= 5'h0;			// mark as unvisited
-  
+
+  // For last move memory structure that ends up forming the solution  
+  always_ff @(posedge clk)
+    if (move_poss)
+        last_move[move_num] <= move_try;
+
+  // For possible moves memory structure used to calculate the possible mvoes
+  // at the given position
+  always_ff @(posedge clk)
+    if ()      
   
   << Your magic occurs here >>
   
 
   //We can create a set reset flop for the move count to prevent race conditions 
   
-  
   function [7:0] calc_poss(input [2:0] xpos,ypos);
     ///////////////////////////////////////////////////
 	// Consider writing a function that returns a packed byte of
-	// all the possible moves (at least in bound) moves given
+	// all the move_poss moves (at least in bound) moves given
 	// coordinates of Knight.
 	/////////////////////////////////////////////////////
-    //initialize the possible moves to 0
+    //initialize the move_poss moves to 0
     logic [7:0] poss_moves;
     poss_moves = 8'b0;
     // $xoff{1} = 1; $yoff{1} = 2;
