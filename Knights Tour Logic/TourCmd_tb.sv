@@ -71,15 +71,16 @@ module TourCmd_tb();
     @(negedge clk) start_tour = 1'b0; // Deassert start_tour after one clock cycle.
 
     // Loop through the 48 expected commands to check if TourCmd processes moves correctly. 
-    for (i = 0; i < 48; i = i + 1) begin
-      expected_mv_indx = i/2; // The expected move index of the KnightsTour.
-      expected_cmd = response_vectors[i][23:8]; // The expected command to receive from TourCmd.
-      expected_resp = response_vectors[i][7:0]; // The expected response to receive from TourCmd.
+    for (i = 0; i < 48; i = i + 1) begin      
       // Wait for TourCmd to process the input and generate output.
       @(posedge clk);
 
       // Check expected output slightly after the rising edge of clock.
       #1
+
+      expected_mv_indx = i/2; // The expected move index of the KnightsTour.
+      expected_cmd = response_vectors[i][23:8]; // The expected command to receive from TourCmd.
+      expected_resp = response_vectors[i][7:0]; // The expected response to receive from TourCmd.
       
       // Check if the correct move is being processed by TourCmd.
       if (mv_indx !== expected_mv_indx) begin
@@ -98,7 +99,7 @@ module TourCmd_tb();
 
       repeat(10) @(posedge clk); // Wait for a couple clocks for the Knight to perform the move.
 
-      @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module. 
+      @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module.
       @(negedge clk) send_resp = 1'b0; // Deassert the send_resp signal.
 
       // Check if correct response is sent back to the Bluetooth module for a given move.

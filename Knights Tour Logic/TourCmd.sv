@@ -200,10 +200,9 @@ module TourCmd(
   // Form the command in TourCmd based on the opcode, heading and square count.
   assign cmd_TOUR = {opcode, heading, square_cnt};
 
-  // Implements the delay flop for the resp signal to hold it for UART_wrapper to process it.
-  always_ff @(posedge clk) begin
-    resp <= (tour_done & cap_horz) ? 8'hA5 : 8'h5A;
-  end
+  // Send a response of 0x5A after every intermediate move, otherwise send 0xA5 if on the last component 
+  // of the last move and the KnightsTour is complete.
+  assign resp = (tour_done & cap_horz) ? 8'hA5 : 8'h5A;
 
   // Usurp control of the command bus when cmd_control is asserted, otherwise UART_wrapper has control.
   assign cmd = (cmd_control) ? cmd_TOUR : cmd_UART;
