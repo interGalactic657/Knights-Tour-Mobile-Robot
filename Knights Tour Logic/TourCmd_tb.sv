@@ -18,6 +18,7 @@ module TourCmd_tb();
   logic [4:0] mv_indx;     // "address" to access next move
   logic [7:0] resp;        // either 0xA5 (done) or 0x5A (in progress)
   logic [7:0] moves[0:23]; // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
+  logic [:0] moves[0:23]; // 8-bit wide 24 entry ROM modelling the KnightsTour movements.
 
   /////////////////////////////////////////////////
   // Instantiate the (DUTs) and simulate inputs //
@@ -66,6 +67,7 @@ module TourCmd_tb();
     clk = 1'b0;          // Initially clock is low
     rst_n = 1'b0;        // Reset the machine
     $readmemh("sample_tour.hex",moves); // Read in a file containing a sample KnightsTour into the ROM.
+    $readmemh("expected_commands.hex",resp); // Read in a file containing the expected commands TourCmd must generate, given a move.
     start_tour = 1'b0;   // Initially is low, i.e., inactive
     send_resp = 1'b0;    // Initially is low, i.e., inactive
     clr_cmd_rdy = 1'b0;  // Initially is low, i.e., inactive

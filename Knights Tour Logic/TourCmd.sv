@@ -180,9 +180,9 @@ module TourCmd(
         end
       end
 
-      default: begin // Case when none of the bits are "hot", i.e., for the very first move.
-        heading = NORTH;   // By default, assume the Knight looks towards NORTH for the very first move.
-        square_cnt = 4'h0; // By default, no squares to move on the very first move.
+      default: begin // Case when none of the bits are "hot" which will not occur.
+        heading = 8'hxx;   // By default we don't care what the heading is otherwise.
+        square_cnt = 4'hx; // By default we don't care what the square count is otherwise.
       end
     endcase
   end
@@ -218,17 +218,6 @@ module TourCmd(
     else
       state <= nxt_state; // Store the next state as the current state by default.
   end
-
-  // Implements the SR flop to hold the cmd_rdy_TOUR signal until clr_cmd_rdy is asserted. 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n)
-      cmd_rdy_TOUR <= 1'b0; // Asynchronously reset the flop.
-    else if (clr_cmd_rdy)
-      cmd_rdy_TOUR <= 1'b0; // Knocks down cmd_rdy_TOUR when clr_cmd_rdy is asserted.
-    else if (set_cmd_rdy)
-      cmd_rdy_TOUR <= 1'b1; // Asserted when move command is processed.
-  end
-  /////////////////////////////////////////////////////////////////////////////////////////////
   
   //////////////////////////////////////////////////////////////////////////////////////////
   // Implements the combinational state transition and output logic of the state machine.//
@@ -242,12 +231,12 @@ module TourCmd(
     cap_vert = 1'b0;    // By default, we are not capturing the vertical position of the move.
     cap_horz = 1'b0;    // By default, we are not capturing the horizontal position of the move.
     fanfare_go = 1'b0;  // By default, we are not moving the Knight with fanfare.
-    set_cmd_rdy = 1'b0; // By defualt, assume we are not done with processing the move.
+    cmd_rdy_TOUR = 1'b0; // By defualt, assume we are not done with processing the move.
 
     case (state)
       VERT : begin // Captures the veritcal component of the move and waits till the command has been received by the Knight.
         cap_vert = 1'b1; // Capture the vertical component of the move.
-        set_cmd_rdy = 1'b1; // Assert that the command is ready to be processed by cmd_proc.
+        cmd_rdy_TOUR = 1'b1; // Assert that the command is ready to be processed by cmd_proc.
         if (clr_cmd_rdy) // Wait till the command is received by the Knight.
           nxt_state = HOLDV; // Go to the HOLDV state to hold the current command till the move is processed.
       end
@@ -262,7 +251,7 @@ module TourCmd(
       HORZ : begin // Captures the horizontal component of the move and waits till the command has been received by the Knight.
         cap_horz = 1'b1; // Capture the horizontal component of the move.
         fanfare_go = 1'b1; // Move with fanfare once the Knight completes the L-shape movement.
-        set_cmd_rdy = 1'b1; // Assert that the command is ready to be processed by cmd_proc.
+        cmd_rdy_TOUR = 1'b1; // Assert that the command is ready to be processed by cmd_proc.
         if (clr_cmd_rdy) // Wait till the command is received by the Knight.
           nxt_state = HOLDH; // Go to the HOLDH state to hold the current command till the move is processed.
       end
