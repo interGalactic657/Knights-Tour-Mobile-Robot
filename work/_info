@@ -1,0 +1,63 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+dC:/Users/prath/Documents/ECE 551/HW5
+vTourLogic
+Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+!s110 1732482740
+!i10b 1
+!s100 ljS3>ViP?_oK<>[=zJWk71
+Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IQUPlImN5e_DoeRnJFEPk22
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+S1
+Z3 dC:/Users/prath/Documents/Knights-Tour-Mobile-Robot
+w1732482700
+8C:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_shell.sv
+FC:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_shell.sv
+!i122 3
+L0 1 317
+Z4 OV;L;2020.1;71
+r1
+!s85 0
+31
+!s108 1732482739.000000
+!s107 C:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_shell.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_shell.sv|
+!i113 1
+Z5 o-work work -sv
+Z6 tCvgOpt 0
+n@tour@logic
+vTourLogic_tb
+R0
+!s110 1732482395
+!i10b 1
+!s100 PaHchgkfY^m87mmeE<^A;1
+R1
+IPZ1CUFZeZ`f4TgHa[2Y@N0
+R2
+S1
+R3
+w1731944916
+8C:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv
+FC:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv
+!i122 2
+L0 1 61
+R4
+r1
+!s85 0
+31
+!s108 1732482395.000000
+!s107 C:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/prath/Documents/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv|
+!i113 1
+R5
+R6
+n@tour@logic_tb
