@@ -35,24 +35,23 @@ module TourCmd(
   // Declare any internal signals //
   /////////////////////////////////
   ///////////////////////// Move Count Logic ///////////////////////////////////////////
-  logic tour_done;            // Asserted when the KnightsTour has been finished.
+  logic tour_done;         // Asserted when the KnightsTour has been finished.
   ////////////////////////////// Move Decoding Logic ////////////////////////////////////
-  logic [3:0] square_cnt;     // The number of squares the Knight must move on the board.
-  heading_t heading;          // Form the direction the Knight should move based on the move.
+  logic [3:0] square_cnt;  // The number of squares the Knight must move on the board.
+  heading_t heading;       // Form the direction the Knight should move based on the move.
   ////////////////////////////// Command Bus Logic ////////////////////////////////////
-  logic [3:0] opcode;         // Form the opcode of the command to either move the Knight with fanfare or not.
-  logic [15:0] cmd_TOUR;      // The command formed by TourCmd.
-  logic cmd_rdy_TOUR;         // Formed as an output to cmd_proc whenever a command is done being processed. 
+  logic [3:0] opcode;      // Form the opcode of the command to either move the Knight with fanfare or not.
+  logic [15:0] cmd_TOUR;   // The command formed by TourCmd.
+  logic cmd_rdy_TOUR;      // Formed as an output to cmd_proc whenever a command is done being processed. 
   ///////////////////////////// State Machine ////////////////////////////////////////////
-  logic cmd_control;          // Usurps control of the command MUX, otherwise UART_wrapper has control.
-  logic clr_index;            // Used to clear the move index counter whenever we start a new KnightsTour.
-  logic inc_index;            // Used to Increment the move index counter to the next move.
-  logic cap_vert;             // Used to capture the vertical component of the move.
-  logic cap_horz;             // Used to capture the horizontal component of the move.
-  logic fanfare_go;           // Kick off the "Charge!" fanfare on piezo when the Knight completes an L-shape.
-  logic set_cmd_rdy;          // Asserted whenever a command is done being processed.
-  state_t state;                       // Holds the current state.
-  state_t nxt_state;                   // Holds the next state.   
+  logic cmd_control;       // Usurps control of the command MUX, otherwise UART_wrapper has control.
+  logic clr_index;         // Used to clear the move index counter whenever we start a new KnightsTour.
+  logic inc_index;         // Used to Increment the move index counter to the next move.
+  logic cap_vert;          // Used to capture the vertical component of the move.
+  logic cap_horz;          // Used to capture the horizontal component of the move.
+  logic fanfare_go;        // Kick off the "Charge!" fanfare on piezo when the Knight completes an L-shape.
+  state_t state;           // Holds the current state.
+  state_t nxt_state;       // Holds the next state.   
   ////////////////////////////////////////////////////////////////////////////////////////
   
   /////////////////////////////////////////////////////////////
@@ -201,8 +200,9 @@ module TourCmd(
   assign cmd_TOUR = {opcode, heading, square_cnt};
 
   // Send a response of 0x5A after every intermediate move, otherwise send 0xA5 if on the last component 
-  // of the last move and the KnightsTour is complete.
-  assign resp = (tour_done & cap_horz) ? 8'hA5 : 8'h5A;
+  // of the last move and the KnightsTour is complete. When the tour is done and command control goes back 
+  // to UART_wrapper, we want the response to be 0xA5.
+  assign resp = (tour_done & ~cmd_control) ? 8'hA5 : 8'h5A;
 
   // Usurp control of the command bus when cmd_control is asserted, otherwise UART_wrapper has control.
   assign cmd = (cmd_control) ? cmd_TOUR : cmd_UART;
@@ -269,6 +269,7 @@ module TourCmd(
           end
         end else begin
           cap_horz = 1'b1; // Keep TourCmd consistent with cmd_proc while processing a move.
+          fanfare_go = 1'b1; // Keep TourCmd consistent with cmd_proc while processing a move.
         end
       end
 

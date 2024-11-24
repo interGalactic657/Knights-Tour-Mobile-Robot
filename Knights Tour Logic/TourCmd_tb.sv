@@ -1,17 +1,18 @@
-/////////////////////////////////////////////////
-// TourCmd_tb.sv                               //
-// This is the testbench for the command       //
-// processing unit of the Knight robot. It     //
-// simulates various Bluetooth commands and    //
-// verifies the DUT's responses.               //
-/////////////////////////////////////////////////
+//////////////////////////////////////////////////
+// TourCmd_tb.sv                                //
+// This is the testbench which provides         //
+// stimulus to the TourCmd module in the form   //
+// of 23 moves through a modeled ROM and        //
+// verifies that the module processes the       //
+// commands correctly by comparing its output   //
+// against an expected commands file.           //
+//////////////////////////////////////////////////
 module TourCmd_tb();
 
   logic clk;                             // System clock signal.
   logic rst_n;                           // Asynchronous active low reset.
   logic start_tour;	                     // from done signal from TourLogic
   logic [7:0] move;	                     // encoded 1-hot move to perform
-  logic cmd_rdy_UART;	                   // cmd_rdy from UART_wrapper
   logic send_resp;                       // lets us know cmd_proc is done with the move command
   logic [15:0] cmd;                      // multiplexed cmd to cmd_proc
   logic cmd_rdy;                         // cmd_rdy signal to cmd_proc
@@ -64,8 +65,8 @@ module TourCmd_tb();
     // Wait 1.5 clocks for reset
     @(posedge clk);
     @(negedge clk) begin 
-      rst_n = 1'b1;               // Deassert reset on a negative edge of clock.
-      start_tour = 1'b1;          // Assert start_tour and begin move decoding.
+      rst_n = 1'b1;        // Deassert reset on a negative edge of clock.
+      start_tour = 1'b1;   // Assert start_tour and begin move decoding.
     end
 
     @(negedge clk) start_tour = 1'b0; // Deassert start_tour after one clock cycle.
@@ -97,7 +98,17 @@ module TourCmd_tb();
       @(negedge clk) clr_cmd_rdy = 1'b1; // Assert clr_cmd_rdy indicating that the command is correct and has been received.
       @(negedge clk) clr_cmd_rdy = 1'b0; // Deassert clr_cmd_rdy on negative edge of clock.
 
-      repeat(10) @(posedge clk); // Wait for a couple clocks for the Knight to perform the move.
+      repeat(5) @(posedge clk); // Wait for a couple clocks for the Knight to perform the move.
+
+      @(negedge clk) begin
+        // Check that the command doesn't change in between waiting for send_resp from cmd_proc.
+        if (cmd !== expected_cmd) begin
+          $display("ERROR: Command is changing while waiting for send_resp from cmd_proc on move index %d\nexpected: 0x%h\nactual: 0x%h.", mv_indx, expected_cmd, cmd);
+          $stop();
+        end
+      end
+
+      repeat(5) @(posedge clk); // Wait for a couple more clocks for the Knight to perform the move.
 
       @(negedge clk) send_resp = 1'b1; // Send an acknowledgement back to the Bluetooth module.
       @(negedge clk) send_resp = 1'b0; // Deassert the send_resp signal.
