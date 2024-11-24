@@ -30,6 +30,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   logic prev_have_move;
   // signal to indicate that we have more moves to try
   logic have_move;
+  // Debugging signals
+  logic [7:0] calc_possible_moves;
+  logic [4:0] chk_board;
 
   ////////////////////////////////////////
   // Declare needed internal registers //
@@ -158,8 +161,10 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // For possible moves memory structure used to calculate the possible mvoes
   // at the given position
   always_ff @(posedge clk)
-    if (calc)
+    if (calc) begin
     poss_moves[move_num] <= calc_poss(xx, yy);
+    calc_possible_moves <= calc_poss(xx, yy);
+    end
 
   // For the next move to try
   always_ff @(posedge clk)
@@ -198,7 +203,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
     xx <= x_start;
-  else if (update_position || go_back)
+  else if (update_position | go_back)
     xx <= nxt_xx;
   // else if (go_back)
   //   xx <= xx - off_x(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)?
@@ -207,7 +212,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
     yy <= y_start;
-  else if (update_position || go_back)
+  else if (update_position | go_back)
     yy <= nxt_yy;
   // else if (go_back)
   //   // yy <= yy - off_y(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)? 
@@ -228,6 +233,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 
   // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes
   assign move_poss = (poss_moves[move_num] & move_try) & (board[nxt_xx][nxt_yy] == 5'h00);
+  assign chk_board = board[nxt_xx][nxt_yy];
 
   // Move to output from this block, which is only valid after the done signal has been asserted from the SM
   assign move = last_move[indx];
