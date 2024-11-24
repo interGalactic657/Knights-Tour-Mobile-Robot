@@ -198,19 +198,19 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
     xx <= x_start;
-  else if (update_position)
+  else if (update_position || go_back)
     xx <= nxt_xx;
-  else if (go_back)
-    xx <= xx - off_x(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)?
+  // else if (go_back)
+  //   xx <= xx - off_x(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)?
 
   // For yy
   always_ff @(posedge clk)
     if (init)
     yy <= y_start;
-  else if (update_position)
+  else if (update_position || go_back)
     yy <= nxt_yy;
-  else if (go_back)
-    yy <= yy - off_y(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)? 
+  // else if (go_back)
+  //   // yy <= yy - off_y(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)? 
 
   // For nxt_xx TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
   always_ff @(posedge clk)
