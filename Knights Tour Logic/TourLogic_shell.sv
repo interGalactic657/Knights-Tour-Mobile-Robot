@@ -35,8 +35,8 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // Declare needed internal registers //
   //////////////////////////////////////
   
-  << some internal registers to consider: >>
-  << These match the variables used in knightsTourSM.pl >>
+  /* << some internal registers to consider: >>
+  << These match the variables used in knightsTourSM.pl >> */
   reg [4:0] board[0:4][0:4];				// keeps track if position visited
   reg [7:0] last_move[0:23];		// last move tried from this spot
   reg [7:0] poss_moves[0:23];		// stores move_poss moves from this position as 8-bit one hot
@@ -45,7 +45,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   reg [2:0] xx,yy;					// current x & y position  
   logic [2:0] nxt_xx,nxt_yy;			// next x & y position
 
-  //Creating the states for the state machine
+  // Creating the states for the state machine
   typedef enum logic [2:0] {
     IDLE,
     INIT,
@@ -56,7 +56,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 
   state_t state, next_state;
 
-  //Sequential logic for the state machine 
+  // Sequential logic for the state machine 
     always_ff @(posedge clk, negedge rst_n) begin
         if (!rst_n)
             state <= IDLE;   // Reset into the IDLE state if machine is reset.
@@ -64,7 +64,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
             state <= nxt_state; // Store the next state as the current state by default.
     end
 
-    //Combinational logic for the state machine
+    // Combinational logic for the state machine
     always_comb begin
         // Default all SM outputs & nxt_state
         nxt_state = state;        
@@ -77,56 +77,49 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         backup = 1'b0;
 
         case (state)
-            IDLE: begin
-              if (go) begin
-                next_state = INIT;
-                zero = 1'b1;
-              end
-            end
             INIT: begin
-              next_state = POSSIBLE;
+              nxt_state = POSSIBLE;
               init = 1'b1;
             end
             POSSIBLE: begin
-              next_state = MAKE_MOVE;
+              nxt_state = MAKE_MOVE;
               calc = 1'b1;
             end
             MAKE_MOVE: begin
-              if (move_poss & move_done) begin
-                next_state = IDLE;
-                update_position = 1'b1;
-                done = 1'b1;
-              end
-              else if (move_poss & !move_done) begin
-                next_state = POSSIBLE;
-                update_position = 1'b1;
-              end
-              else if (!move_poss & have_move) begin
-                next_state = MAKE_MOVE;
+              if (move_poss) begin
+                update_position = 1'b1; // TODO: Move inside if's for better synthesis??
+                if (move_done) begin
+                  done = 1'b1;
+                  nxt_state = IDLE;
+                end else begin
+                  nxt_state = POSSIBLE;  
+                end
+              end else if (have_move) begin
                 nxt_move = 1'b1;
-              end
-              else if (!move_poss & !have_move) begin
-                next_state = BACKUP;
-                backup = 1'b1;
+              end else begin
+                backup = 1'b1; // TODO: Could move backup to be an internal signal of BACKUP state as Moore, but doesn't matter
+                nxt_state = BACKUP;
               end
             end
             BACKUP: begin
-              if(prev_have_move) begin
-              next_state = MAKE_MOVE;
+              if (prev_have_move) begin
+                nxt_state = MAKE_MOVE;
+              end else begin
+                backup = 1'b1;
               end
-              
-              else begin
-              next_state = BACKUP;
-              backup = 1'b1;
-              end
-            
             end
-            default: next_state = IDLE;
+            // Default Case = IDLE //
+            default: begin
+              if (go) begin
+                nxt_state = INIT;
+                zero = 1'b1;
+              end
+            end
         endcase
     end
   
   
-  //We need a counter to keep track of order of moves to track where on the board the knight has visited
+  /*We need a counter to keep track of order of moves to track where on the board the knight has visited
   << 2-D array of 5-bit vectors that keep track of where on the board the knight
      has visited.  Will be reduced to 1-bit boolean after debug phase >>
 
@@ -139,7 +132,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   << xx, yy couple of 3-bit vectors that represent the current x/y coordinates of the knight>>
   
   << below I am giving you an implementation of the one of the register structures you have >>
-  << to infer (board[][]).  You need to implement the rest, and the controlling SM >>
+  << to infer (board[][]).  You need to implement the rest, and the controlling SM >> */
   ///////////////////////////////////////////////////
   // The board memory structure keeps track of where 
   // the knight has already visited.  Initially this 
@@ -172,10 +165,16 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (calc)
     move_try <= 8'h01;
-  else if (have_move)
+  else if (nxt_move)
     move_try <= {move_try[6:0], 1'b0};      
   else if (go_back)
     move_try <= {last_move[move_num][6:0], 1'b0};
+
+  // Checks if there is another move available from the current square
+  assign have_move = (move_try != 8'h80);
+
+  // Checks if there is another move available from the previous square TODO: check if we use move_try here?
+  assign prev_have_move = (last_move[move_num] != 8'h80);
 
   // For move number
   always_ff @(posedge clk)
@@ -186,11 +185,52 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   else if (backup)
     move_num <= move_num - 1;
 
+  assign move_done = (move_num == 23); // Checks if we have completed the Knights Tour
+
+  // Set reset flop for the backup to allow decrementation first TODO: Check if last else clause is correct
+  always_ff @(posedge clk)
+    if (backup)
+    go_back <= 1'b1;
+  else
+    go_back <= 1'b0;   
+
   // For xx
-  always_ff @(posedge clk) 
+  always_ff @(posedge clk)
+    if (init)
+    xx <= x_start;
+  else if (update_position)
+    xx <= nxt_xx;
+  else if (go_back)
+    xx <= xx - off_x(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)?
 
+  // For yy
+  always_ff @(posedge clk)
+    if (init)
+    yy <= y_start;
+  else if (update_position)
+    yy <= nxt_yy;
+  else if (go_back)
+    yy <= yy - off_y(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)? 
 
-  //We can create a set reset flop for the move count to prevent race conditions 
+  // For nxt_xx TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
+  always_ff @(posedge clk)
+    if (calc)     
+    nxt_xx <= xx + off_x(move_try);
+  else if (backup)
+    nxt_xx <= xx - off_x(last_move[move_num]);
+
+  // For nxt_yy TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
+  always_ff @(posedge clk)
+    if (calc)     
+    nxt_yy <= yy + off_y(move_try);
+  else if (backup)
+    nxt_yy <= yy - off_y(last_move[move_num]);
+
+  // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes
+  assign move_poss = (poss_moves[move_num] & move_try) & (board[nxt_xx][nxt_yy] == 5'h00);
+
+  // Move to output from this block, which is only valid after the done signal has been asserted from the SM
+  assign move = last_move[indx];
   
   function [7:0] calc_poss(input [2:0] xpos,ypos);
     ///////////////////////////////////////////////////
