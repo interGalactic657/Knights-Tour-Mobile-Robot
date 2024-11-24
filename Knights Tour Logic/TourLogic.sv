@@ -282,7 +282,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       newx = xpos + x_offsets[i];
       newy = ypos + y_offsets[i];
       if (newx >= 0 && newx < 5 && newy >= 0 && newy < 5)
-        calc_poss[i] = 1;
+        calc_poss[i] = 1'b1;
     end
   endfunction
   

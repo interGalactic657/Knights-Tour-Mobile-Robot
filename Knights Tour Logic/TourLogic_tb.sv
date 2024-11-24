@@ -8,7 +8,7 @@ module TourLogic_tb();
   //////////////////////
   // Instantiate DUT //
   ////////////////////
-  TourLogic iDUT(.clk(clk),.rst_n(rst_n),.x_start(3'h0),.y_start(3'h0),
+  TourLogic iDUT(.clk(clk),.rst_n(rst_n),.x_start(3'h2),.y_start(3'h2),
                  .go(go),.done(done),.indx(5'h00),.move());
 
   initial begin
