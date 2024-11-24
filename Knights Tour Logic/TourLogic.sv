@@ -33,6 +33,8 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // Debugging signals
   logic [7:0] calc_possible_moves;
   logic [4:0] chk_board;
+  logic [2:0] chk_off_x;
+  logic [2:0] chk_off_y;
 
   ////////////////////////////////////////
   // Declare needed internal registers //
@@ -165,10 +167,11 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     poss_moves[move_num] <= calc_poss(xx, yy);
     calc_possible_moves <= calc_poss(xx, yy);
     end
+    
 
   // For the next move to try
   always_ff @(posedge clk)
-    if (calc)
+    if (init | calc)
     move_try <= 8'h01;
   else if (nxt_move)
     move_try <= {move_try[6:0], 1'b0};      
@@ -219,18 +222,26 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 
   // For nxt_xx TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
   always_ff @(posedge clk)
-    if (calc)     
+    if (calc) begin     
     nxt_xx <= xx + off_x(move_try);
-  else if (backup)
+    chk_off_x <= off_x(move_try); 
+    end
+  else if (backup) begin
     nxt_xx <= xx - off_x(last_move[move_num]);
+    chk_off_x <= off_x(move_try);
+  end
 
   // For nxt_yy TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
   always_ff @(posedge clk)
-    if (calc)     
+    if (calc) begin
     nxt_yy <= yy + off_y(move_try);
-  else if (backup)
+    chk_off_y <= off_y(move_try);
+    end
+  else if (backup) begin
     nxt_yy <= yy - off_y(last_move[move_num]);
-
+    chk_off_y <= off_y(move_try);
+  end
+  
   // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes
   assign move_poss = (poss_moves[move_num] & move_try) & (board[nxt_xx][nxt_yy] == 5'h00);
   assign chk_board = board[nxt_xx][nxt_yy];
@@ -239,19 +250,18 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   assign move = last_move[indx];
   
   function logic [7:0] calc_poss(input [2:0] xpos,ypos);
-    ///////////////////////////////////////////////////
+  ///////////////////////////////////////////////////
 	// Consider writing a function that returns a packed byte of
 	// all the move_poss moves (at least in bound) moves given
 	// coordinates of Knight.
 	/////////////////////////////////////////////////////
     //initialize the move_poss moves to 0
-    logic [7:0] poss_moves;
-    logic signed [2:0] x_offsets[8];
-    logic signed [2:0] y_offsets[8];
+    // logic [7:0] poss_moves;
+    logic signed [2:0] x_offsets[0:7];
+    logic signed [2:0] y_offsets[0:7];
     logic signed [3:0] newx;
     logic signed [3:0] newy;
-    int i;
-
+    integer i;
 
     // $xoff{1} = 1; $yoff{1} = 2;
     // $xoff{2} = -1; $yoff{2} = 2;
@@ -262,20 +272,18 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     // $xoff{64} = 2; $yoff{64} = -1;
     // $xoff{128} = 2; $yoff{128} = 1;
     
-    poss_moves = 8'b0;
+    // poss_moves = 8'b0;
+    calc_poss = 8'h0;
     x_offsets = '{1, -1, -2, -2, -1, 1, 2, 2};
     y_offsets = '{2, 2, 1, -1, -2, -2, -1, 1};
-    poss_moves = 8'b0;
+    // poss_moves = 8'b0;
     
     for (i = 0; i < 8; i++) begin
       newx = xpos + x_offsets[i];
       newy = ypos + y_offsets[i];
       if (newx >= 0 && newx < 5 && newy >= 0 && newy < 5)
-        poss_moves[i] = 1;
+        calc_poss[i] = 1;
     end
-
-    return poss_moves;
-  
   endfunction
   
   function signed [2:0] off_x(input [7:0] try);
@@ -286,16 +294,17 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	// by passing in last move you did try, and subtracting 
 	// the resulting offset from xx
 	/////////////////////////////////////////////////////
-  case (try)
-    8'b0000_0001: return 1;
-    8'b0000_0010: return -1;
-    8'b0000_0100: return -2;
-    8'b0000_1000: return -2;
-    8'b0001_0000: return -1;
-    8'b0010_0000: return 1;
-    8'b0100_0000: return 2;
-    8'b1000_0000: return 2;
-    default: return 0;
+
+  unique case (try)
+    8'b0000_0001: off_x = 3'b001; // 1
+    8'b0000_0010: off_x = 3'b111; // -1
+    8'b0000_0100: off_x = 3'b110; // -2
+    8'b0000_1000: off_x = 3'b110; // -2
+    8'b0001_0000: off_x = 3'b111; // -1
+    8'b0010_0000: off_x = 3'b001; // 1
+    8'b0100_0000: off_x = 3'b010; // 2
+    8'b1000_0000: off_x = 3'b010; // 2
+    default: off_x = 3'bxxx;
   endcase
   endfunction
   
@@ -307,16 +316,17 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	// by passing in last move you did try, and subtracting 
 	// the resulting offset from yy
 	/////////////////////////////////////////////////////
-  case (try)
-    8'b0000_0001: return 2;
-    8'b0000_0010: return 2;
-    8'b0000_0100: return 1;
-    8'b0000_1000: return -1;
-    8'b0001_0000: return -2;
-    8'b0010_0000: return -2;
-    8'b0100_0000: return -1;
-    8'b1000_0000: return 1;
-    default: return 0;
+  
+  unique case (try)
+      8'b0000_0001: off_y = 3'b010; // 2
+      8'b0000_0010: off_y = 3'b010; // 2
+      8'b0000_0100: off_y = 3'b001; // 1
+      8'b0000_1000: off_y = 3'b111; // -1
+      8'b0001_0000: off_y = 3'b110; // -2
+      8'b0010_0000: off_y = 3'b110; // -2
+      8'b0100_0000: off_y = 3'b111; // -1
+      8'b1000_0000: off_y = 3'b001; // 1
+      default: off_y = 3'bxxx;
   endcase
   endfunction
   
