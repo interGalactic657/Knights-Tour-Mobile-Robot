@@ -198,7 +198,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
     xx <= x_start;
-  else if (update_position || go_back)
+  else if (update_position | go_back)
     xx <= nxt_xx;
   // else if (go_back)
   //   xx <= xx - off_x(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)?
@@ -207,7 +207,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
     yy <= y_start;
-  else if (update_position || go_back)
+  else if (update_position | go_back)
     yy <= nxt_yy;
   // else if (go_back)
   //   // yy <= yy - off_y(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)? 
