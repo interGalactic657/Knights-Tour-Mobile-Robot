@@ -61,13 +61,13 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         if (!rst_n)
             state <= IDLE;   // Reset into the IDLE state if machine is reset.
         else
-            state <= nxt_state; // Store the next state as the current state by default.
+            state <= next_state; // Store the next state as the current state by default.
     end
 
     // Combinational logic for the state machine
     always_comb begin
         // Default all SM outputs & nxt_state
-        nxt_state = state;        
+        next_state = state;        
         zero = 1'b0;
         init = 1'b0;
         calc = 1'b0;
@@ -78,11 +78,11 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 
         case (state)
             INIT: begin
-              nxt_state = POSSIBLE;
+              next_state = POSSIBLE;
               init = 1'b1;
             end
             POSSIBLE: begin
-              nxt_state = MAKE_MOVE;
+              next_state = MAKE_MOVE;
               calc = 1'b1;
             end
             MAKE_MOVE: begin
@@ -90,20 +90,20 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
                 update_position = 1'b1; // TODO: Move inside if's for better synthesis??
                 if (move_done) begin
                   done = 1'b1;
-                  nxt_state = IDLE;
+                  next_state = IDLE;
                 end else begin
-                  nxt_state = POSSIBLE;  
+                  next_state = POSSIBLE;  
                 end
               end else if (have_move) begin
-                nxt_move = 1'b1;
+                next_move = 1'b1;
               end else begin
                 backup = 1'b1; // TODO: Could move backup to be an internal signal of BACKUP state as Moore, but doesn't matter
-                nxt_state = BACKUP;
+                next_state = BACKUP;
               end
             end
             BACKUP: begin
               if (prev_have_move) begin
-                nxt_state = MAKE_MOVE;
+                next_state = MAKE_MOVE;
               end else begin
                 backup = 1'b1;
               end
@@ -111,7 +111,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
             // Default Case = IDLE //
             default: begin
               if (go) begin
-                nxt_state = INIT;
+                next_state = INIT;
                 zero = 1'b1;
               end
             end
