@@ -53,23 +53,41 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	//////////////////////////////////////////////////
   function logic [7:0] calc_poss(input [2:0] xpos,ypos);
     begin
-      logic [7:0] try; // A move try to test if it is possible from this square.
-      logic signed [2:0] newx; // A new x position to calculate from this square.
-      logic signed [2:0] newy; // A new y position to calculate from this square.
-      integer i; // Loop index variable.
+      //initialize the move_poss moves to 0
+      logic [7:0] poss_moves;
+      logic [7:0] xposs_moves;
+      logic [7:0] yposs_moves;
+
+      // $xoff{1} = 1; $yoff{1} = 2;
+      // $xoff{2} = -1; $yoff{2} = 2;
+      // $xoff{4} = -2; $yoff{4} = 1;
+      // $xoff{8} = -2; $yoff{8} = -1;
+      // $xoff{16} = -1; $yoff{16} = -2;
+      // $xoff{32} = 1; $yoff{32} = -2;
+      // $xoff{64} = 2; $yoff{64} = -1;
+      // $xoff{128} = 2; $yoff{128} = 1;
       
-      calc_poss = 8'h0; // Initially, there are no possible moves.
-      try = 8'h01; // Start with LSB for the first move.
-      
-      // This for loop iterates through 8 times, for maximum possible moves
-      // from a square on the board.
-      for (i = 0; i < 8; i = i + 1) begin
-        newx = xpos + off_x(try); // Computes the new x position from the current position.
-        newy = ypos + off_y(try); // Computes the new y position from the current position.
-        if ((newx >= 0 && newx < 5) && (newy >= 0 && newy < 5))
-          calc_poss[i] = 1'b1; // Only set that position if it is in range within the board.
-        try = {try[6:0], 1'b0}; // Try the next position from this square.
-      end
+      unique case(xpos)
+        3'h0: xposs_moves = 8'b1110_0001;
+        3'h1: xposs_moves = 8'b1111_0011;
+        3'h2: xposs_moves = 8'b1111_1111;
+        3'h3: xposs_moves = 8'b0011_1111;
+        3'h4: xposs_moves = 8'b0001_1110;
+        default: xposs_moves = 8'hxx;
+      endcase
+
+      unique case(ypos)
+        3'h0: yposs_moves = 8'b1000_0111;
+        3'h1: yposs_moves = 8'b1100_1111;
+        3'h2: yposs_moves = 8'b1111_1111;
+        3'h3: yposs_moves = 8'b1111_1100;
+        3'h4: yposs_moves = 8'b0111_1000;
+        default: yposs_moves = 8'hxx;
+      endcase
+
+      poss_moves = xposs_moves & yposs_moves;
+
+      return poss_moves;
     end
   endfunction
 
@@ -78,17 +96,17 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // given the encoding of the move to try.     //
 	///////////////////////////////////////////////
   function signed [2:0] off_x(input [7:0] try);
-  unique case (try) // Computes the offset based on the try.
-    8'b0000_0001: off_x = 3'b001; // 1
-    8'b0000_0010: off_x = 3'b111; // -1
-    8'b0000_0100: off_x = 3'b110; // -2
-    8'b0000_1000: off_x = 3'b110; // -2
-    8'b0001_0000: off_x = 3'b111; // -1
-    8'b0010_0000: off_x = 3'b001; // 1
-    8'b0100_0000: off_x = 3'b010; // 2
-    8'b1000_0000: off_x = 3'b010; // 2
-    default: off_x = 3'bxxx; // We don't care when it doesn't match, for optimized area.
-  endcase
+    unique case (try) // Computes the offset based on the try.
+      8'b0000_0001: off_x = 3'b001; // 1
+      8'b0000_0010: off_x = 3'b111; // -1
+      8'b0000_0100: off_x = 3'b110; // -2
+      8'b0000_1000: off_x = 3'b110; // -2
+      8'b0001_0000: off_x = 3'b111; // -1
+      8'b0010_0000: off_x = 3'b001; // 1
+      8'b0100_0000: off_x = 3'b010; // 2
+      8'b1000_0000: off_x = 3'b010; // 2
+      default: off_x = 3'bxxx; // We don't care when it doesn't match, for optimized area.
+    endcase
   endfunction
   
   //////////////////////////////////////////////////
@@ -96,7 +114,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // given the encoding of the move to try.     //
 	///////////////////////////////////////////////
   function signed [2:0] off_y(input [7:0] try);
-  unique case (try) // Computes the offset based on the try.
+    unique case (try) // Computes the offset based on the try.
       8'b0000_0001: off_y = 3'b010; // 2
       8'b0000_0010: off_y = 3'b010; // 2
       8'b0000_0100: off_y = 3'b001; // 1
@@ -106,7 +124,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       8'b0100_0000: off_y = 3'b111; // -1
       8'b1000_0000: off_y = 3'b001; // 1
       default: off_y = 3'bxxx; // We don't care when it doesn't match, for optimized area.
-  endcase
+    endcase
   endfunction
   ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -129,35 +147,25 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
       xx <= x_start; // Initialize the starting x-position.
-    else if (update_position | go_back)
+    else if (update_position | backup)
       xx <= nxt_xx; // Update the current position based on whether we need to update it or go back.
 
   // Stores the current y position of the Knight on the board.
   always_ff @(posedge clk)
     if (init)
       yy <= y_start; // Initialize the starting y-position.
-    else if (update_position | go_back)
+    else if (update_position | backup)
       yy <= nxt_yy; // Update the current position based on whether we need to update it or go back.
   
   // Computes the new x position based on the move to try or backs up one move.
-  always_ff @(posedge clk) begin
-    if (calc) begin     
-      nxt_xx <= xx + off_x(move_try); // Computes the new x-position based on the offset.
-      chk_off_x <= off_x(move_try); 
-    end else if (backup) begin
-      nxt_xx <= xx - off_x(last_move[move_num]); // Backs up one move from the previous location.
-      chk_off_x <= off_x(move_try);
-    end
-  end
+  assign nxt_xx = (calc) ? (xx + off_x(move_try)) : 
+                  (backup) ? (xx - off_x(last_move[move_num - 1])) :
+                  xx;
 
-  // Computes the new y position based on the move to try or backs up one move.
-  always_ff @(posedge clk) begin
-    if (calc) begin
-      nxt_yy <= yy + off_y(move_try); // Computes the new y-position based on the offset.
-    end else if (backup) begin
-      nxt_yy <= yy - off_y(last_move[move_num]); // Backs up one move from the previous location.
-    end
-  end
+  // Computes the new y position based on the move to try or backs up one move.                
+  assign nxt_yy = (calc) ? yy + off_y(move_try) : 
+                  (backup) ? yy - off_y(last_move[move_num - 1]) :
+                  yy;               
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////
@@ -169,8 +177,8 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       move_try <= 8'h01; // Initially the first move to try is the LSB move.
     else if (next_move)
       move_try <= {move_try[6:0], 1'b0}; // For every other move, go to successive bits.  
-    else if (go_back) // Go back to the last move and compute a new move from there.
-      move_try <= {last_move[move_num][6:0], 1'b0};
+    else if (backup) // Go back to the last move and compute a new move from there.
+      move_try <= {last_move[move_num - 1][6:0], 1'b0};
 
   // Implement counter to track the current move index of the KnightsTour trace.
   always_ff @(posedge clk)
@@ -192,13 +200,6 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   ///////////////////////////////////////////////////////////////////////
   // Checks if we have more moves to try or go back to a previous move //
   //////////////////////////////////////////////////////////////////////
-  // Implements an SR flop for backing up to allow decrementation first.
-  always_ff @(posedge clk)
-    if (backup)
-      go_back <= 1'b1; // Set the signal to go back if backup is asserted.
-    else
-      go_back <= 1'b0; // Otherwise deassert the signal.
-
   // Checks if there is another move available from the current square.
   assign have_move = (move_try != 8'h80);
 

@@ -10,52 +10,54 @@ z2
 cModel Technology
 dC:/Users/prath/Documents/ECE 551/HW5
 vTourLogic
-DXx6 sv_std 3 std 0 22 WmjPaeP=7F5?QFXzJ>D[Q2
-!s110 1732489649
+Z0 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+!s110 1732511037
 !i10b 1
-!s100 IZi6oF>P7odTEY@c1bS?V2
-Iak1cBEKc7DZS1cN^BheR>0
-Z0 VDg1SIo80bB@j0V0VzS_@n1
-!s105 TourLogic_sv_unit
+!s100 mj]Ab4aOlHhg3?b_D=1_X0
+Z1 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IQENHcYg[XNHF^ZSIeQoF10
+Z2 VDg1SIo80bB@j0V0VzS_@n1
 S1
-dC:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot
-w1732489615
-8C:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv
-FC:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv
-L0 1
-OV;L;10.4d;61
+Z3 dC:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot
+w1732511011
+8C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv
+FC:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv
+!i122 2
+L0 1 295
+Z4 OV;L;2020.1;71
 r1
 !s85 0
 31
-!s108 1732489649.000000
-!s107 C:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv|
-!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv|
+!s108 1732511037.000000
+!s107 C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv|
 !i113 1
-Z1 o-work work -sv
+Z5 o-work work -sv
+Z6 tCvgOpt 0
 n@tour@logic
 vTourLogic_tb
-DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-!s110 1732510947
+R0
+!s110 1732511082
 !i10b 1
 !s100 kYk[7ORTEA<oRoSA>8mdH1
-!s11b Dg1SIo80bB@j0V0VzS_@n1
+R1
 IhDA;`f<z^Ve;ddjgTkJHj1
-R0
+R2
 S1
-dC:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot
+R3
 w1732507418
 8C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv
 FC:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv
-!i122 1
+!i122 4
 L0 1 61
-OV;L;2020.1;71
+R4
 r1
 !s85 0
 31
-!s108 1732510947.000000
+!s108 1732511082.000000
 !s107 C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv|
 !i113 1
-R1
-tCvgOpt 0
+R5
+R6
 n@tour@logic_tb
