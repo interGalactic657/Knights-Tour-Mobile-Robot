@@ -1,4 +1,12 @@
-module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
+/////////////////////////////////////////////////
+// TourLogic.sv                                //
+// This block computes the solution to         //
+// the KnightsTour problem, given a starting   //
+// x and y position on a 5x5 board.            //
+/////////////////////////////////////////////////
+module TourLogic(
+    clk, rst_n, x_start, y_start, go, done, indx, move
+);
 
   input clk,rst_n;				      // 50MHz clock and active low asynch reset
   input [2:0] x_start, y_start;	// starting position on 5x5 board
@@ -16,20 +24,20 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // Declare any internal signals //
   /////////////////////////////////
   ///////////////////////// Board Position Signals ///////////////////////////////////////////
-  logic [4:0] board[0:4][0:4];	// keeps track if position visited
-  logic [7:0] last_move[0:23];  // last move tried from this spot
-  logic [7:0] poss_moves[0:23];	// stores move_poss moves from this position as 8-bit one hot
-  logic [7:0] move_try;				  // one hot encoding of move we will try next
-  logic [4:0] move_num;				  // keeps track of move we are on
-  logic [2:0] xx,yy;					  // current x & y position  
-  logic [2:0] nxt_xx_inc,nxt_yy_inc, nxt_xx_dec, nxt_yy_dec;		// next x & y position
+  logic [4:0] board[0:4][0:4];	      // keeps track if position visited
+  logic [7:0] last_move[0:23];        // last move tried from this spot
+  logic [7:0] poss_moves[0:23];	      // stores move_poss moves from this position as 8-bit one hot
+  logic [7:0] move_try;				        // one hot encoding of move we will try next
+  logic [4:0] move_num;				        // keeps track of move we are on
+  logic [2:0] xx,yy;					        // current x & y position  
+  logic [2:0] nxt_xx_inc, nxt_yy_inc; // next x and y position when moving forward
+  logic [2:0] nxt_xx_dec, nxt_yy_dec;	// next x & y position when backing up
   ////////////////////////////// Movement Logic //////////////////////////////////////////////
   logic move_poss;      // Indicates if the next move is possible.
   logic have_move;      // Indicates that we have more moves to try in the tour.
   logic go_back;        // Used to go back to a previous move and check for other possible moves.
   logic prev_have_move; // Used to validate if the previous move has other possible moves.
   logic tour_done;      // Asserted when the KnightsTour has been finished.
-  logic set_done;       // Used to set SR flop for done signal that alerts TourCmd
   ///////////////////////////// State Machine ///////////////////////////////////////////////
   logic zero;             // Used to clear the board.
   logic init;             // Used to initliaze the board and set registers.
@@ -55,43 +63,33 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	//////////////////////////////////////////////////
   function logic [7:0] calc_poss(input [2:0] xpos,ypos);
     begin
-      //initialize the move_poss moves to 0
-      logic [7:0] poss_moves;
+      // Encodes all the possible moves in the x-direction.
       logic [7:0] xposs_moves;
-      logic [7:0] yposs_moves;
 
-      // $xoff{1} = 1; $yoff{1} = 2;
-      // $xoff{2} = -1; $yoff{2} = 2;
-      // $xoff{4} = -2; $yoff{4} = 1;
-      // $xoff{8} = -2; $yoff{8} = -1;
-      // $xoff{16} = -1; $yoff{16} = -2;
-      // $xoff{32} = 1; $yoff{32} = -2;
-      // $xoff{64} = 2; $yoff{64} = -1;
-      // $xoff{128} = 2; $yoff{128} = 1;
+      // Encodes all the possible moves in the y-direction.
+      logic [7:0] yposs_moves;
       
-      unique case(xpos)
+      unique case(xpos) // Computes all possible moves in the x-direction from a given x.
         3'h0: xposs_moves = 8'b1110_0001;
         3'h1: xposs_moves = 8'b1111_0011;
         3'h2: xposs_moves = 8'b1111_1111;
         3'h3: xposs_moves = 8'b0011_1111;
         3'h4: xposs_moves = 8'b0001_1110;
-        default: xposs_moves = 8'hxx;
+        default: xposs_moves = 8'hxx; // We don't care when it doesn't match, for optimized area.
       endcase
 
-      unique case(ypos)
+      unique case(ypos) // Computes all possible moves in the y-direction from a given y.
         3'h0: yposs_moves = 8'b1000_0111;
         3'h1: yposs_moves = 8'b1100_1111;
         3'h2: yposs_moves = 8'b1111_1111;
         3'h3: yposs_moves = 8'b1111_1100;
         3'h4: yposs_moves = 8'b0111_1000;
-        default: yposs_moves = 8'hxx;
+        default: yposs_moves = 8'hxx; // We don't care when it doesn't match, for optimized area.
       endcase
 
-      poss_moves = xposs_moves & yposs_moves;
-     
-      $display("poss_moves: %b", poss_moves);
-
-      return poss_moves;
+      // We can only move in a certain direction from a given square if both x and y movements are possible
+      // towards that square.
+      calc_poss = xposs_moves & yposs_moves;
     end
   endfunction
 
@@ -142,7 +140,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	    board <= '{'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0}};
 	  else if (init) // Mark the starting position on the board.
 	    board[x_start][y_start] <= 5'h1;
-	  else if (update_position) // Mark the position as visisited with the current move number.
+	  else if (update_position) // Mark the position as visited with the current move number.
 	    board[nxt_xx_inc][nxt_yy_inc] <= move_num + 2'h2;	
 	  else if (backup) // Mark the current square as unvisited.
 	    board[xx][yy] <= 5'h0;
@@ -152,18 +150,18 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     if (init)
       xx <= x_start; // Initialize the starting x-position.
     else if (update_position)
-      xx <= nxt_xx_inc; // Update the current position based on whether we need to update it or go back.
+      xx <= nxt_xx_inc; // Update the current position when we make a move.
     else if (backup)
-      xx <= nxt_xx_dec;
+      xx <= nxt_xx_dec; // Update the current position when we backup.
 
   // Stores the current y position of the Knight on the board.
   always_ff @(posedge clk)
     if (init)
       yy <= y_start; // Initialize the starting y-position.
     else if (update_position)
-      yy <= nxt_yy_inc; // Update the current position based on whether we need to update it or go back.
+      yy <= nxt_yy_inc; // Update the current position when we make a move.
     else if (backup)
-      yy <= nxt_yy_dec;
+      yy <= nxt_yy_dec; // Update the current position when we backup.
   
   // Computes the new x position based on the move to try or backs up one move.
   assign nxt_xx_inc = xx + off_x(move_try);
@@ -171,8 +169,10 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // Computes the new y position based on the move to try or backs up one move.                
   assign nxt_yy_inc = yy + off_y(move_try); 
 
+  // Computes the new x position after backing up one move.
   assign nxt_xx_dec = xx - off_x(last_move[move_num - 1]);
 
+  // Computes the new y position after backing up one move.
   assign nxt_yy_dec = yy - off_y(last_move[move_num - 1]);        
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -184,7 +184,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     if (calc)
       move_try <= 8'h01; // Initially the first move to try is the LSB move.
     else if (next_move)
-      move_try <= {move_try[6:0], 1'b0}; // For every other move, go to successive bits.  
+      move_try <= {move_try[6:0], 1'b0}; // Go to successive moves, if the current move is not possible.  
     else if (backup) // Go back to the last move and compute a new move from there.
       move_try <= {last_move[move_num - 1][6:0], 1'b0};
 
@@ -204,9 +204,6 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       calc_possible_moves <= calc_poss(xx, yy);
     end
   end
-
-  always_ff @(posedge clk)
-    done <= set_done;
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////
@@ -218,7 +215,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // Checks if there is another move available from the previous square.
   assign prev_have_move = (last_move[move_num] != 8'h80);
 
-  // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes.
+  // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging.
   assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx_inc][nxt_yy_inc] == 5'h00);
   assign chk_board = (board[nxt_xx_inc][nxt_yy_inc]);
   assign chk_poss = (poss_moves[move_num] & move_try);
@@ -262,7 +259,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     update_position = 1'b0;   // By default, the Knight's position is not being updated.
     next_move = 1'b0;         // By default, we are not proceeding with the next move.
     backup = 1'b0;            // By default, we are not backtracking from the current position.
-    set_done = 1'b0;              // By default, the KnightsTour is not done.
+    done = 1'b0;              // By default, the KnightsTour is not done.
 
     case (state)
       INIT: begin // Prepares the board and sets up the starting position.
@@ -279,7 +276,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         if (move_poss) begin // Check if a valid move is possible.
             update_position = 1'b1; // Update the knight's position on the board.
             if (tour_done) begin // Check if the KnightsTour has been successfully completed.
-                set_done = 1'b1; // Set the done signal to indicate the tour is finished.
+                done = 1'b1; // Set the done signal to indicate the tour is finished.
                 nxt_state = IDLE; // Transition back to the IDLE state to start a new tour.
             end else
                 nxt_state = POSSIBLE; // If the tour isn't complete, go back to POSSIBLE to complete other moves.
