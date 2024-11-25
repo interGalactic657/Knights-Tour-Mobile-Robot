@@ -37,13 +37,8 @@ module TourLogic_tb();
       end
 	join
 
-	for (y=4; y>=0; y--) begin
-	    $display("%2d  %2d  %2d  %2d  %2d\n",iDUT.board[0][y],iDUT.board[1][y],
-		         iDUT.board[2][y],iDUT.board[3][y],iDUT.board[4][y]);	 
-	end
-	$display("--------------------\n");
-
     $display("YAHOO! Solution found!");
+	repeat(5) @(posedge clk);
 	$stop();
 	
   end

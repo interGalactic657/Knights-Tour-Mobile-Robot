@@ -29,6 +29,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   logic go_back;        // Used to go back to a previous move and check for other possible moves.
   logic prev_have_move; // Used to validate if the previous move has other possible moves.
   logic tour_done;      // Asserted when the KnightsTour has been finished.
+  logic set_done;       // Used to set SR flop for done signal that alerts TourCmd
   ///////////////////////////// State Machine ///////////////////////////////////////////////
   logic zero;             // Used to clear the board.
   logic init;             // Used to initliaze the board and set registers.
@@ -203,6 +204,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       calc_possible_moves <= calc_poss(xx, yy);
     end
   end
+
+  always_ff @(posedge clk)
+    done <= set_done;
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////
@@ -258,7 +262,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     update_position = 1'b0;   // By default, the Knight's position is not being updated.
     next_move = 1'b0;         // By default, we are not proceeding with the next move.
     backup = 1'b0;            // By default, we are not backtracking from the current position.
-    done = 1'b0;              // By default, the KnightsTour is not done.
+    set_done = 1'b0;              // By default, the KnightsTour is not done.
 
     case (state)
       INIT: begin // Prepares the board and sets up the starting position.
@@ -275,7 +279,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         if (move_poss) begin // Check if a valid move is possible.
             update_position = 1'b1; // Update the knight's position on the board.
             if (tour_done) begin // Check if the KnightsTour has been successfully completed.
-                done = 1'b1; // Set the done signal to indicate the tour is finished.
+                set_done = 1'b1; // Set the done signal to indicate the tour is finished.
                 nxt_state = IDLE; // Transition back to the IDLE state to start a new tour.
             end else
                 nxt_state = POSSIBLE; // If the tour isn't complete, go back to POSSIBLE to complete other moves.
