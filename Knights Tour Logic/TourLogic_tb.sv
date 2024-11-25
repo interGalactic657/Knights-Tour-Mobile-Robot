@@ -4,6 +4,8 @@ module TourLogic_tb();
   reg go;
   
   wire done;
+
+  integer x, y;
   
   //////////////////////
   // Instantiate DUT //
@@ -35,6 +37,12 @@ module TourLogic_tb();
       end
 	join
 
+	for (y=4; y>=0; y--) begin
+	    $display("%2d  %2d  %2d  %2d  %2d\n",iDUT.board[0][y],iDUT.board[1][y],
+		         iDUT.board[2][y],iDUT.board[3][y],iDUT.board[4][y]);	 
+	end
+	$display("--------------------\n");
+
     $display("YAHOO! Solution found!");
 	$stop();
 	
@@ -53,7 +61,7 @@ module TourLogic_tb();
     integer x,y;
 	for (y=4; y>=0; y--) begin
 	    $display("%2d  %2d  %2d  %2d  %2d\n",iDUT.board[0][y],iDUT.board[1][y],
-		         iDUT.board[2][y],iDUT.board[3][y],iDUT.board[4][y]);
+		         iDUT.board[2][y],iDUT.board[3][y],iDUT.board[4][y]);	 
 	end
 	$display("--------------------\n");
   end

@@ -1,16 +1,8 @@
-{C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv} {0 {vlog -work work -sv -stats=none {C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv}
-Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+{C:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv} {1 {vlog -work work -sv -stats=none {C:/School/ECE551/Ex21/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv}
+Model Technology ModelSim ALTERA vlog 10.4d Compiler 2015.12 Dec 30 2015
 -- Compiling module TourLogic
-** Error: (vlog-13069) C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv(70): near "xpos": syntax error, unexpected IDENTIFIER, expecting '('.
-** Error: (vlog-13069) C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv(97): near "end": syntax error, unexpected end.
-** Error: C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv(105): (vlog-2730) Undefined variable: 'try'.
-** Error: C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic.sv(106): (vlog-2730) Undefined variable: 'off_x'.
-
-} {4.0 8.0} {}} {C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv} {1 {vlog -work work -sv -stats=none {C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv}
-Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
--- Compiling module TourLogic_tb
 
 Top level modules:
-	TourLogic_tb
+	TourLogic
 
 } {} {}}

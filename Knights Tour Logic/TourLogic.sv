@@ -22,7 +22,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   logic [7:0] move_try;				  // one hot encoding of move we will try next
   logic [4:0] move_num;				  // keeps track of move we are on
   logic [2:0] xx,yy;					  // current x & y position  
-  logic [2:0] nxt_xx,nxt_yy;		// next x & y position
+  logic [2:0] nxt_xx_inc,nxt_yy_inc, nxt_xx_dec, nxt_yy_dec;		// next x & y position
   ////////////////////////////// Movement Logic //////////////////////////////////////////////
   logic move_poss;      // Indicates if the next move is possible.
   logic have_move;      // Indicates that we have more moves to try in the tour.
@@ -43,6 +43,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   logic [4:0] chk_board;
   logic [2:0] chk_off_x;
   logic [2:0] chk_off_y;   
+  logic chk_poss;
   //////////////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////// Functions ////////////////////////////////////////////////
@@ -85,10 +86,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         default: yposs_moves = 8'hxx;
       endcase
 
-      $display("xposs_moves: %b", xposs_moves);
-      $display("yposs_moves: %b", yposs_moves);
-
       poss_moves = xposs_moves & yposs_moves;
+     
+      $display("poss_moves: %b", poss_moves);
 
       return poss_moves;
     end
@@ -142,7 +142,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
 	  else if (init) // Mark the starting position on the board.
 	    board[x_start][y_start] <= 5'h1;
 	  else if (update_position) // Mark the position as visisited with the current move number.
-	    board[nxt_xx][nxt_yy] <= move_num + 2'h2;	
+	    board[nxt_xx_inc][nxt_yy_inc] <= move_num + 2'h2;	
 	  else if (backup) // Mark the current square as unvisited.
 	    board[xx][yy] <= 5'h0;
 
@@ -150,25 +150,29 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk)
     if (init)
       xx <= x_start; // Initialize the starting x-position.
-    else if (update_position | backup)
-      xx <= nxt_xx; // Update the current position based on whether we need to update it or go back.
+    else if (update_position)
+      xx <= nxt_xx_inc; // Update the current position based on whether we need to update it or go back.
+    else if (backup)
+      xx <= nxt_xx_dec;
 
   // Stores the current y position of the Knight on the board.
   always_ff @(posedge clk)
     if (init)
       yy <= y_start; // Initialize the starting y-position.
-    else if (update_position | backup)
-      yy <= nxt_yy; // Update the current position based on whether we need to update it or go back.
+    else if (update_position)
+      yy <= nxt_yy_inc; // Update the current position based on whether we need to update it or go back.
+    else if (backup)
+      yy <= nxt_yy_dec;
   
   // Computes the new x position based on the move to try or backs up one move.
-  assign nxt_xx = (calc) ? (xx + off_x(move_try)) : 
-                  (backup) ? (xx - off_x(last_move[move_num - 1])) :
-                  xx;
+  assign nxt_xx_inc = xx + off_x(move_try);
 
   // Computes the new y position based on the move to try or backs up one move.                
-  assign nxt_yy = (calc) ? yy + off_y(move_try) : 
-                  (backup) ? yy - off_y(last_move[move_num - 1]) :
-                  yy;               
+  assign nxt_yy_inc = yy + off_y(move_try); 
+
+  assign nxt_xx_dec = xx - off_x(last_move[move_num - 1]);
+
+  assign nxt_yy_dec = yy - off_y(last_move[move_num - 1]);        
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////
@@ -196,6 +200,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   always_ff @(posedge clk) begin
     if (calc) begin
       poss_moves[move_num] <= calc_poss(xx, yy); // Stores all possible moves from that location.
+      calc_possible_moves <= calc_poss(xx, yy);
     end
   end
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,7 +215,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   assign prev_have_move = (last_move[move_num] != 8'h80);
 
   // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes.
-  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx][nxt_yy] == 5'h00);
+  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx_inc][nxt_yy_inc] == 5'h00);
+  assign chk_board = (board[nxt_xx_inc][nxt_yy_inc]);
+  assign chk_poss = (poss_moves[move_num] & move_try);
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
