@@ -292,6 +292,7 @@ module cmd_proc_tb();
 
     // Wait for resp_rdy to be asserted (sending 2 bytes over UART_Wrapper), or timeout.
     timeout_task(resp_rdy, 60000, "resp_rdy");
+    
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //// TEST 3: Test whether the move command is processed correctly along with a nudge factor //
     /////////////////////////////////////////////////////////////////////////////////////////////
