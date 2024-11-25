@@ -45,7 +45,72 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   logic [2:0] chk_off_y;   
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  /////////////////////////////// Functions ////////////////////////////////////////////////
+   //////////////////////////////////////////////////////
+	// Returns a packed byte of all the move_poss      //
+  // (at least in bound) moves given coordinates of //
+  // the Knight.                                   //
+	//////////////////////////////////////////////////
+  function logic [7:0] calc_poss(input [2:0] xpos,ypos);
+    begin
+      logic [7:0] try; // A move try to test if it is possible from this square.
+      logic signed [2:0] newx; // A new x position to calculate from this square.
+      logic signed [2:0] newy; // A new y position to calculate from this square.
+      integer i; // Loop index variable.
+      
+      calc_poss = 8'h0; // Initially, there are no possible moves.
+      try = 8'h01; // Start with LSB for the first move.
+      
+      // This for loop iterates through 8 times, for maximum possible moves
+      // from a square on the board.
+      for (i = 0; i < 8; i = i + 1) begin
+        newx = xpos + off_x(try); // Computes the new x position from the current position.
+        newy = ypos + off_y(try); // Computes the new y position from the current position.
+        if ((newx >= 0 && newx < 5) && (newy >= 0 && newy < 5))
+          calc_poss[i] = 1'b1; // Only set that position if it is in range within the board.
+        try = {try[6:0], 1'b0}; // Try the next position from this square.
+      end
+    end
+  endfunction
+
+  //////////////////////////////////////////////////
+	// Returns the x-offset for the Knight to move //
+  // given the encoding of the move to try.     //
+	///////////////////////////////////////////////
+  function signed [2:0] off_x(input [7:0] try);
+  unique case (try) // Computes the offset based on the try.
+    8'b0000_0001: off_x = 3'b001; // 1
+    8'b0000_0010: off_x = 3'b111; // -1
+    8'b0000_0100: off_x = 3'b110; // -2
+    8'b0000_1000: off_x = 3'b110; // -2
+    8'b0001_0000: off_x = 3'b111; // -1
+    8'b0010_0000: off_x = 3'b001; // 1
+    8'b0100_0000: off_x = 3'b010; // 2
+    8'b1000_0000: off_x = 3'b010; // 2
+    default: off_x = 3'bxxx; // We don't care when it doesn't match, for optimized area.
+  endcase
+  endfunction
   
+  //////////////////////////////////////////////////
+	// Returns the y-offset for the Knight to move //
+  // given the encoding of the move to try.     //
+	///////////////////////////////////////////////
+  function signed [2:0] off_y(input [7:0] try);
+  unique case (try) // Computes the offset based on the try.
+      8'b0000_0001: off_y = 3'b010; // 2
+      8'b0000_0010: off_y = 3'b010; // 2
+      8'b0000_0100: off_y = 3'b001; // 1
+      8'b0000_1000: off_y = 3'b111; // -1
+      8'b0001_0000: off_y = 3'b110; // -2
+      8'b0010_0000: off_y = 3'b110; // -2
+      8'b0100_0000: off_y = 3'b111; // -1
+      8'b1000_0000: off_y = 3'b001; // 1
+      default: off_y = 3'bxxx; // We don't care when it doesn't match, for optimized area.
+  endcase
+  endfunction
+  ///////////////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   /*We need a counter to keep track of order of moves to track where on the board the knight has visited
   << 2-D array of 5-bit vectors that keep track of where on the board the knight
      has visited.  Will be reduced to 1-bit boolean after debug phase >>
@@ -66,76 +131,73 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // should be a 5x5 array of 5-bit numbers to store
   // the move number (helpful for debug).  Later it 
   // can be reduced to a single bit (visited or not)
-  ////////////////////////////////////////////////	  
-  always_ff @(posedge clk)
-    if (zero)
-	  board <= '{'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0}};
-	else if (init)
-	  board[x_start][y_start] <= 5'h1;	// mark starting position
-	else if (update_position)
-	  board[nxt_xx][nxt_yy] <= move_num + 2'h2;	// mark as visited
-	else if (backup)
-	  board[xx][yy] <= 5'h0;			// mark as unvisited
+  ////////////////////////////////////////////////
 
-   // For xx
+  /////////////////////////////////////////////////////////////////////
+  // Keeps track of the state of the board while finding a solution //
+  ///////////////////////////////////////////////////////////////////
+  // Implements register to keep track of the state of the board while finding a solution
+  // for the KnightsTour.	  
   always_ff @(posedge clk)
-    if (init)
-    xx <= x_start;
-  else if (update_position | go_back)
-    xx <= nxt_xx;
-  // else if (go_back)
-  //   xx <= xx - off_x(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)?
+    if (zero) // Initialize the board to be 0s.
+	    board <= '{'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0}};
+	  else if (init) // Mark the starting position on the board.
+	    board[x_start][y_start] <= 5'h1;
+	  else if (update_position) // Mark the position as visisited with the current move number.
+	    board[nxt_xx][nxt_yy] <= move_num + 2'h2;	
+	  else if (backup) // Mark the current square as unvisited.
+	    board[xx][yy] <= 5'h0;
 
-  // For yy
+   // Stores the current x position of the Knight on the board.
   always_ff @(posedge clk)
     if (init)
-    yy <= y_start;
-  else if (update_position | go_back)
-    yy <= nxt_yy;
-  // else if (go_back)
-  //   // yy <= yy - off_y(last_move[move_num]); // TODO: Correct? Or do an assignment like nxt_xx (flop)? 
+      xx <= x_start; // Initialize the starting x-position.
+    else if (update_position | go_back)
+      xx <= nxt_xx; // Update the current position based on whether we need to update it or go back.
 
-  // For the next move to try
+  // Stores the current y position of the Knight on the board.
+  always_ff @(posedge clk)
+    if (init)
+      yy <= y_start; // Initialize the starting y-position.
+    else if (update_position | go_back)
+      yy <= nxt_yy; // Update the current position based on whether we need to update it or go back.
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  // Implements the possible moves to try as one-hot encoded signals
   always_ff @(posedge clk)
     if (calc)
-    move_try <= 8'h01;
+    move_try <= 8'h01; // initially the first move to try is the LSB move.
   else if (next_move)
-    move_try <= {move_try[6:0], 1'b0};      
-  else if (go_back)
+    move_try <= {move_try[6:0], 1'b0}; // For every other move, go to successive bits.  
+  else if (go_back) // Go back to the last move and compute a new move from there.
     move_try <= {last_move[move_num][6:0], 1'b0};
 
-  // For last move memory structure that ends up forming the solution  
+  // Implement counter to track the current move index of the KnightsTour trace.
   always_ff @(posedge clk)
-    if (move_poss)
-    last_move[move_num] <= move_try;
+    if (zero)
+      move_num <= 5'h0; // Reset the counter on zero.
+    else if (update_position)
+      move_num <= move_num + 1'b1; // Increment the counter when updating the position of the Knight on the board.
+    else if (backup)
+      move_num <= move_num - 1'b1; // Decrement the counter when going back.
 
-  // For possible moves memory structure used to calculate the possible mvoes
-  // at the given position
-  always_ff @(posedge clk)
+  // Calculates all possible moves from the given position .
+  always_ff @(posedge clk) begin
     if (calc) begin
-    poss_moves[move_num] <= calc_poss(xx, yy);
-    calc_possible_moves <= calc_poss(xx, yy);
+      poss_moves[move_num] <= calc_poss(xx, yy);
+      calc_possible_moves <= calc_poss(xx, yy);
     end
+  end
     
 
 
-  // Checks if there is another move available from the current square
-  assign have_move = (move_try != 8'h80);
 
-  // Checks if there is another move available from the previous square TODO: check if we use move_try here?
-  assign prev_have_move = (last_move[move_num] != 8'h80);
 
-  // For move number
-  always_ff @(posedge clk)
-    if (zero)
-    move_num <= 5'h00;
-  else if (update_position)
-    move_num <= move_num + 1'b1;
-  else if (backup)
-    move_num <= move_num - 1'b1;
+ 
+ 
 
-  // The KnightsTour has been completed after 24 moves, i.e., when move_num is 23.
-  assign tour_done = (move_num == 5'h17);
+  
 
   // Set reset flop for the backup to allow decrementation first TODO: Check if last else clause is correct
   always_ff @(posedge clk)
@@ -144,7 +206,14 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   else
     go_back <= 1'b0;   
 
- 
+   // Checks if there is another move available from the current square
+  assign have_move = (move_try != 8'h80);
+
+  // Checks if there is another move available from the previous square TODO: check if we use move_try here?
+  assign prev_have_move = (last_move[move_num] != 8'h80);
+
+   // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes
+  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx][nxt_yy] == 5'h00);
 
   // For nxt_xx TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
   always_ff @(posedge clk)
@@ -158,102 +227,34 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   end
 
   // For nxt_yy TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
-  always_ff @(posedge clk)
+  always_ff @(posedge clk) begin
     if (calc) begin
-    nxt_yy <= yy + off_y(move_try);
-    chk_off_y <= off_y(move_try);
-    end
-  else if (backup) begin
-    nxt_yy <= yy - off_y(last_move[move_num]);
-    chk_off_y <= off_y(move_try);
+      nxt_yy <= yy + off_y(move_try);
+      chk_off_y <= off_y(move_try);
+  end else if (backup) begin
+      nxt_yy <= yy - off_y(last_move[move_num]);
+      chk_off_y <= off_y(move_try);
+  end
   end
   
-  // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes
-  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx][nxt_yy] == 5'h00);
+ 
   assign chk_board = board[nxt_xx][nxt_yy];
 
-  // Move to output from this block, which is only valid after the done signal has been asserted from the SM
+  ////////////////////////////////////////////////////////////////////////////
+  // Forms the solution to the KnightsTour and returns moves as requested  //
+  //////////////////////////////////////////////////////////////////////////
+  // Stores the solution to the KnightsTour after it is found.
+  always_ff @(posedge clk)
+    if (move_poss)
+      last_move[move_num] <= move_try; // Store the move in the register if the move was possible.
+
+  // Return the move to TourCmd to replay the trace. It is only valid after the solution has been found.
   assign move = last_move[indx];
-  
-  function logic [7:0] calc_poss(input [2:0] xpos,ypos);
-  ///////////////////////////////////////////////////
-	// Consider writing a function that returns a packed byte of
-	// all the move_poss moves (at least in bound) moves given
-	// coordinates of Knight.
-	/////////////////////////////////////////////////////
-    //initialize the move_poss moves to 0
-    // logic [7:0] poss_moves;
-    logic signed [2:0] x_offsets[0:7];
-    logic signed [2:0] y_offsets[0:7];
-    logic signed [3:0] newx;
-    logic signed [3:0] newy;
-    integer i;
 
-    // $xoff{1} = 1; $yoff{1} = 2;
-    // $xoff{2} = -1; $yoff{2} = 2;
-    // $xoff{4} = -2; $yoff{4} = 1;
-    // $xoff{8} = -2; $yoff{8} = -1;
-    // $xoff{16} = -1; $yoff{16} = -2;
-    // $xoff{32} = 1; $yoff{32} = -2;
-    // $xoff{64} = 2; $yoff{64} = -1;
-    // $xoff{128} = 2; $yoff{128} = 1;
-    
-    // poss_moves = 8'b0;
-    calc_poss = 8'h0;
-    x_offsets = '{1, -1, -2, -2, -1, 1, 2, 2};
-    y_offsets = '{2, 2, 1, -1, -2, -2, -1, 1};
-    // poss_moves = 8'b0;
-    
-    for (i = 0; i < 8; i = i + 1) begin
-      newx = xpos + x_offsets[i];
-      newy = ypos + y_offsets[i];
-      if ((newx >= 0 && newx < 5) && (newy >= 0 && newy < 5))
-        calc_poss[i] = 1'b1;
-    end
-  endfunction
+  // The KnightsTour has been completed after 24 moves, i.e., when move_num is 23.
+  assign tour_done = (move_num == 5'h17);
+  ////////////////////////////////////////////////////////////////////////////////
   
-  function signed [2:0] off_x(input [7:0] try);
-    ///////////////////////////////////////////////////
-	// Consider writing a function that returns a the x-offset
-	// the Knight will move given the encoding of the move you
-	// are going to try.  Can also be useful when backing up
-	// by passing in last move you did try, and subtracting 
-	// the resulting offset from xx
-	/////////////////////////////////////////////////////
-  unique case (try)
-    8'b0000_0001: off_x = 3'b001; // 1
-    8'b0000_0010: off_x = 3'b111; // -1
-    8'b0000_0100: off_x = 3'b110; // -2
-    8'b0000_1000: off_x = 3'b110; // -2
-    8'b0001_0000: off_x = 3'b111; // -1
-    8'b0010_0000: off_x = 3'b001; // 1
-    8'b0100_0000: off_x = 3'b010; // 2
-    8'b1000_0000: off_x = 3'b010; // 2
-    default: off_x = 3'bxxx;
-  endcase
-  endfunction
-  
-  function signed [2:0] off_y(input [7:0] try);
-  ///////////////////////////////////////////////////
-	// Consider writing a function that returns a the y-offset
-	// the Knight will move given the encoding of the move you
-	// are going to try.  Can also be useful when backing up
-	// by passing in last move you did try, and subtracting 
-	// the resulting offset from yy
-	/////////////////////////////////////////////////////
-  unique case (try)
-      8'b0000_0001: off_y = 3'b010; // 2
-      8'b0000_0010: off_y = 3'b010; // 2
-      8'b0000_0100: off_y = 3'b001; // 1
-      8'b0000_1000: off_y = 3'b111; // -1
-      8'b0001_0000: off_y = 3'b110; // -2
-      8'b0010_0000: off_y = 3'b110; // -2
-      8'b0100_0000: off_y = 3'b111; // -1
-      8'b1000_0000: off_y = 3'b001; // 1
-      default: off_y = 3'bxxx;
-  endcase
-  endfunction
-
   /////////////////////////////////////
   // Implements State Machine Logic //
   ///////////////////////////////////
