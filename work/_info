@@ -35,7 +35,7 @@ Z1 o-work work -sv
 n@tour@logic
 vTourLogic_tb
 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-!s110 1732508571
+!s110 1732510947
 !i10b 1
 !s100 kYk[7ORTEA<oRoSA>8mdH1
 !s11b Dg1SIo80bB@j0V0VzS_@n1
@@ -46,13 +46,13 @@ dC:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot
 w1732507418
 8C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv
 FC:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv
-!i122 0
+!i122 1
 L0 1 61
 OV;L;2020.1;71
 r1
 !s85 0
 31
-!s108 1732508571.000000
+!s108 1732510947.000000
 !s107 C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/owner/ECE 551/Exercises/Knights-Tour-Mobile-Robot/Knights Tour Logic/TourLogic_tb.sv|
 !i113 1

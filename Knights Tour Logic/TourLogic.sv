@@ -57,9 +57,6 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       logic signed [2:0] newx; // A new x position to calculate from this square.
       logic signed [2:0] newy; // A new y position to calculate from this square.
       integer i; // Loop index variable.
-
-      if (xpos  3) && (ypos > )
-      endcase
       
       calc_poss = 8'h0; // Initially, there are no possible moves.
       try = 8'h01; // Start with LSB for the first move.
@@ -268,20 +265,20 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
             update_position = 1'b1; // Update the knight's position on the board.
             if (tour_done) begin // Check if the KnightsTour has been successfully completed.
                 done = 1'b1; // Set the done signal to indicate the tour is finished.
-                next_state = IDLE; // Transition back to the IDLE state to start a new tour.
+                nxt_state = IDLE; // Transition back to the IDLE state to start a new tour.
             end else
-                next_state = POSSIBLE; // If the tour isn't complete, go back to POSSIBLE to complete other moves.
+                nxt_state = POSSIBLE; // If the tour isn't complete, go back to POSSIBLE to complete other moves.
         end else if (have_move) begin // The current move was not possible, so attempt to proceed to the next move.
             next_move = 1'b1; // Proceed with the next move.
         end else begin // If no moves are possible, the Knight must backtrack.
             backup = 1'b1; // Initiate the backtracking process.
-            next_state = BACKUP; // Transition to the BACKUP state to backtrack and try different paths.
+            nxt_state = BACKUP; // Transition to the BACKUP state to backtrack and try different paths.
         end
       end
 
       BACKUP: begin // Handles the situation when no valid moves are available, and the Knight needs to backtrack.
         if (prev_have_move) // Check if there was a valid move to backtrack to.
-          next_state = MAKE_MOVE; // If there was a valid previous move, proceed to make the next move.
+          nxt_state = MAKE_MOVE; // If there was a valid previous move, proceed to make the next move.
         else
           backup = 1'b1; // If no previous valid move exists to backtrack to, keep backtracking.
       end
