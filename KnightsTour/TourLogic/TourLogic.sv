@@ -47,12 +47,6 @@ module TourLogic(
   logic backup;           // Used to backup if there are no other possible moves.
   state_t state;          // Holds the current state.
   state_t nxt_state;      // Holds the next state.
-  ////////////////////////////// Debugging Logic ///////////////////////////////////////////
-  logic [7:0] calc_possible_moves;
-  logic [4:0] chk_board;
-  logic [2:0] chk_off_x;
-  logic [2:0] chk_off_y;   
-  logic chk_poss;
   //////////////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////// Functions ////////////////////////////////////////////////
@@ -140,8 +134,8 @@ module TourLogic(
 	    board <= '{'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0}};
 	  else if (init) // Mark the starting position on the board.
 	    board[x_start][y_start] <= 5'h1;
-	  else if (update_position) // Mark the position as visited with the current move number.
-	    board[nxt_xx_inc][nxt_yy_inc] <= move_num + 2'h2;	
+	  else if (update_position) // Mark the position as visited.
+	    board[nxt_xx_inc][nxt_yy_inc] <= 1'b1;	
 	  else if (backup) // Mark the current square as unvisited.
 	    board[xx][yy] <= 5'h0;
 
@@ -198,12 +192,9 @@ module TourLogic(
       move_num <= move_num - 1'b1; // Decrement the counter when going back.
 
   // Calculates all possible moves from a given position.
-  always_ff @(posedge clk) begin
-    if (calc) begin
+  always_ff @(posedge clk)
+    if (calc)
       poss_moves[move_num] <= calc_poss(xx, yy); // Stores all possible moves from that location.
-      calc_possible_moves <= calc_poss(xx, yy);
-    end
-  end
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ///////////////////////////////////////////////////////////////////////
@@ -215,10 +206,8 @@ module TourLogic(
   // Checks if there is another move available from the previous square.
   assign prev_have_move = (last_move[move_num] != 8'h80);
 
-  // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging.
-  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx_inc][nxt_yy_inc] == 5'h00);
-  assign chk_board = (board[nxt_xx_inc][nxt_yy_inc]);
-  assign chk_poss = (poss_moves[move_num] & move_try);
+  // Checks if the next move we want to make is possible and that square is not visited yet.
+  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx_inc][nxt_yy_inc] == 1'h0);
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
