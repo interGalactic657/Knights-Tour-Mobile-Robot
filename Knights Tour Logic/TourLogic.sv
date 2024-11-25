@@ -85,6 +85,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
         default: yposs_moves = 8'hxx;
       endcase
 
+      $display("xposs_moves: %b", xposs_moves);
+      $display("yposs_moves: %b", yposs_moves);
+
       poss_moves = xposs_moves & yposs_moves;
 
       return poss_moves;
