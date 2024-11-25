@@ -46,7 +46,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   //////////////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////// Functions ////////////////////////////////////////////////
-   //////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////
 	// Returns a packed byte of all the move_poss      //
   // (at least in bound) moves given coordinates of //
   // the Knight.                                   //
@@ -57,6 +57,9 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       logic signed [2:0] newx; // A new x position to calculate from this square.
       logic signed [2:0] newy; // A new y position to calculate from this square.
       integer i; // Loop index variable.
+
+      if (xpos  3) && (ypos > )
+      endcase
       
       calc_poss = 8'h0; // Initially, there are no possible moves.
       try = 8'h01; // Start with LSB for the first move.
@@ -110,29 +113,6 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   endfunction
   ///////////////////////////////////////////////////////////////////////////////////////////
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-  /*We need a counter to keep track of order of moves to track where on the board the knight has visited
-  << 2-D array of 5-bit vectors that keep track of where on the board the knight
-     has visited.  Will be reduced to 1-bit boolean after debug phase >>
-
-  << 1-D array (of size 24) to keep track of last move taken from each move index >>
-
-
-  << 1-D array (of size 24) to keep track of move_poss moves from each move index >>
-  << move_try ... not sure you need this.  I had this to hold move I would try next >>
-  << move number...when you have moved 24 times you are done.  Decrement when backing up >>
-  << xx, yy couple of 3-bit vectors that represent the current x/y coordinates of the knight>>
-  
-  << below I am giving you an implementation of the one of the register structures you have >>
-  << to infer (board[][]).  You need to implement the rest, and the controlling SM >> */
-  ///////////////////////////////////////////////////
-  // The board memory structure keeps track of where 
-  // the knight has already visited.  Initially this 
-  // should be a 5x5 array of 5-bit numbers to store
-  // the move number (helpful for debug).  Later it 
-  // can be reduced to a single bit (visited or not)
-  ////////////////////////////////////////////////
-
   /////////////////////////////////////////////////////////////////////
   // Keeps track of the state of the board while finding a solution //
   ///////////////////////////////////////////////////////////////////
@@ -161,17 +141,39 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
       yy <= y_start; // Initialize the starting y-position.
     else if (update_position | go_back)
       yy <= nxt_yy; // Update the current position based on whether we need to update it or go back.
+  
+  // Computes the new x position based on the move to try or backs up one move.
+  always_ff @(posedge clk) begin
+    if (calc) begin     
+      nxt_xx <= xx + off_x(move_try); // Computes the new x-position based on the offset.
+      chk_off_x <= off_x(move_try); 
+    end else if (backup) begin
+      nxt_xx <= xx - off_x(last_move[move_num]); // Backs up one move from the previous location.
+      chk_off_x <= off_x(move_try);
+    end
+  end
+
+  // Computes the new y position based on the move to try or backs up one move.
+  always_ff @(posedge clk) begin
+    if (calc) begin
+      nxt_yy <= yy + off_y(move_try); // Computes the new y-position based on the offset.
+    end else if (backup) begin
+      nxt_yy <= yy - off_y(last_move[move_num]); // Backs up one move from the previous location.
+    end
+  end
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
+  /////////////////////////////////////////////////////////////
+  // Computes all possible moves from the current position  //
+  ///////////////////////////////////////////////////////////
   // Implements the possible moves to try as one-hot encoded signals
   always_ff @(posedge clk)
     if (calc)
-    move_try <= 8'h01; // initially the first move to try is the LSB move.
-  else if (next_move)
-    move_try <= {move_try[6:0], 1'b0}; // For every other move, go to successive bits.  
-  else if (go_back) // Go back to the last move and compute a new move from there.
-    move_try <= {last_move[move_num][6:0], 1'b0};
+      move_try <= 8'h01; // Initially the first move to try is the LSB move.
+    else if (next_move)
+      move_try <= {move_try[6:0], 1'b0}; // For every other move, go to successive bits.  
+    else if (go_back) // Go back to the last move and compute a new move from there.
+      move_try <= {last_move[move_num][6:0], 1'b0};
 
   // Implement counter to track the current move index of the KnightsTour trace.
   always_ff @(posedge clk)
@@ -182,63 +184,33 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
     else if (backup)
       move_num <= move_num - 1'b1; // Decrement the counter when going back.
 
-  // Calculates all possible moves from the given position .
+  // Calculates all possible moves from a given position.
   always_ff @(posedge clk) begin
     if (calc) begin
-      poss_moves[move_num] <= calc_poss(xx, yy);
-      calc_possible_moves <= calc_poss(xx, yy);
+      poss_moves[move_num] <= calc_poss(xx, yy); // Stores all possible moves from that location.
     end
   end
-    
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
- 
- 
-
-  
-
-  // Set reset flop for the backup to allow decrementation first TODO: Check if last else clause is correct
+  ///////////////////////////////////////////////////////////////////////
+  // Checks if we have more moves to try or go back to a previous move //
+  //////////////////////////////////////////////////////////////////////
+  // Implements an SR flop for backing up to allow decrementation first.
   always_ff @(posedge clk)
     if (backup)
-    go_back <= 1'b1;
-  else
-    go_back <= 1'b0;   
+      go_back <= 1'b1; // Set the signal to go back if backup is asserted.
+    else
+      go_back <= 1'b0; // Otherwise deassert the signal.
 
-   // Checks if there is another move available from the current square
+  // Checks if there is another move available from the current square.
   assign have_move = (move_try != 8'h80);
 
-  // Checks if there is another move available from the previous square TODO: check if we use move_try here?
+  // Checks if there is another move available from the previous square.
   assign prev_have_move = (last_move[move_num] != 8'h80);
 
-   // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes
+  // Checks if the next move we want to make is possible TODO: Change to 1'h0 when done debugging and see if nxt_xx and nxt_yy are right indexes.
   assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx][nxt_yy] == 5'h00);
-
-  // For nxt_xx TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
-  always_ff @(posedge clk)
-    if (calc) begin     
-    nxt_xx <= xx + off_x(move_try);
-    chk_off_x <= off_x(move_try); 
-    end
-  else if (backup) begin
-    nxt_xx <= xx - off_x(last_move[move_num]);
-    chk_off_x <= off_x(move_try);
-  end
-
-  // For nxt_yy TODO: Check if control signals are correct?? Or to use an assign for this (like above)??
-  always_ff @(posedge clk) begin
-    if (calc) begin
-      nxt_yy <= yy + off_y(move_try);
-      chk_off_y <= off_y(move_try);
-  end else if (backup) begin
-      nxt_yy <= yy - off_y(last_move[move_num]);
-      chk_off_y <= off_y(move_try);
-  end
-  end
-  
- 
-  assign chk_board = board[nxt_xx][nxt_yy];
+ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
   // Forms the solution to the KnightsTour and returns moves as requested  //
@@ -254,7 +226,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   // The KnightsTour has been completed after 24 moves, i.e., when move_num is 23.
   assign tour_done = (move_num == 5'h17);
   ////////////////////////////////////////////////////////////////////////////////
-  
+
   /////////////////////////////////////
   // Implements State Machine Logic //
   ///////////////////////////////////
@@ -271,7 +243,7 @@ module TourLogic(clk,rst_n,x_start,y_start,go,done,indx,move);
   ////////////////////////////////////////////////////////////////////////////////////////
   always_comb begin
     /* Default all SM outputs & nxt_state */
-    next_state = state;       // By default, assume we remain in the current state.
+    nxt_state = state;        // By default, assume we remain in the current state.
     zero = 1'b0;              // By default, we are not clearing the board.
     init = 1'b0;              // By default, the initialization is not triggered.
     calc = 1'b0;              // By default, we are not calculating possible moves from a given square.
