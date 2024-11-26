@@ -9,171 +9,142 @@
 // (D-term) to achieve precise and stable control.      //
 /////////////////////////////////////////////////////////
 module PID(
-  input logic clk, // System clock signal. 
-  input logic rst_n, // Asynchronous active low reset.
-  input logic moving, // The Knight is moving so PID should be active.
-  input logic err_vld, // A new error signal is valid and should be accumulated into I_term.
-  input logic signed [11:0] error, // Signed 12-bit error term between desired and actual heading.
-  input logic [9:0] frwrd, // Summed with PID to form lft_spd,right_spd
-  output logic signed [10:0] lft_spd, // Signed left motor speed.
-  output logic signed [10:0] rght_spd // Signed right motor speed.
+  input clk, rst_n,				                  // System clock and asynch active low reset
+  input moving,                             // Clear I_term f not moving
+  input err_vld,                            // Compute I & D again when vld
+  input signed	[11:0] error,	              // 12-bit signed error term (heading - desired_heading)
+  input [9:0] frwrd,                        // Summed iwth PID to form lft_spd, rght_spd
+  output signed [10:0] lft_spd, rght_spd    // These form the input to mtr_drv
 );
-	/////////////////////////////////////////////////
-	// Declare any internal signals as type logic //
-	///////////////////////////////////////////////
-	////////////////////// P_term //////////////////////////////////////////
-	logic signed [9:0] err_sat;   // Saturated error term in 10 bits.
-	localparam P_COEFF = 6'h10;   // Coefficient used to compute the P_term.
-	logic signed [13:0] P_term;   // proportional term (P_term) required to correct heading
-	////////////////////// I_term //////////////////////////////////////////
-	logic signed [14:0] err_sat_ext; // Sign extend the 10-bit saturated error term to 15 bits.
-	logic signed [14:0] sum; // Sum of new error with previous value.
-	logic ov; // Signal used for detecting overflow.
-	logic signed [14:0] accumulate; // Stores either the new computed sum, or previous result.
-	logic signed [14:0] nxt_integrator; // New result to store in the system.
-	logic signed [14:0] integrator; // Computed I_term over multiple clock cycles, only the most significant 9 bits used.
-	logic signed [8:0] I_term; // The I_term for use in PID control.
-	////////////////////// D_term //////////////////////////////////////////
-	logic signed [9:0] first_error;    // The first valid error.
-	logic signed [9:0] second_error;  // The second valid error.
-	logic signed [9:0] prev_err;     // The third recent valid error.
-	logic signed [9:0] D_diff;      // Difference between the third valid error and current error.
-	logic signed [7:0] D_diff_sat; // Saturate the 10-bit difference term to 8 bits.
-	localparam D_COEFF = 5'h07;   // Coefficient used to compute the D_term.
-	logic signed [12:0] D_term; // The D_term for use in PID control.
-	///////////////////////// PID ///////////////////////////////////////////
-	logic signed [13:0] P_term_ext; // Sign extended (P_term) required to correct heading.
-	logic signed [13:0] I_term_ext; // Sign extended I_term for use in PID control.
-	logic signed [13:0] D_term_ext; // Sign extended D_term for use in PID control.
-	logic signed [13:0] PID_term; // The PID term for correcting system heading.
-	logic signed [10:0] frwrd_ext; // Zero extended frwrd term for computation.
-	logic signed [10:0] lft_spd_raw; // The raw left speed, formed by summing frwrd_ext term with PID term.
-	logic signed [10:0] rght_spd_raw; // The raw right speed, formed by subtracting PID term from frwrd_ext term.
-	////////////////////////////////////////////////////////////////////////
-	
-	///////////////////////////////////////////
-	// Implement P_term as dataflow verilog //
-	/////////////////////////////////////////
 
-	// Saturate error: clamp to 0x1FF if error is greater than max, 
-	// 0x200 if error is less than min, else use the 10 least significant
-	// bits as the error, where max and min are the most positive
-	// and most negative numbers representable in signed 10 bit binary.
-    assign err_sat = (~error[11] & |error[10:9]) ? 10'h1FF:
-					 (error[11] & ~&error[10:9]) ? 10'h200:
-					 error[9:0];
-	
-	// Calculate the P_term by multiplying the saturated error term
-	// with the chosen coefficient.
-	assign P_term = err_sat * $signed(P_COEFF);
-	
-	////////////////////////////////////////////////////////////
-	// Implement I_term as dataflow and behaviorial verilog  //
-	//////////////////////////////////////////////////////////
-	
-	// Sign extend the 10-bit saturated error term to 15 bits.
-    assign err_sat_ext = {{5{err_sat[9]}}, err_sat};
-	
-	// Infer an accumulator to sum up previous value with current value.
-	assign sum = err_sat_ext + integrator;
-	
-	/* OVERFLOW DETECTION LOGIC */
-	// Inferring a 2:1 MUX and checking if the MSBs of each, 
-	// the currently stored sum and the new error term 
-	// are equal, then we check if the sum has a different sign, meaning the sum
-	// has overflowed. Otheriwse, we have not overflowed the sum.
-	assign ov = (err_sat_ext[14] ^ integrator[14]) ? 1'b0 : (sum[14] ^ err_sat_ext[14]);
-	
-	// Infer a 2:1 MUX to decide whether to store new result or keep previous value
-	// based on overflow and having a valid error term.
-	assign accumulate = (~ov & err_vld) ? sum : integrator;
-	
-	// Infer a 2:1 MUX to store a result, either previous or newly computed
-	// value if the robot is moving. Otherwise, clear the currently stored value to 0,
-	// as the robot is currently idle.
-	assign nxt_integrator = (moving) ? accumulate : 15'h0000;
-	
-	// Infer a positive edge triggered flip-flop with active low asynchronous
-	// reset, for performing integration over multiple clock cycles.
-	always_ff @(posedge clk, negedge rst_n)
-	    // Reset the flop to 0.
-		if(!rst_n)
-			integrator <= 15'h0000;
-		else
-			// Store the previous value.
-			integrator <= nxt_integrator;
-			
-	// Grab the most significant 9 bits of the integrator as the I_term.
-	assign I_term = integrator[14:6];
+  ///////////////////////////////////
+  // Declare any internal signals //
+  /////////////////////////////////
+  logic signed [9:0] err_sat;                       // Saturated error to 10 bits
+  /* P Term */
+  localparam signed P_COEFF = 6'h10;                // Coefficient to compute P_term
+  logic signed  [13:0] P_term;                      // 14-bit signed P component of PID controller
+  /* I Term */
+  logic signed [14:0] err_ext;                      // Sign externsion of the saturated error
+  logic signed [14:0] sum, accum;                   // Holds sum of integration and what to be added
+  logic signed [14:0] integrator, nxt_integrator;   // Values to be fed to the I_term
+  logic ov;                                         // Overflow has occured for I_term
+  logic signed [8:0] I_term;                        // The I_term for eventual use in PID control
+  /* D Term */
+  localparam signed D_COEFF = 5'h07;                // Coefficient to compute D_term
+  logic signed [9:0] stage1, stage2;                // reg for flops to hold previous values
+  logic signed [9:0] prev_err, D_diff;              // reg for past error value used and difference between it and the current value
+  logic signed [7:0] diff_sat;                      // holds the difference saturated to 8 bits
+  logic signed  [12:0] D_term ;                     // The D_term for eventual use in PID control
 
-	////////////////////////////////////////////////////////////
-	// Implement D_term as dataflow and behaviorial verilog  //
-	//////////////////////////////////////////////////////////
-	
-	// Infer a 3 flop pipeline, each holding the first, second, and most recent valid error
-	// to compute the difference in the error over 3 clock cycles. 
-	always_ff @(posedge clk, negedge rst_n) begin
-		// Reset all flip-flops.
-		if(!rst_n) begin
-			first_error <= 10'h000;
-			second_error <= 10'h000;
-			prev_err <= 10'h000;
-		end else if(err_vld) begin
-			// Store the new error if err_vld is asserted, else store the previous error. 
-			first_error <= err_sat;
-			second_error <= first_error;
-			prev_err <= second_error;
-		end
-	end
+  logic signed [13:0] P_ext, I_ext, D_ext;          // Sign extended PID terms
+  logic signed [13:0] PID_term;                     // Sum of all the PID terms
 
-	// Compute the difference in the current error and 3rd recent error.
-	assign D_diff = err_sat - prev_err;
+  logic signed [10:0] frwrd_ext;                    // Zero extended frwrd term
+  logic signed [10:0] raw_lft_spd, raw_rght_spd;    // Holds the summed values before saturaion
 
-	// Saturate the difference as an 8-bit signed term.
-	assign D_diff_sat = (~D_diff[9] & |D_diff[8:7]) ? 8'h7F:
-					    (D_diff[9] & ~&D_diff[8:7]) ? 8'h80:
-					    D_diff[7:0];
-			
-	// Calculate the D_term by multiplying the saturated difference term
-	// with the chosen coefficient.
-	assign D_term = D_diff_sat * $signed(D_COEFF);
+  //////////////////////////////
+  // Saturate the error term //
+  ////////////////////////////
+  assign err_sat = (!error[11] && |error[10:9]) ? 10'h1FF :
+                   (error[11] && !(&error[10:9])) ? 10'h200 :
+                   error[9:0];
 
-	/////////////////////////////////////////
-	// Implement PID as dataflow verilog  //
-	///////////////////////////////////////
+  /////////////////////////////////////
+  // Get the P term from saturation //
+  ///////////////////////////////////
+  assign P_term = err_sat * P_COEFF;
 
-	// Divide the P_term by 2 and sign extend the result to 14 bits.
-	assign P_term_ext = {P_term[13],P_term[13:1]};
+  /////////////////////////////////////////
+  // Extend and add error to integrator //
+  ///////////////////////////////////////
+  assign err_ext = {{5{err_sat[9]}}, err_sat};
+  assign sum = err_ext + integrator;
 
-	// Sign extend the I_term to 14 bits.
-	assign I_term_ext = {{5{I_term[8]}},I_term};
+  // check for overflow
+  assign ov = (err_ext[14] ^ integrator[14]) ? 1'b0 : (err_ext[14] ^ sum[14]);
 
-	// Sign extend the D_term to 14 bits.
-	assign D_term_ext = {D_term[12],D_term};
+  ///////////////////////////////////////////
+  // Get the new value for the integrator //
+  /////////////////////////////////////////
+  assign accum = (err_vld & ~ov) ? sum : integrator;
+  assign nxt_integrator = moving ? accum : 15'h0000;
 
-	// Form the PID term by summing the P,I,D terms.
-	assign PID_term = P_term_ext + I_term_ext + D_term_ext;
+  always_ff @(posedge clk or negedge rst_n)
+    if(!rst_n)
+      integrator <= 15'h0000;
+    else
+      integrator <= nxt_integrator;
 
-	// Zero extend the frwrd term for computation.
-	assign frwrd_ext = {1'b0, frwrd};
+  /////////////////////////////////////////
+  // Get the I term from the integrator //
+  ///////////////////////////////////////
+  assign I_term = integrator[14:6];
 
-	// Stores the raw left speed if the robot is moving. 
-	// Otherwise, clear the currently stored value to 0,
-	// as the robot is currently idle.
-	assign lft_spd_raw = (moving) ? (PID_term[13:3] + frwrd_ext) : 11'h000;
 
-	// Stores the raw right speed if the robot is moving. 
-	// Otherwise, clear the currently stored value to 0,
-	// as the robot is currently idle.
-	assign rght_spd_raw = (moving) ? (frwrd_ext - PID_term[13:3]) : 11'h000;
+  ///////////////////////////////////////////////
+  // Flop the error 3 times to have past data //
+  /////////////////////////////////////////////
+  always_ff @(posedge clk or negedge rst_n) begin
+    if(!rst_n) begin
+      stage1 <= 0;
+      stage2 <= 0;
+      prev_err <= 0;
+    end
+    else if (err_vld) begin
+      stage1 <= err_sat;
+      stage2 <= stage1;
+      prev_err <= stage2;
+    end
+  end
 
-	// Clamp lft_spd to 0x3FF if the PID_term was positive but
-	// the lft_spd_raw was negative, else use the raw computed value 
-	// as the lft_spd.
-    assign lft_spd = (~PID_term[13] & lft_spd_raw[10]) ? 11'h3FF : lft_spd_raw;
+  /////////////////////////////////////////////////
+  // Get difference between curr and prev error //
+  ///////////////////////////////////////////////
+  assign D_diff = err_sat - prev_err;
 
-	// Clamp rght_spd to 0x3FF if rght_spd_raw was more
-	// positive than could be represented in 11 bits, 
-	// else use the raw computed value as the rght_spd.
-    assign rght_spd =  (PID_term[13] & rght_spd_raw[10]) ? 11'h3FF : rght_spd_raw;
+  // saturate difference to 8 bits
+  assign diff_sat = (!D_diff[9] && |D_diff[8:7]) ? 8'h7F :
+                    (D_diff[9] && !(&D_diff[8:7])) ? 8'h80 :
+                    D_diff[7:0];
+
+  ////////////////////////////////////////////
+  // Multiply by coeff to get final D_term //
+  //////////////////////////////////////////
+  assign D_term = diff_sat * D_COEFF;
+
+
+  ///////////////////////////////////////
+  // Sign extend and sum up PID terms //
+  /////////////////////////////////////
+  assign P_ext = {P_term[13], P_term[13:1]};
+  assign I_ext = {{5{I_term[8]}}, I_term};
+  assign D_ext = {D_term[12], D_term};
+
+  assign PID_term = P_ext + I_ext + D_ext;
+
+  ///////////////////////////////////////////////////////////////////////////
+  // Calculate left and right speed based on PID and its forward movement //
+  /////////////////////////////////////////////////////////////////////////
+  // Zero extended frwrd to match bits
+  assign frwrd_ext = {1'b0, frwrd};
+
+  // Ensure Knight is moving when calulating speed
+  assign raw_lft_spd = moving ? frwrd_ext + PID_term[13:3] :
+                                11'h000;
+
+  assign raw_rght_spd = moving ? frwrd_ext - PID_term[13:3] :
+                                 11'h000;
+
+  /////////////////////////////////////////////////////
+  // Saturate left and right speed based on results //
+  ///////////////////////////////////////////////////
+  // Saturate lft if PID is positive and raw value is negative
+  assign lft_spd = (~PID_term[13] & raw_lft_spd[10]) ? 11'h3FF :
+                                                       raw_lft_spd;
+
+  // Saturate rght if PID is negative and raw value is negative
+  assign rght_spd = (PID_term[13] & raw_rght_spd[10]) ? 11'h3FF :
+                                                        raw_rght_spd;
+
 endmodule
