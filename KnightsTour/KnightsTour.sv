@@ -68,7 +68,7 @@ module KnightsTour(
   ///////////////////////////////////////////////////
   // Instantiate tour logic that solves the moves //
   /////////////////////////////////////////////////  
-  TourLogic iTL(.clk(clk),.rst_n(rst_n),.x_start(cmd[6:4]),.y_start(cmd[2:0]),
+  TourLogic iTL(.clk(clk),.rst_n(rst_n),.x_start(cmd[7:4]),.y_start(cmd[3:0]),
                 .go(tour_go),.done(start_tour),.indx(mv_indx),.move(move));
 				
   ///////////////////////////////////////////////////////////////
