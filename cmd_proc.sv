@@ -72,7 +72,6 @@ module cmd_proc(
   logic move_cmd;                      // The command that tells Knight to move from the state machine.
   logic calibrate_y;                   // Indicates calibration of the y-position of the Knight.
   logic reverse_heading;               // Indicates that we are reversing the heading of the Knight.
-  logic reverse;                       // Pulsed high for one clock cycle to load pulse count register.
   logic moving_back;                   // Indicates that we are moving the Knight backwards.
   logic clr_frwrd;                     // Tells the Knight to ramp up its speed starting from 0.
   logic inc_frwrd;                     // Tells the Knight to ramp up its speed.
@@ -155,7 +154,7 @@ module cmd_proc(
   always_ff @(posedge clk) begin
     if (move_cmd | calibrate_y)
       pulse_cnt <= 5'h0; // Reset to 0 initially when begining a move or moving forward to calibrate the y-position.
-    else if (reverse)
+    else if (reverse_heading)
       pulse_cnt <= 5'h1; // When we are reversing the Knight, load in one as we won't see two pulses on the way back.
     else if (pulse_detected)
       pulse_cnt <= pulse_cnt + 1'b1; // Increment the pulse count whenever we detect that cntrIR went high.
@@ -261,7 +260,6 @@ module cmd_proc(
     move_cmd = 1'b0;        // By default, we are not processing a move command.
     calibrate_y = 1'b0;     // By default, we are not calibrating the y-position of the Knight.
     reverse_heading = 1'b0; // By default, we are not reversing the heading of the Knight.
-    reverse = 1'b0;         // By default, we are not modifying the pulse count register. 
     moving = 1'b0;          // By default, the Knight is not moving.
     moving_back = 1'b0;     // By default, we are not moving backwards.
     clr_frwrd = 1'b0;       // By default, the forward speed register is not cleared.
@@ -331,7 +329,6 @@ module cmd_proc(
           moving = 1'b1; // We only move when the absolute value of the error is within the threshold.
           moving_back = 1'b1; // Indicate that we are moving backwards.
           clr_frwrd = 1'b1; // Clear the forward register.
-          reverse = 1'b1;   // Asserted for one clock cycle for pulse counter to be loaded with one (as we won't see a second pulse on the way back).
           nxt_state = BACKUP; // Move to the backup state.
         end
       end
