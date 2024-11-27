@@ -61,7 +61,7 @@ module cmd_proc(
   logic cntrIR_prev;                   // Previous cntrIR signal from the IR sensor.
   //////////////////////// Y-Calibration Logic ////////////////////////////////////////////
   logic [3:0] y_pos;                   // Indicates the current y-position of the Knight from the start of the board.
-  logic off_board;                     // Indicates that the Knight is off the board.
+  logic fall_edge_pulse;               // Used to know when the Knight is off the board.
   logic square_done;                   // Indicates that one single square has been moved by the Knight
   logic came_back;                     // Indicates that the Knight returned to the original position after calibration.
   ////////////////////////////// PID Interface Logic ////////////////////////////////////
@@ -186,8 +186,9 @@ module cmd_proc(
   // Indicates that the Knight moved a single sqaure in the reverse direction, if the pulse count is a multiple of two.
   assign square_done = (~pulse_cnt[0]);
 
-  // We know that the Knight is off the board if the Knight stopped and a cntrIR pulse is still detected.
-  assign off_board = ((zero) && (pulse_detected)); 
+  // A fall-edge detector on cntrIR to know when we are off the board. We expect the cntrIR signal to previously be high
+  // but go low within a square after coming to a stop.
+  assign fall_edge_pulse = cntrIR_prev & ~cntrIR; 
 
   // We came back to the starting location when the offset reached zero.
   assign came_back = (y_pos == 4'h0);
@@ -305,7 +306,7 @@ module cmd_proc(
         dec_frwrd = 1'b1; // Decrement speed.
         if (zero) begin // If forward speed reaches zero.
           if (opcode == CALY) begin // If we are calibrating the y-position, we need to check if the Knight is off the board.
-            if (off_board)
+            if (!fall_edge_pulse) // If the Knight came to a stop but did not detect a falling edge on cntrIR, it means the Knight is off the board.
               nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees. 
             else
               if (came_back) begin // This is only true if we returned back to the starting position.
