@@ -142,35 +142,36 @@ module cmd_proc(
       square_cnt <= cmd[3:0]; // Load in the number of squares to move when the command is asserted.
     else if (calibrate_y)
       square_cnt <= 4'h1; // By default, we move one square at a time till off the board to calibrate the y-position.
-    else if (rotate_heading)
+    else if (reverse_heading)
       square_cnt <= y_pos; // Load in y_pos to move the Knight back to the original starting location.
   end
 
   // Implement counter to count number of times the cntrIR pulse went high. 
   always_ff @(posedge clk) begin
-    // Reset to 0 initially when begining a move.
     if (move_cmd)
-      pulse_cnt <= 5'h0;
+      pulse_cnt <= 5'h0; // Reset to 0 initially when begining a move.
+    else if (reverse)
+      pulse_cnt <= 5'h1; // When we are reversing the Knight, load in the one.
     else if (pulse_detected)
-    // Increment the pulse count whenever we detect that cntrIR went high.
-      pulse_cnt <= pulse_cnt + 1'b1;     
+      pulse_cnt <= pulse_cnt + 1'b1; // Increment the pulse count whenever we detect that cntrIR went high.
   end
 
   // Implement counter to track the offset of the Knight from the end of the board.
   always_ff @(posedge clk, negedge rst_n) begin
     if (!rst_n)
       y_pos <= 4'h0; // Reset the offset to zero initially.
-    else if (move_done)
-      y_pos <= y_pos + 1'b1; // Increment the offset to know how far the Knight is from the end of the board.
     else if (square_done)
-      y_pos <= y_pos - 1'b1; // Decrement the offset as we are heading back.
+      if (moving_back)
+        y_pos <= y_pos - 1'b1; // Decrement the offset as we are heading back.
+      else
+        y_pos <= y_pos + 1'b1; // Increment the offset to know how far the Knight is from the end of the board.
   end
 
   // We came back to the starting location when the offset reached zero.
   assign came_back = (y_pos == 4'h0);
 
-  // Indicates that the Knight moved a single sqaure in the reverse direction.
-  assign square_done = (moving_back) && (pulse_cnt == 2'h2);
+  // Indicates that the Knight moved a single sqaure in the reverse direction, if the pulse count is a multiple of two.
+  assign square_done = (~pulse_cnt[0]);
 
   // Compare whether the pulse count detected is 2 times the number of sqaures requested to move,
   // to indicate that a move is complete.
@@ -210,10 +211,8 @@ module cmd_proc(
     end 
     else if (calibrate_y)
         desired_heading <= 12'h000; // We always move north to calibrate the y-position.
-    else if (rotate_heading)
-        desired_heading <= 12'h3FF; // Rotate Knight CW by 90 degrees first..
-    else if (reverse_heading)
-        desired_heading <= 12'h7FF; // Rotate the Knight CW by another 90 degrees CW to now face south.
+    else (reverse_heading)
+        desired_heading <= 12'h7FF; // Rotate the Knight CW by 180 degrees to now face south.
   end
 
   // Form the error term as the difference of the actual and desired heading with the nudge factor.
@@ -272,11 +271,11 @@ module cmd_proc(
         if (error_abs < 12'h02C) begin
           moving = 1'b1;    // We only move when the absolute value of the error is within the threshold.
           clr_frwrd = 1'b1; // Clear the forward register.
-          nxt_state = FINCR; // Move to the increment speed state.
+          nxt_state = INCR; // Move to the increment speed state.
         end
       end
 
-      FINCR : begin // State to increment speed.
+      INCR : begin // State to increment speed.
         inc_frwrd = 1'b1; // Increment forward speed.
         moving = 1'b1; // Continue moving.
         if (move_done) begin // If movement is complete.
@@ -291,8 +290,7 @@ module cmd_proc(
         if (zero) begin // If forward speed reaches zero.
           if (opcode == CALY) begin // If we are calibrating the y-position, we need to check if the Knight is off the board.
             if (off_board) begin 
-              rotate_heading = 1'b1; // If the Knight is off the board, we have to rotate the heading once CW.
-              nxt_state = ROTATE; // Head to the ROTATE state to reverse the heading of the Knight CW by 90 degrees more.
+              nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees.
             end 
             else
               if (came_back) begin // This is only true if we returned back to the starting position.
@@ -311,21 +309,17 @@ module cmd_proc(
           moving = 1'b1; // Continue moving if not zero.
       end
 
-      ROTATE : begin // Reverse the heading of the Knight by 90 degrees CW.
-        if (error_abs < 12'h02C) // Don't reverse a further 90 degrees until the absolute error is below the threshold.
-          nxt_state = BACKUP;
-      end
-
-      BACKUP : begin // Reverse the heading of the Knight by 90 degrees CW.
+      REVERSE : begin // Reverse the heading of the Knight by 90 degrees CW.
         reverse_heading = 1'b1; // Reverse the heading of the Knight again by 90 degrees if off the board.
+        reverse = 1'b1;
         if (error_abs < 12'h02C) begin // Don't reverse a further 90 degrees until the absolute error is below the threshold.
           moving = 1'b1;    // We only move when the absolute value of the error is within the threshold.
           clr_frwrd = 1'b1; // Clear the forward register.
-          nxt_state = INCR; // Move to the increment speed state.
+          nxt_state = BACKUP; // Move to the increment speed state.
         end
       end
 
-      BINCR : begin // State to increment speed.
+      BACKUP : begin // State to increment speed.
         inc_frwrd = 1'b1; // Increment forward speed.
         moving = 1'b1; // Continue moving.
         moving_back = 1'b1; // Signal to indicate that we are moving back.
