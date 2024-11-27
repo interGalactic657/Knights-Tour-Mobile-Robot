@@ -1,0 +1,69 @@
+# Read in the Verilog files for the Knights Tour design
+read_file -format sverilog { ./KnightsTour.sv ./KnightPhysics.sv ./cmd_proc/cmd_proc.sv \
+    ./inert_intf/inert_intf.sv ./IR_intf/IR_intf.sv ./MtrDrv/MtrDrv.sv \
+    ./MtrDrv/PWM11/PWM11.sv ./PID/PID.sv ./rst_synch/rst_synch.sv \
+    ./sponge/sponge.sv ./TourCmd/TourCmd.sv ./TourLogic/TourLogic.sv \
+    ./UART_wrapper/UART_wrapper.sv ./UART_wrapper/RemoteComm.sv \
+    ./UART_wrapper/UART/UART_rx/UART_rx.sv ./UART_wrapper/UART/UART_tx/UART_tx.sv \
+    ./UART_wrapper/UART/UART.v ./SPI_INEMO4.sv }
+
+# Set the current design to the Knights Tour design
+set current_design KnightsTour
+
+# Create a clock signal named "clk" 
+create_clock -name "clk" -period 3 -waveform {0 1.5} {clk}
+
+# Sets a clock uncertainty of 0.15ns 
+set_clock_uncertainty 0.15 [get_clocks]
+
+# Specify that the clock network should not be modified by synthesis tools
+set_dont_touch_network [find port clk]
+
+# Create the primary inputs set, excluding the clock signal
+set prim_inputs [remove_from_collection [all_inputs] [find port clk]]
+
+# Set an input delay of 0.4 units relative to the clock signal for the primary inputs
+set_input_delay -clock clk 0.4 $prim_inputs
+
+# Specify that the primary inputs are driven by a NAND gate with specific properties from the 'saed32lvt_tt0p85v25c' library
+set_driving_cell -lib_cell NAND2X2_LVT -library saed32lvt_tt0p85v25c $prim_inputs
+
+# Reaffirm that the clock network should not be modified by synthesis tools
+set_dont_touch_network [find port clk]
+
+# Defines an output delay of 0.4ns on all outputs.
+set_output_delay -clock clk 0.4 [all_outputs]
+
+# Defines a 0.10pf load on all outputs.
+set_load 0.1 [all_outputs]
+
+# Sets a max transition time of 0.15ns on all nodes.
+set_max_transition 0.15 [current_design]
+
+#Employs the Synopsys 32nm wire load model for a block of size 16000 sq microns
+set_wire_load_model -name 16000 -library saed32lvt_tt0p85v25c
+
+#Compile the design
+compile -map_effort medium
+
+#Flatten the design
+ungroup -all -flatten
+
+#Compile the design again
+compile -map_effort medium
+
+#Report the min timing
+report_timing -delay min
+
+#Report the max timing
+report_timing -delay max
+
+#Generate the area report
+report_area > KnightsTour_area.txt
+
+#Make the netlist
+write -format verilog KnightsTour -output KnightsTour.vg
+
+#Write out a SDC file
+write_sdc -output KnightsTour.sdc
+
