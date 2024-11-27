@@ -148,6 +148,9 @@ module cmd_proc(
       pulse_cnt <= pulse_cnt + 1'b1;     
   end
 
+  // Grab opcode that is being held in cmd.
+  assign opcode = op_t'(cmd[15:12]);
+
   // Compare whether the pulse count detected is 2 times the number of sqaures requested to move,
   // to indicate that a move is complete.
   assign move_done = (pulse_cnt == {square_cnt, 1'b0});
@@ -207,7 +210,6 @@ module cmd_proc(
   always_comb begin
     /* Default all SM outputs & nxt_state */
     nxt_state = state;   // By default, assume we are in the current state.
-    opcode = op_t'(cmd[15:12]); // Grab opcode that is being held in cmd.
     strt_cal = 1'b0;     // By default, do not start calibration of the gyro.
     move_cmd = 1'b0;     // By default, we are not processing a move command.
     moving = 1'b0;       // By default, the Knight is not moving.
