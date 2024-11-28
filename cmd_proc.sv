@@ -6,7 +6,7 @@
 // module.                                       //
 ///////////////////////////////////////////////////
 module cmd_proc(
-    clk, rst_n, cmd, cmd_rdy, clr_cmd_rdy, send_resp, strt_cal,
+    clk, rst_n, cmd, modified_cmd, cmd_rdy, clr_cmd_rdy, send_resp, strt_cal,
     cal_done, heading, heading_rdy, lftIR, cntrIR, rghtIR, error,
     frwrd, moving, tour_go, fanfare_go
 );
@@ -18,6 +18,7 @@ module cmd_proc(
   input         cmd_rdy;                  // command ready
   output logic  clr_cmd_rdy;              // mark command as consumed
   output logic  send_resp;                // command finished, send_response via UART_wrapper/BT
+  output logic [15:0] modified_cmd;             // modified tour command with y-offset appended
 
   output logic  strt_cal;                 // initiate calibration of gyro
   input         cal_done;                 // calibration of gyro done
@@ -119,9 +120,9 @@ module cmd_proc(
 
   generate // Decrement frwrd by different amounts based on whether FAST_SIM is enabled.
     if (FAST_SIM)
-      assign dec_amt = 7'h40;
+      assign dec_amt = (opcode == CALY) ? 7'h35 : 7'h40;
     else 
-      assign dec_amt = 7'h06;
+      assign dec_amt = (opcode == CALY) ? 7'h04 : 7'h06;
   endgenerate
   //////////////////////////////////////////////////////////////////////////
  
@@ -160,6 +161,9 @@ module cmd_proc(
       pulse_cnt <= pulse_cnt + 1'b1; // Increment the pulse count whenever we detect that cntrIR went high.
   end
 
+  // Grab opcode that is being held in cmd.
+  assign opcode = op_t'(cmd[15:12]);
+
   // Compare whether the pulse count detected is 2 times the number of sqaures requested to move,
   // to indicate that a move is complete.
   assign move_done = (pulse_cnt == {square_cnt, 1'b0});
@@ -192,11 +196,8 @@ module cmd_proc(
   // We came back to the starting location when the offset reached zero.
   assign came_back = (y_pos == 4'h0);
 
-  // Grab opcode that is being held in cmd.
-  assign opcode = op_t'(cmd[15:12]);
-
   // Concatenate the incoming command with the correct offset after calibration.
-  assign cmd = (opcode == CALY) ? (cmd | (4'h5 - square_cnt)) : cmd; 
+  assign modified_cmd = (opcode == CALY) ? (cmd | (4'h5 - square_cnt)) : cmd; 
   /////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////////////////
@@ -343,7 +344,7 @@ module cmd_proc(
 
       default : begin // IDLE state - waits for a command
         if (cmd_rdy) begin // If a command is ready split into the following states based on the opcode.
-          unique case (opcode)
+          case (opcode)
             TOUR : begin
               tour_go = 1'b1; // Enable Knight's tour.
             end
