@@ -2,10 +2,10 @@
 # Read in the verilog files first #
 ###################################
 read_file -format sverilog {../KnightsTour.sv ../reset_synch/reset_synch.sv \
-    ../inert_intf/inert_intf.sv ../inert_intf/gyro_intf/inertial_integrator.sv  \
-    ../inert_intf/gyro_intf/SPI_mnrch.sv ../TourLogic/TourLogic.sv \
-    ../TourCmd/TourCmd.sv ../sponge/sponge.sv ../cmd_proc/cmd_proc.sv \
-    ../UART_wrapper/UART_wrapper.sv ../UART_wrapper/UART/UART.v  \ 
+    ../inert_intf/inert_intf.sv ../inert_intf/gyro_intf/inertial_integrator.sv \
+    ../inert_intf/gyro_intf/SPI_mnrch.sv ../IR_intf/IR_intf.sv \
+    ../TourLogic/TourLogic.sv ../TourCmd/TourCmd.sv ../sponge/sponge.sv ../cmd_proc/cmd_proc.sv \
+    ../UART_wrapper/UART_wrapper.sv ../UART_wrapper/UART/UART.v \
     ../UART_wrapper/UART/UART_rx/UART_rx.sv ../UART_wrapper/UART/UART_tx/UART_tx.sv \
     ../PID/PID.sv ../MtrDrv/MtrDrv.sv ../MtrDrv/PWM11/PWM11.sv}
 
