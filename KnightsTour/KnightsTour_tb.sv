@@ -59,8 +59,17 @@ module KnightsTour_tb();
     ////////////////////////////////////
     // Start issuing commands to DUT //
     //////////////////////////////////
+    // Check that NEMO_setup is being asserted after initialization.
+    TimeoutTask(.sig(iPHYS.iNEMO.NEMO_setup), .clk(clk), .clks2wait(1000000), .signal("NEMO_setup"));
+
     // Send a command to calibrate the gyro of the Knight.
     SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Check that cal_done is being asserted after calibration.
+    TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
+
+    // Check that a positive acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
   end
   
   always
