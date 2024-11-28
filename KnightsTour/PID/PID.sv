@@ -78,7 +78,7 @@ module PID(
 
   // Store a result, either previous or newly computed value if the robot is moving. Otherwise, 
   // clear the currently stored value to 0 as the robot is currently idle.
-	assign nxt_integrator = (moving) ? accumulate : 15'h0000;
+	assign nxt_integrator = (moving) ? accum : 15'h0000;
 
   // Performs integration over multiple clock cycles.
 	always_ff @(posedge clk, negedge rst_n)

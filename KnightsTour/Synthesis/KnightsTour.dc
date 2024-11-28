@@ -1,11 +1,11 @@
-# Read in the Verilog files for the Knights Tour design
-read_file -format sverilog { ./KnightsTour.sv ./KnightPhysics.sv ./cmd_proc/cmd_proc.sv \
-    ./inert_intf/inert_intf.sv ./IR_intf/IR_intf.sv ./MtrDrv/MtrDrv.sv \
-    ./MtrDrv/PWM11/PWM11.sv ./PID/PID.sv ./rst_synch/rst_synch.sv \
-    ./sponge/sponge.sv ./TourCmd/TourCmd.sv ./TourLogic/TourLogic.sv \
-    ./UART_wrapper/UART_wrapper.sv ./UART_wrapper/RemoteComm.sv \
-    ./UART_wrapper/UART/UART_rx/UART_rx.sv ./UART_wrapper/UART/UART_tx/UART_tx.sv \
-    ./UART_wrapper/UART/UART.v ./SPI_INEMO4.sv }
+# Read in the design files
+read_file -format sverilog { ../KnightsTour.sv ../KnightPhysics.sv ../cmd_proc/cmd_proc.sv \
+    ../inert_intf/inert_intf.sv ../IR_intf/IR_intf.sv ../MtrDrv/MtrDrv.sv \
+    ../MtrDrv/PWM11/PWM11.sv ../PID/PID.sv ../reset_synch/reset_synch.sv \
+    ../sponge/sponge.sv ../TourCmd/TourCmd.sv ../TourLogic/TourLogic.sv \
+    ../UART_wrapper/UART_wrapper.sv ../UART_wrapper/RemoteComm.sv \
+    ../UART_wrapper/UART/UART_rx/UART_rx.sv ../UART_wrapper/UART/UART_tx/UART_tx.sv \
+    ../UART_wrapper/UART/UART.v ../SPI_iNEMO4.sv }
 
 # Set the current design to the Knights Tour design
 set current_design KnightsTour
