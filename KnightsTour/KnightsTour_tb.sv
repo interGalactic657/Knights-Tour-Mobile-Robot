@@ -1,9 +1,10 @@
 module KnightsTour_tb();
 
+  import tb_tasks::*;
+
   localparam FAST_SIM = 1;
   
-  
-  /////////////////////////////
+  ///////////////////////////
   // Stimulus of type reg //
   /////////////////////////
   reg clk, RST_n;
@@ -25,7 +26,7 @@ module KnightsTour_tb();
   //////////////////////
   // Instantiate DUT //
   ////////////////////
-  KnightsTour iDUT(.clk(clk), .RST_n(RST_n), .SS_n(SS_n), .SCLK(SCLK),
+  KnightsTour #(FAST_SIM) iDUT(.clk(clk), .RST_n(RST_n), .SS_n(SS_n), .SCLK(SCLK),
                    .MOSI(MOSI), .MISO(MISO), .INT(INT), .lftPWM1(lftPWM1),
 				   .lftPWM2(lftPWM2), .rghtPWM1(rghtPWM1), .rghtPWM2(rghtPWM2),
 				   .RX(TX_RX), .TX(RX_TX), .piezo(piezo), .piezo_n(piezo_n),
@@ -45,11 +46,21 @@ module KnightsTour_tb();
                       .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
 					  .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
 					  .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n)); 
-				   
+	
+  ///////////////////////////////////////////////////////////
+  // Test procedure to apply stimulus and check responses //
+  /////////////////////////////////////////////////////////
   initial begin
- 
-    << Your magic goes here >>
+    /////////////////////////////
+    // Initialize all signals //
+    ///////////////////////////
+    Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
 
+    ////////////////////////////////////
+    // Start issuing commands to DUT //
+    //////////////////////////////////
+    // Send a command to calibrate the gyro of the Knight.
+    SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
   end
   
   always
