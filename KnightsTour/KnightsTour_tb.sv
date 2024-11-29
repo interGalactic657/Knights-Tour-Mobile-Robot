@@ -56,12 +56,46 @@ module KnightsTour_tb();
     ///////////////////////////
     Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
 
-    ////////////////////////////////////
-    // Start issuing commands to DUT //
-    //////////////////////////////////
+    ///////////////////////////////////////////////
+    // TEST 1: Test signals post initialization //
+    /////////////////////////////////////////////
+    // Check that the PWM signals are running and at midrail right after reset.
+    if (iDUT.lftPWM1 !== 1'bx) begin
+      $display("ERROR: lftPWM1 signal should have been midrail after reset but was not.");
+      $stop(); 
+    end
+
+    if (iDUT.lftPWM2 !== 1'bx) begin
+      $display("ERROR: lftPWM2 signal should have been midrail after reset but was not.");
+      $stop(); 
+    end
+
+    if (iDUT.rghtPWM1 !== 1'bx) begin
+      $display("ERROR: rghtPWM1 signal should have been midrail after reset but was not.");
+      $stop(); 
+    end
+    if (iDUT.rghtPWM2 !== 1'bx) begin
+      $display("ERROR: rghtPWM2 signal should have been midrail after reset but was not.");
+      $stop(); 
+    end
+
+    if (iDUT.piezo !== 1'bx) begin
+      $display("ERROR: piezo signal should have been midrail after reset but was not.");
+      $stop(); 
+    end
+
+    if (iDUT.piezo_n !== 1'bx) begin
+      $display("ERROR: piezo_n signal should have been midrail after reset but was not.");
+      $stop(); 
+    end
+
     // Check that NEMO_setup is being asserted after initialization.
     TimeoutTask(.sig(iPHYS.iNEMO.NEMO_setup), .clk(clk), .clks2wait(1000000), .signal("NEMO_setup"));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////
+    // TEST 2: Test signals post calibration //
+    //////////////////////////////////////////
     // Send a command to calibrate the gyro of the Knight.
     SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
@@ -70,6 +104,16 @@ module KnightsTour_tb();
 
     // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////
+    // TEST 3: Test whether the move command is processed correctly //
+    /////////////////////////////////////////////////////////////////
+    // Send a command to move the Knight west by one square.
+    SendCmd(.cmd_to_send(16'h43F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Check that a movement acknowledge is received from the DUT.
+    ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
   end
   
   always

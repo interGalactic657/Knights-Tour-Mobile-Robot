@@ -59,4 +59,16 @@ package tb_tasks;
     end
   endtask
 
+  // Task to check if an acknowledge is received from the DUT.
+  task automatic ChkAck(ref resp_rdy, ref clk, ref resp);
+    // Wait 60000 clock cycles, and ensure that a response is received.
+    TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
+
+    // Check that an acknowledge of 0x5A is received.
+    if (resp !== 8'h5A) begin
+      $display("ERROR: resp should have been 8'h5A but was 0x%h", resp);
+      $stop(); 
+    end
+  endtask
+
 endpackage
