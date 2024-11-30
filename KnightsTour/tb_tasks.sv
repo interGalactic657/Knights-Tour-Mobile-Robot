@@ -1,8 +1,9 @@
 package tb_tasks;
 
-  localparam CAL_GYRO =  16'h2000;
+  localparam CAL_GYRO = 16'h2000;
 
-  localparam POS_ACK   = 8'hA5;
+  localparam POS_ACK = 8'hA5;
+  localparam ACK   = 8'h5A;
   
   // Task to initialize all input signals to default values.
   task automatic Initialize(ref clk, ref RST_n, ref send_cmd, ref [15:0] cmd);
@@ -53,7 +54,7 @@ package tb_tasks;
     TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
 
     // Check that a positive acknowledge of 0xA5 is received.
-    if (resp !== 8'hA5) begin
+    if (resp !== POS_ACK) begin
       $display("ERROR: resp should have been 8'hA5 but was 0x%h", resp);
       $stop(); 
     end
@@ -65,7 +66,7 @@ package tb_tasks;
     TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
 
     // Check that an acknowledge of 0x5A is received.
-    if (resp !== 8'h5A) begin
+    if (resp !== ACK) begin
       $display("ERROR: resp should have been 8'h5A but was 0x%h", resp);
       $stop(); 
     end
