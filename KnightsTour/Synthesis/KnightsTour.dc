@@ -15,6 +15,8 @@ read_file -format sverilog {../KnightsTour.sv ../reset_synch/reset_synch.sv \
 set current_design KnightsTour
 link
 
+set_max_area 0
+
 #####################################
 # Constrain and assign assign clock #
 #####################################
@@ -45,7 +47,7 @@ set_max_transition 0.15 [current_design]
 ##########################
 # Now kick off synthesis #
 ##########################
-compile -map_effort medium
+compile -map_effort medium -area_effort high
 
 #####################
 # Flatten hierarchy #
@@ -55,7 +57,8 @@ ungroup -all -flatten
 ###############
 # 2nd Compile #
 ###############
-compile -map_effort medium 
+set compile_incremental_mapping true
+compile -map_effort medium -area_effort high 
 
 ####################################################
 # Take a look at max & min timings as well as area #
@@ -63,9 +66,11 @@ compile -map_effort medium
 report_timing -delay min > KnightsTour_min_delay.txt
 report_timing -delay max > KnightsTour_max_delay.txt
 report_area > KnightsTour_area.txt
+#report_area -hierarchy > KnightsTour_area.txt
+
 
 ########################################################
 # Write out resulting synthesized netlist and SDC file #
 ########################################################
 write -format verilog KnightsTour -output KnightsTour.vg
-write_sdc -output KnightsTour.sdc
+write_sdc KnightsTour.sdc
