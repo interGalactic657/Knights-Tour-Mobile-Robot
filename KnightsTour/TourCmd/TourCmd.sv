@@ -202,7 +202,7 @@ module TourCmd(
   // Send a response of 0x5A after every intermediate move, otherwise send 0xA5 if on the last component 
   // of the last move and the KnightsTour is complete. When the tour is done and command control goes back 
   // to UART_wrapper, we want the response to be 0xA5.
-  assign resp = (tour_done & ~cmd_control) ? 8'hA5 : 8'h5A;
+  assign resp = (cmd_control) ? ((tour_done) ? 8'hA5 : 8'h5A) : 8'hA5;
 
   // Usurp control of the command bus when cmd_control is asserted, otherwise UART_wrapper has control.
   assign cmd = (cmd_control) ? cmd_TOUR : cmd_UART;
