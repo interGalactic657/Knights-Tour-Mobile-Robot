@@ -3,7 +3,7 @@ package tb_tasks;
   localparam CAL_GYRO = 16'h2000;
 
   localparam POS_ACK = 8'hA5;
-  localparam ACK   = 8'h5A;
+  localparam ACK = 8'h5A;
   
   // Task to initialize all input signals to default values.
   task automatic Initialize(ref clk, ref RST_n, ref send_cmd, ref [15:0] cmd);
