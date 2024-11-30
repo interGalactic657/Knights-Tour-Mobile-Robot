@@ -24,7 +24,7 @@ module TourLogic(
   // Declare any internal signals //
   /////////////////////////////////
   ///////////////////////// Board Position Signals ///////////////////////////////////////////
-  logic [4:0] board[0:4][0:4];	      // keeps track if position visited
+  logic board[0:4][0:4];	            // keeps track if position visited
   logic [7:0] last_move[0:23];        // last move tried from this spot
   logic [7:0] poss_moves[0:23];	      // stores move_poss moves from this position as 8-bit one hot
   logic [7:0] move_try;				        // one hot encoding of move we will try next
@@ -133,11 +133,11 @@ module TourLogic(
     if (zero) // Initialize the board to be 0s.
 	    board <= '{'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0},'{0,0,0,0,0}};
 	  else if (init) // Mark the starting position on the board.
-	    board[x_start][y_start] <= 5'h1;
+	    board[x_start][y_start] <= 1'b1;
 	  else if (update_position) // Mark the position as visited.
 	    board[nxt_xx_inc][nxt_yy_inc] <= 1'b1;	
 	  else if (backup) // Mark the current square as unvisited.
-	    board[xx][yy] <= 5'h0;
+	    board[xx][yy] <= 1'b0;
 
    // Stores the current x position of the Knight on the board.
   always_ff @(posedge clk)
@@ -207,7 +207,7 @@ module TourLogic(
   assign prev_have_move = (last_move[move_num] != 8'h80);
 
   // Checks if the next move we want to make is possible and that square is not visited yet.
-  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx_inc][nxt_yy_inc] == 1'h0);
+  assign move_poss = (poss_moves[move_num] & move_try) && (board[nxt_xx_inc][nxt_yy_inc] == 1'b0);
  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
