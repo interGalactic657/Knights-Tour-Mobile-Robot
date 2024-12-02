@@ -160,8 +160,10 @@ module KnightsTour_tb();
     //TODO: 
 
     ///////////////////////////////////////////////////////////////////
-    // TEST xx: Test moving north by four squares from south edge    //
+    // TEST xx: Test first few moves of tour                        //
     /////////////////////////////////////////////////////////////////
+
+  end
   
   always
     #5 clk = ~clk;
