@@ -49,6 +49,7 @@ module TourCmd(
   logic inc_index;         // Used to Increment the move index counter to the next move.
   logic cap_vert;          // Used to capture the vertical component of the move.
   logic cap_horz;          // Used to capture the horizontal component of the move.
+  logic last_move;         // Used to determine if we are on the last horizontal component of the tour.
   logic fanfare_go;        // Kick off the "Charge!" fanfare on piezo when the Knight completes an L-shape.
   state_t state;           // Holds the current state.
   state_t nxt_state;       // Holds the next state.   
@@ -200,8 +201,8 @@ module TourCmd(
   assign cmd_TOUR = {opcode, heading, square_cnt};
 
   // If the command bus is in control of UART_wrapper we always send 0xA5, otherwise we send 0x5A
-  // on every other move except the last move of the tour.
-  assign resp = (cmd_control) ? ((tour_done) ? 8'hA5 : 8'h5A) : 8'hA5;
+  // on every other move except the last component of the last move of the tour.
+  assign resp = (cmd_control) ? ((last_move) ? 8'hA5 : 8'h5A) : 8'hA5;
 
   // Usurp control of the command bus when cmd_control is asserted, otherwise UART_wrapper has control.
   assign cmd = (cmd_control) ? cmd_TOUR : cmd_UART;
@@ -226,13 +227,14 @@ module TourCmd(
   ////////////////////////////////////////////////////////////////////////////////////////
   always_comb begin
     /* Default all SM outputs & nxt_state */
-    nxt_state = state;  // By default, assume we are in the current state.
-    cmd_control = 1'b1; // Uses commands from TourCmd by default, otherwise from UART_Wrapper.
-    clr_index = 1'b0;   // By default, we are not clearing the move counter.
-    inc_index = 1'b0;   // By default, we are not incrementing the move index.
-    cap_vert = 1'b0;    // By default, we are not capturing the vertical position of the move.
-    cap_horz = 1'b0;    // By default, we are not capturing the horizontal position of the move.
-    fanfare_go = 1'b0;  // By default, we are not moving the Knight with fanfare.
+    nxt_state = state;   // By default, assume we are in the current state.
+    cmd_control = 1'b1;  // Uses commands from TourCmd by default, otherwise from UART_Wrapper.
+    clr_index = 1'b0;    // By default, we are not clearing the move counter.
+    inc_index = 1'b0;    // By default, we are not incrementing the move index.
+    cap_vert = 1'b0;     // By default, we are not capturing the vertical position of the move.
+    cap_horz = 1'b0;     // By default, we are not capturing the horizontal position of the move.
+    last_move = 1'b0;    // By defualt, assume we are not on the last component of the last move of the tour.
+    fanfare_go = 1'b0;   // By default, we are not moving the Knight with fanfare.
     cmd_rdy_TOUR = 1'b0; // By defualt, assume we are not done with processing the move.
 
     case (state)
@@ -261,6 +263,7 @@ module TourCmd(
       HOLDH : begin // Waits for an acknowledgement from the Knight that the horizontal move has been processed.
         if(send_resp) begin // Once the command is acknowledged, go to the next move, or go back to IDLE, if tour is done.
           if (tour_done) begin
+            last_move = 1'b1; // Indicates that this is the last component of the last move of the tour.
             nxt_state = IDLE; // We completed the KnightsTour, so go back to IDLE until requested to play again.
           end else begin
             inc_index = 1'b1; // Increment the move index to the next move.
