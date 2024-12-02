@@ -35,7 +35,7 @@ module TourCmd(
   // Declare any internal signals //
   /////////////////////////////////
   ///////////////////////// Move Count Logic ///////////////////////////////////////////
-  logic tour_done;         // Asserted when the KnightsTour has been finished.
+  logic last_move;         // Used to determine if we are on the last move the tour.
   ////////////////////////////// Move Decoding Logic ////////////////////////////////////
   logic [3:0] square_cnt;  // The number of squares the Knight must move on the board.
   heading_t heading;       // Form the direction the Knight should move based on the move.
@@ -49,7 +49,7 @@ module TourCmd(
   logic inc_index;         // Used to Increment the move index counter to the next move.
   logic cap_vert;          // Used to capture the vertical component of the move.
   logic cap_horz;          // Used to capture the horizontal component of the move.
-  logic last_move;         // Used to determine if we are on the last horizontal component of the tour.
+  logic tour_done;         // Asserted when the KnightsTour has been finished.
   logic fanfare_go;        // Kick off the "Charge!" fanfare on piezo when the Knight completes an L-shape.
   state_t state;           // Holds the current state.
   state_t nxt_state;       // Holds the next state.   
@@ -68,8 +68,8 @@ module TourCmd(
       mv_indx <= mv_indx + 1'b1;  // Increment the counter to get the next move.
   end
 
-  // The KnightsTour has been completed after 24 moves, i.e., when move_indx is 23.
-  assign tour_done = (mv_indx == 5'h17);
+  // We are on the last move of the tour when move_indx is 23.
+  assign last_move = (mv_indx == 5'h17);
   //////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////
@@ -202,7 +202,7 @@ module TourCmd(
 
   // If the command bus is in control of UART_wrapper we always send 0xA5, otherwise we send 0x5A
   // on every other move except the last component of the last move of the tour.
-  assign resp = (cmd_control) ? ((last_move) ? 8'hA5 : 8'h5A) : 8'hA5;
+  assign resp = (cmd_control) ? ((tour_done) ? 8'hA5 : 8'h5A) : 8'hA5;
 
   // Usurp control of the command bus when cmd_control is asserted, otherwise UART_wrapper has control.
   assign cmd = (cmd_control) ? cmd_TOUR : cmd_UART;
@@ -233,7 +233,7 @@ module TourCmd(
     inc_index = 1'b0;    // By default, we are not incrementing the move index.
     cap_vert = 1'b0;     // By default, we are not capturing the vertical position of the move.
     cap_horz = 1'b0;     // By default, we are not capturing the horizontal position of the move.
-    last_move = 1'b0;    // By defualt, assume we are not on the last component of the last move of the tour.
+    tour_done = 1'b0;    // By defualt, assume we are not done with the KnightsTour.
     fanfare_go = 1'b0;   // By default, we are not moving the Knight with fanfare.
     cmd_rdy_TOUR = 1'b0; // By defualt, assume we are not done with processing the move.
 
@@ -262,8 +262,9 @@ module TourCmd(
 
       HOLDH : begin // Waits for an acknowledgement from the Knight that the horizontal move has been processed.
         if(send_resp) begin // Once the command is acknowledged, go to the next move, or go back to IDLE, if tour is done.
-          if (tour_done) begin
-            last_move = 1'b1; // Indicates that this is the last component of the last move of the tour.
+          if (last_move) begin
+            tour_done = 1'b1; // Indicates that the KnightsTour has been completed.
+            inc_index = 1'b1; // Increment the move index to the next move (to indicate 25 moves have been completed).
             nxt_state = IDLE; // We completed the KnightsTour, so go back to IDLE until requested to play again.
           end else begin
             inc_index = 1'b1; // Increment the move index to the next move.
