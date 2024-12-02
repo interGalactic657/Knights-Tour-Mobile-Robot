@@ -72,9 +72,18 @@ package tb_tasks;
     end
   endtask
 
-  // Task to check if the Knight moved to the correct position, within a range
-  task automatic ChkPos(ref target_xx, ref target_yy);
-    // Check xx, yy within KnightPhysics +/- 200
+  // Task to check if the Knight moved to the correct position within a range
+  task automatic ChkPos(ref target_xx, ref target_yy, ref actual_xx, ref actual_yy);
+    // Check xx within KnightPhysics +/- 200
+    if ( (actual_xx < {target_xx, 12'h600}) || (actual_xx > {target_xx, 12'hA00}) ) begin
+      $display("ERROR: xx position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_xx, 12'h800}, actual_xx);
+      $stop();
+    end
+    // Check yy within KnightPhysics +/- 200
+    if ( (actual_yy < {target_yy, 12'h600}) || (actual_yy > {target_yy, 12'hA00}) ) begin
+      $display("ERROR: yy position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_yy, 12'h800}, actual_yy);
+      $stop();
+    end
   endtask
 
 endpackage
