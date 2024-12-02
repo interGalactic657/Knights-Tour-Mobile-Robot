@@ -72,4 +72,9 @@ package tb_tasks;
     end
   endtask
 
+  // Task to check if the Knight moved to the correct position, within a range
+  task automatic ChkPos(ref target_xx, ref target_yy);
+    // Check xx, yy within KnightPhysics +/- 200
+  endtask
+
 endpackage
