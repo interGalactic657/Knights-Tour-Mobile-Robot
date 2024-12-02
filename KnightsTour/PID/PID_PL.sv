@@ -21,7 +21,6 @@ module PID(
 	// Declare any internal signals as type logic //
 	///////////////////////////////////////////////
 	////////////////////// P_term //////////////////////////////////////////
-  logic err_vld_piped;          // Pipelined error valid signal.
 	logic signed [9:0] err_sat;   // Saturated pipelined error term in 10 bits.
 	localparam P_COEFF = 6'h10;   // Coefficient used to compute the P_term.
 	logic signed [13:0] P_term;   // Proportional term (P_term) required to correct heading.
@@ -38,6 +37,7 @@ module PID(
 	localparam D_COEFF = 5'h07;          // Coefficient used to compute the D_term.
 	logic signed [12:0] D_term;          // The D_term for use in PID control.  
   ///////////////////////// PID ///////////////////////////////////////////
+  logic err_vld_piped;                           // Pipelined error valid signal.
 	logic signed [13:0] P_ext, I_ext, D_ext;       // Sign extended PID terms.
   logic signed [13:0] PID_term;                  // Sum of all the PID terms.
 	logic signed [10:0] frwrd_ext;                 // Zero extended frwrd term for computation.
