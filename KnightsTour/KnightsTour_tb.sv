@@ -115,8 +115,10 @@ module KnightsTour_tb();
     // Check that a movement acknowledge is received from the DUT.
     ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
-    // Check if Knight moved to desired position on board TODO: Complete ChkPos task
-
+    // Check if Knight moved to desired position on board.
+    ChkPos(.target_xx(3'h1), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    
     ///////////////////////////////////////////////////////////////////
     // TEST 4: Test moving east by one square from center           //
     /////////////////////////////////////////////////////////////////

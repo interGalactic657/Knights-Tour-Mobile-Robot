@@ -54,9 +54,11 @@ package tb_tasks;
     TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
 
     // Check that a positive acknowledge of 0xA5 is received.
-    if (resp !== POS_ACK) begin
-      $display("ERROR: resp should have been 8'hA5 but was 0x%h", resp);
-      $stop(); 
+    @(negedge clk) begin
+      if (resp !== POS_ACK) begin
+        $display("ERROR: resp should have been 8'hA5 but was 0x%h", resp);
+        $stop(); 
+      end
     end
   endtask
 
@@ -66,24 +68,28 @@ package tb_tasks;
     TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
 
     // Check that an acknowledge of 0x5A is received.
-    if (resp !== ACK) begin
-      $display("ERROR: resp should have been 8'h5A but was 0x%h", resp);
-      $stop(); 
+    @(negedge clk) begin
+      if (resp !== ACK) begin
+        $display("ERROR: resp should have been 8'h5A but was 0x%h", resp);
+        $stop(); 
+      end
     end
   endtask
 
-  // Task to check if the Knight moved to the correct position within a range
-  task automatic ChkPos(ref target_xx, ref target_yy, ref actual_xx, ref actual_yy);
-    // Check xx within KnightPhysics +/- 200
-    if ( (actual_xx < {target_xx, 12'h600}) || (actual_xx > {target_xx, 12'hA00}) ) begin
-      $display("ERROR: xx position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_xx, 12'h800}, actual_xx);
-      $stop();
-    end
-    // Check yy within KnightPhysics +/- 200
-    if ( (actual_yy < {target_yy, 12'h600}) || (actual_yy > {target_yy, 12'hA00}) ) begin
-      $display("ERROR: yy position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_yy, 12'h800}, actual_yy);
-      $stop();
+  // Task to check if the Knight moved to the correct position within a range.
+  task automatic ChkPos(input [2:0] target_xx, input [2:0] target_yy, ref [14:0] actual_xx, ref [14:0] actual_yy);
+    @(negedge clk) begin
+      // Check xx within KnightPhysics +/- 200.
+      if ((actual_xx < {target_xx, 12'h600}) || (actual_xx > {target_xx, 12'hA00}) ) begin
+        $display("ERROR: xx position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_xx, 12'h800}, actual_xx);
+        $stop();
+      end
+
+      // Check yy within KnightPhysics +/- 200.
+      if ((actual_yy < {target_yy, 12'h600}) || (actual_yy > {target_yy, 12'hA00}) ) begin
+        $display("ERROR: yy position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_yy, 12'h800}, actual_yy);
+        $stop();
+      end
     end
   endtask
-
 endpackage
