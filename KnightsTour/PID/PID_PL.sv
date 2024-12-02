@@ -21,7 +21,8 @@ module PID(
 	// Declare any internal signals as type logic //
 	///////////////////////////////////////////////
 	////////////////////// P_term //////////////////////////////////////////
-	logic signed [9:0] err_sat;   // Saturated pipelined error term in 10 bits.
+  logic err_vld1;               // Delayed error valid signal.
+	logic signed [9:0] err_sat, err_sat0;   // Saturated error term in 10 bits.
 	localparam P_COEFF = 6'h10;   // Coefficient used to compute the P_term.
 	logic signed [13:0] P_term;   // Proportional term (P_term) required to correct heading.
 	////////////////////// I_term //////////////////////////////////////////
@@ -37,30 +38,43 @@ module PID(
 	localparam D_COEFF = 5'h07;          // Coefficient used to compute the D_term.
 	logic signed [12:0] D_term;          // The D_term for use in PID control.  
   ///////////////////////// PID ///////////////////////////////////////////
-  logic err_vld_piped;                           // Pipelined error valid signal.
 	logic signed [13:0] P_ext, I_ext, D_ext;       // Sign extended PID terms.
   logic signed [13:0] PID_term;                  // Sum of all the PID terms.
 	logic signed [10:0] frwrd_ext;                 // Zero extended frwrd term for computation.
 	logic signed [10:0] raw_lft_spd, raw_rght_spd; // Holds the summed values before saturation.
 	////////////////////////////////////////////////////////////////////////
 
-  // Pipeline the error valid signal.
-  always_ff @(posedge clk)
-      err_vld_piped <= err_vld;
+  //Delay error valid signal by 1 clock cycle.
+  always_ff @(posedge clk or negedge rst_n) begin
+    if(!rst_n)
+      err_vld <= 1'b0;
+    else
+      err_vld1 <= err_vld;
+  end
 
   ///////////////////////////////////////////
 	// Implement P_term as dataflow verilog //
 	/////////////////////////////////////////
 
-  ///////////////////////////////////////////////
+  //////////////////////////////
   // Saturate the error term and pipleline it //
-  /////////////////////////////////////////////
-  always_ff @(posedge clk)
-    // Saturate the error term.
-    err_sat <= (!error[11] && |error[10:9]) ? 10'h1FF   :
-               (error[11] && !(&error[10:9])) ? 10'h200 :
-               error[9:0];
-                  
+  ////////////////////////////
+  // assign err_sat = (!error[11] && |error[10:9]) ? 10'h1FF :
+  //                  (error[11] && !(&error[10:9])) ? 10'h200 :
+  //                  error[9:0];
+  always_ff @(posedge clk or negedge rst_n) begin
+    // Reset the flop to 0.
+    if(!rst_n)
+      err_sat0 <= 10'h000;
+      err_sat <= 10'h000;
+    else
+      // Saturate the error term.
+      err_sat <= err_sat0;
+      err_sat0 <= (!error[11] && |error[10:9]) ? 10'h1FF :
+                 (error[11] && !(&error[10:9])) ? 10'h200 :
+                 error[9:0];
+  end
+
   /////////////////////////////////////
   // Get the P term from saturation //
   ///////////////////////////////////
@@ -81,7 +95,7 @@ module PID(
 
   // Decide whether to store new result or keep previous value
 	// based on overflow and having a valid error term.
-	assign accum = (err_vld_piped & ~ov) ? sum : integrator;
+	assign accum = (err_vld1 & ~ov) ? sum : integrator;
 
   // Store a result, either previous or newly computed value if the robot is moving. Otherwise, 
   // clear the currently stored value to 0 as the robot is currently idle.
@@ -113,7 +127,7 @@ module PID(
       stage2 <= 0;
       prev_err <= 0;
     end
-    else if (err_vld_piped) begin
+    else if (err_vld1) begin
       // Store the new error if err_vld is asserted, else store the previous error. 
       stage1 <= err_sat;
       stage2 <= stage1;
