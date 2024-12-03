@@ -54,11 +54,20 @@ compile -map_effort medium -area_effort high
 #####################
 ungroup -all -flatten
 
+#######################################
+#Enable fixing of hold-time violations#
+set_fix_hold clk
+#######################################
+
 ###############
 # 2nd Compile #
 ###############
 set compile_incremental_mapping true
-compile -map_effort medium -area_effort high 
+compile -map_effort medium -area_effort high
+
+set_fix_hold clk
+
+compile -map_effort medium -area_effort high
 
 ####################################################
 # Take a look at max & min timings as well as area #
