@@ -115,7 +115,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
 	always_comb begin
     /* Default all SM outputs & nxt_state */
     nxt_state = state; // By default, assume we are in the current state. 
-    cmd = 16'h0000; // By default, assume we are not sneding meaningful data across the SPI. 
+    cmd = 16'h0000; // By default, assume we are not sending meaningful data across the SPI. 
     snd = 1'b0; // By default, we are not sending any data across the SPI.
     set_vld = 1'b0; // By default, we don't have valid data for the inertial integrator yet.
     C_Y_H = 1'b0; // By default, we did not receive the high byte from the yaw register of the sensor.
@@ -129,6 +129,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
           nxt_state = INIT3; // Shift to the next state to turn rounding on for gyro readings.
         end
       end
+
       INIT3 : begin
         cmd = 16'h1440; // Turn rounding on for gyro readings.
         if (done) begin // Wait till the SPI transaction is complete.
@@ -136,6 +137,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
           nxt_state = INTW; // Shift to the next state to wait for valid data as received by the gyro.
         end
       end
+
       INTW : begin
         cmd = 16'hA700; // Read the yaw rate high register from the gyro.
         if (INT_stable) begin // Wait for an interrupt to occur to read the acceleration registers.
@@ -143,6 +145,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
           nxt_state = YAWH; // Shift to the next state to read the yaw rate low register.
         end
       end
+
       YAWH : begin
         cmd = 16'hA600; // Read the yaw rate low register from the gyro.
         if (done) begin // Wait till the SPI transaction is complete.
@@ -151,6 +154,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
           nxt_state = YAWL; // Shift to the next state to wait for the low byte to be read.
         end
       end
+
       YAWL : begin
         if (done) begin // Wait till the SPI transaction is complete.
           C_Y_L = 1'b1; // Assert that the high byte is received to be read and stored into the holding register.
@@ -158,6 +162,7 @@ module inert_intf(clk,rst_n,strt_cal,cal_done,heading,rdy,lftIR,
           nxt_state = INTW; // Shift to the next state to wait for new data to be received.
         end
       end
+      
       default : begin   // Used as the INIT1 state and checks if timer is full, else stay in the current state. 
         cmd = 16'h0D02; // Configure the sensor to genrate an interrupt whenever new data is ready.
         if (full) begin // Wait till the gyro is booted up and configured correctly.
