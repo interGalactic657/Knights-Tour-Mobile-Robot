@@ -77,70 +77,156 @@ module KnightsTour_tb();
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////
-    // TEST 3: Test whether the move command is processed correctly //
+    // TEST 3: Test moving west by one square from center           //
     /////////////////////////////////////////////////////////////////
     // Send a command to move the Knight west by one square.
     SendCmd(.cmd_to_send(16'h43F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h3FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
     // Check that a movement acknowledge is received from the DUT.
-    ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // Check if Knight moved to desired position on board.
-    ChkPos(.target_xx(3'h1), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ChkPos(.clk(clk), .target_xx(3'h1), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     
     ///////////////////////////////////////////////////////////////////
     // TEST 4: Test moving east by one square from center           //
     /////////////////////////////////////////////////////////////////
-    // Send a command to move Knight east by one square
+    // Send a command to move the Knight east by one square.
     SendCmd(.cmd_to_send(16'h4BF1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'hBFF), .actual_heading(iPHYS.heading_robot[19:8]));
+
     // Check that a movement acknowledge is received from the DUT.
-    ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // Check if Knight moved to desired position on board.
-    ChkPos(.target_xx(3'h3), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////
     // TEST 5: Test moving north by one square from center          //
     /////////////////////////////////////////////////////////////////
-    // Send a command to move Knight north by one square
+    // Send a command to move the Knight north by one square.
     SendCmd(.cmd_to_send(16'h4001), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h000), .actual_heading(iPHYS.heading_robot[19:8]));
+
     // Check that a movement acknowledge is received from the DUT.
-    ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // Check if Knight moved to desired position on board.
-    ChkPos(.target_xx(3'h2), .target_yy(3'h3), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h3), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////
-    // TEST 6: Test moving south by one square from center          //
-    /////////////////////////////////////////////////////////////////
-    // Send a command to move Knight south by one square
+    //////////////////////////////////////////////////////////
+    // TEST 6: Test moving south by one square from center //
+    ////////////////////////////////////////////////////////
+    // Send a command to move the Knight south by one square.
     SendCmd(.cmd_to_send(16'h47F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h7FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
     // Check that a movement acknowledge is received from the DUT.
-    ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // Check if Knight moved to desired position on board.
-    ChkPos(.target_xx(3'h1), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////
-    // TEST 7: Test moving north by four squares from south edge    //
-    /////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////
+    // TEST 7: Test moving north by four squares from south edge //
+    //////////////////////////////////////////////////////////////
     //TODO Can be a random position on the edge
+    // Send a command to move the Knight north by four squares
+    SendCmd(.cmd_to_send(16'h4004), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
-    ///////////////////////////////////////////////////////////////////
-    // TEST 8: Test moving east by four squares from west edge     //
-    /////////////////////////////////////////////////////////////////
-    
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h000), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check that a movement acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+
+    // Check if Knight moved to desired position on board.
+    ChkPos(.clk(clk), .target_xx(3'h /* TODO */ ), .target_yy(3'h4), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////
+    // TEST 8: Test moving east by four squares from west edge //
+    ////////////////////////////////////////////////////////////
+     //TODO Can be a random position on the edge
+    // Send a command to move the Knight east by four squares
+    SendCmd(.cmd_to_send(16'h4BF4), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'hBFF), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check that a movement acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+
+    // Check if Knight moved to desired position on board.
+    ChkPos(.clk(clk), .target_xx(3'h4), .target_yy(3'h /* TODO */), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
     ///////////////////////////////////////////////////////////////////
     // TEST 9: Test moving west by three squares                   //
     /////////////////////////////////////////////////////////////////
+    // Send a command to move the Knight west by three squares.
+    SendCmd(.cmd_to_send(16'h43F3), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h3FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check that a movement acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+
+    // Check if Knight moved to desired position on board.
+    ChkPos(.clk(clk), .target_xx(3'h/* TODO */), .target_yy(3'h/* TODO */), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     ///////////////////////////////////////////////////////////////////
     // TEST 10: Test moving south by three squares                  //
     /////////////////////////////////////////////////////////////////
+    // Send a command to move the Knight south by one square.
+    SendCmd(.cmd_to_send(16'h47F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h7FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check that a movement acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+
+    // Check if Knight moved to desired position on board.
+    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     ///////////////////////////////////////////////////////////////////
     // TEST 11-xx: Test moving in L-shaped moves from different positions    //

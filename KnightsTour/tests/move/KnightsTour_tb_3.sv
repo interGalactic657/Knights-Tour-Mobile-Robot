@@ -56,26 +56,33 @@ module KnightsTour_tb();
     ///////////////////////////
     Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
 
-    ///////////////////////////////////////////////
-    // TEST 1: Test signals post initialization //
-    /////////////////////////////////////////////
-
-    // Check that NEMO_setup is being asserted after initialization.
-    TimeoutTask(.sig(iPHYS.iNEMO.NEMO_setup), .clk(clk), .clks2wait(1000000), .signal("NEMO_setup"));
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////
-    // TEST 2: Test signals post calibration //
-    //////////////////////////////////////////
     // Send a command to calibrate the gyro of the Knight.
     SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
-
+    
     // Check that cal_done is being asserted after calibration.
     TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
 
     // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
-    /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////
+    // Test moving west by one square from center  //
+    ////////////////////////////////////////////////
+    // Send a command to move the Knight west by one square.
+    SendCmd(.cmd_to_send(16'h43F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Wait for the Knight to begin moving before checking heading
+    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+
+    // Check that the Knight achieved the desired heading
+    ChkHeading(.clk(clk), .target_heading(12'h3FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check that a movement acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+
+    // Check if Knight moved to desired position on board.
+    ChkPos(.clk(clk), .target_xx(3'h1), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ////////////////////////////////////////////////////////////////////////////////////////////////
   end
   
   always
