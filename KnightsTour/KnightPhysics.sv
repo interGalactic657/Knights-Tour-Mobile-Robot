@@ -151,6 +151,13 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			  lftIR_n = 0;
 			else
 			  lftIR_n = 1;
+			
+			// Modified board to have border, and all 3 IR signals will light up.
+			if (yy > 16'h5000) begin
+				lftIR_n = 0;
+				cntrIR_n = 0;
+				rghtIR_n = 0;
+			end
 		  end
 		[12'hFB8:12'hFFF] : begin						// east of pure north
 		    yy = yy + omega_sum[16:13];
@@ -165,6 +172,13 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			  lftIR_n = 0;
 			else
 			  lftIR_n = 1;
+			
+			// Modified board to have border, and all 3 IR signals will light up.
+			if (yy > 16'h5000) begin
+				lftIR_n = 0;
+				cntrIR_n = 0;
+				rghtIR_n = 0;
+			end
 		  end
 		default : if (omega_sum>17'h3c00) $display("PHYS ERR: not traveling orthogonal direction");
 	  endcase
