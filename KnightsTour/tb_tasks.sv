@@ -94,7 +94,7 @@ package tb_tasks;
   endtask
 
   // Task to check if the Knight heading is pointed in the correct direction.
-  task automatic ChkHeading(input signed [15:0] target_heading, input signed [15:0] actual_heading);
+  task automatic ChkHeading(input signed [15:0] target_heading, ref signed [15:0] actual_heading);
     @(negedge clk) begin
       // Check heading within KnightPhysics +/- 0x2C.
       if ((actual_xx < (target_heading - $signed(8'h2C))) || (actual_xx > (target_heading + $signed(8'h2C))) ) begin
@@ -104,23 +104,11 @@ package tb_tasks;
     end
   endtask
 
-  // Task to check if the Knight is actively turning directions.
-  task automatic ChkTurning(input signed [16:0] velocity_sum);
-    @(negedge clk) begin
-      // Check sum of both wheels' velocity within KnightPhysics +/- 0x20 of 0.
-      if ((velocity_sum < $signed(17'h1FFE0)) || (velocity_sum > $signed(17'h00020)) ) begin
-        $display("ERROR: velocity sum is more than 0x20 outside of 0\nvelocity sum: 0x%h", velocity_sum);
-        $stop();
-      end
-    end
-  endtask
-
   // Task to check if the Knight is actively moving forward.
-  task automatic ChkMoving(input signed [16:0] velocity_sum);
-    @(negedge clk) begin
-      // Check sum of both wheels' velocity within KnightPhysics is greater than 0.
-      if ((velocity_sum < $signed(17'h00000)) ) begin
-        $display("ERROR: velocity sum is less than 0\nvelocity sum: 0x%h", velocity_sum);
+  task automatic WaitMoving(ref signed [16:0] velocity_sum);
+    repeat(3000000) @(posedge clk) begin
+      if (velocity_sum < $signed(17'h00200)) begin
+        $display("ERROR: velocity sum is not crossing 0x200 threshold\nvelocity sum: 0x%h", velocity_sum);
         $stop();
       end
     end
