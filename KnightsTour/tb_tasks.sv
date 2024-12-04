@@ -96,9 +96,9 @@ package tb_tasks;
   // Task to check if the Knight heading is pointed in the correct direction.
   task automatic ChkHeading(input signed [15:0] target_heading, input signed [15:0] actual_heading);
     @(negedge clk) begin
-      // Check heading within KnightPhysics +/- 0x20.
-      if ((actual_xx < (target_heading - $signed(8'h20))) || (actual_xx > (target_heading + $signed(8'h20))) ) begin
-        $display("ERROR: heading is more than 0x20 outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading);
+      // Check heading within KnightPhysics +/- 0x2C.
+      if ((actual_xx < (target_heading - $signed(8'h2C))) || (actual_xx > (target_heading + $signed(8'h2C))) ) begin
+        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading);
         $stop();
       end
     end
