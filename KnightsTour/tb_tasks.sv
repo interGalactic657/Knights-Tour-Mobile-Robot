@@ -79,15 +79,48 @@ package tb_tasks;
   // Task to check if the Knight moved to the correct position within a range.
   task automatic ChkPos(input [2:0] target_xx, input [2:0] target_yy, ref [14:0] actual_xx, ref [14:0] actual_yy);
     @(negedge clk) begin
-      // Check xx within KnightPhysics +/- 200.
+      // Check xx within KnightPhysics +/- 0x200.
       if ((actual_xx < {target_xx, 12'h600}) || (actual_xx > {target_xx, 12'hA00}) ) begin
         $display("ERROR: xx position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_xx, 12'h800}, actual_xx);
         $stop();
       end
 
-      // Check yy within KnightPhysics +/- 200.
+      // Check yy within KnightPhysics +/- 0x200.
       if ((actual_yy < {target_yy, 12'h600}) || (actual_yy > {target_yy, 12'hA00}) ) begin
         $display("ERROR: yy position is more than 0x200 outside of target position\ntarget: 0x%h\nactual: 0x%h", {target_yy, 12'h800}, actual_yy);
+        $stop();
+      end
+    end
+  endtask
+
+  // Task to check if the Knight heading is pointed in the correct direction.
+  task automatic ChkHeading(input signed [15:0] target_heading, input signed [15:0] actual_heading);
+    @(negedge clk) begin
+      // Check heading within KnightPhysics +/- 0x2C.
+      if ((actual_xx < (target_heading - $signed(8'h2C))) || (actual_xx > (target_heading + $signed(8'h2C))) ) begin
+        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading);
+        $stop();
+      end
+    end
+  endtask
+
+  // Task to check if the Knight is actively turning directions.
+  task automatic ChkTurning(input signed [16:0] velocity_sum);
+    @(negedge clk) begin
+      // Check sum of both wheels' velocity within KnightPhysics +/- 0x20 of 0.
+      if ((velocity_sum < $signed(17'h1FFE0)) || (velocity_sum > $signed(17'h00020)) ) begin
+        $display("ERROR: velocity sum is more than 0x20 outside of 0\nvelocity sum: 0x%h", velocity_sum);
+        $stop();
+      end
+    end
+  endtask
+
+  // Task to check if the Knight is actively moving forward.
+  task automatic ChkMoving(input signed [16:0] velocity_sum);
+    @(negedge clk) begin
+      // Check sum of both wheels' velocity within KnightPhysics is greater than 0.
+      if ((velocity_sum < $signed(17'h00000)) ) begin
+        $display("ERROR: velocity sum is less than 0\nvelocity sum: 0x%h", velocity_sum);
         $stop();
       end
     end
