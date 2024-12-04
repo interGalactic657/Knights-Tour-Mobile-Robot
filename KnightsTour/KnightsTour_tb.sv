@@ -123,6 +123,7 @@ module KnightsTour_tb();
     // TEST 4: Test moving east by one square from center           //
     /////////////////////////////////////////////////////////////////
     // Send a command to move Knight east by one square
+    SendCmd(.cmd_to_send(16'h4BF1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Check that a movement acknowledge is received from the DUT.
     ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
@@ -134,6 +135,7 @@ module KnightsTour_tb();
     // TEST 5: Test moving north by one square from center          //
     /////////////////////////////////////////////////////////////////
     // Send a command to move Knight north by one square
+    SendCmd(.cmd_to_send(16'h4001), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Check that a movement acknowledge is received from the DUT.
     ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
@@ -145,6 +147,7 @@ module KnightsTour_tb();
     // TEST 6: Test moving south by one square from center          //
     /////////////////////////////////////////////////////////////////
     // Send a command to move Knight south by one square
+    SendCmd(.cmd_to_send(16'h47F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Check that a movement acknowledge is received from the DUT.
     ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
