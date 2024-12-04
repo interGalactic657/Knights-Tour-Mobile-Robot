@@ -46,45 +46,53 @@ module KnightsTour_tb();
                       .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
 					  .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
 					  .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n)); 
+
+  // Task to initialize the testbench.
+  task automatic Setup();
+    begin
+      // Initialize all signals for the testbench.
+      Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
+
+      // Send a command to calibrate the gyro of the Knight.
+      SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+      // Check that cal_done is being asserted after calibration.
+      TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
+
+      // Check that a positive acknowledge is received from the DUT.
+      ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    end
+  endtask 
 	
   ///////////////////////////////////////////////////////////
   // Test procedure to apply stimulus and check responses //
   /////////////////////////////////////////////////////////
   initial begin
+    ///////////////////////////////
+    // Initialize the testbench //
     /////////////////////////////
-    // Initialize all signals //
-    ///////////////////////////
-    Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
+    Setup();
 
-    // Send a command to calibrate the gyro of the Knight.
-    SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
-    
-    // Check that cal_done is being asserted after calibration.
-    TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
+    /////////////////////////////////////////////////
+    // Test moving east by one square from center //
+    ///////////////////////////////////////////////
+    // Send a command to move the Knight east by one square.
+    SendCmd(.cmd_to_send(16'h4BF1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
-    // Check that a positive acknowledge is received from the DUT.
-    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
-
-    //////////////////////////////////////////////////
-    // Test moving west by one square from center  //
-    ////////////////////////////////////////////////
-    // Send a command to move the Knight west by one square.
-    SendCmd(.cmd_to_send(16'h43F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
-
-    // Wait for the Knight to begin moving before checking heading.
+    // Wait for the Knight to begin moving before checking heading
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
 
     // Check that the Knight achieved the desired heading
-    ChkHeading(.clk(clk), .target_heading(12'h3FF), .actual_heading(iPHYS.heading_robot[19:8]));
+    ChkHeading(.clk(clk), .target_heading(12'hBFF), .actual_heading(iPHYS.heading_robot[19:8]));
 
-    // Check that send_resp is being asserted after calibration.
-    TimeoutTask(.sig(iDUT.send_resp), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
+    // Wait till the move is complete and check that send_resp is asserted.
+    WaitForMove(.send_resp(iDUT.send_resp), .clk(clk));
 
     // Check that a movement acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // Check if Knight moved to desired position on board.
-    ChkPos(.clk(clk), .target_xx(3'h1), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
     ////////////////////////////////////////////////////////////////////////////////////////////////
   end
   

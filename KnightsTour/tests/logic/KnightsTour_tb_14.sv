@@ -47,38 +47,58 @@ module KnightsTour_tb();
 					  .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
 					  .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n)); 
 	
+  // Task to initialize the testbench.
+  task automatic Setup();
+    begin
+      // Initialize all signals for the testbench.
+      Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
+
+      // Send a command to calibrate the gyro of the Knight.
+      SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+      // Check that cal_done is being asserted after calibration.
+      TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
+
+      // Check that a positive acknowledge is received from the DUT.
+      ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    end
+  endtask 
+	
   ///////////////////////////////////////////////////////////
   // Test procedure to apply stimulus and check responses //
   /////////////////////////////////////////////////////////
   initial begin
+    ///////////////////////////////
+    // Initialize the testbench //
     /////////////////////////////
-    // Initialize all signals //
-    ///////////////////////////
-    Initialize(.clk(clk), .RST_n(RST_n), .send_cmd(send_cmd), .cmd(cmd));
-
-    // Send a command to calibrate the gyro of the Knight.
-    SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
-    
-    // Check that cal_done is being asserted after calibration.
-    TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
-
-    // Check that a positive acknowledge is received from the DUT.
-    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    Setup();
     
     ////////////////////////////////////////////////////////////////
     // Test a couple moves of the KnightsTour starting at (2,0)  //
     //////////////////////////////////////////////////////////////
-    // Send a command to start the KnightsTour from (2,0).
-    SendCmd(.cmd_to_send(16'h6020), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    // Send a command to start the KnightsTour from (2,0) without giving the y position.
+    SendCmd(.cmd_to_send(16'h7020), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Wait till the Knight found out its position on the board.
+    ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h2), .actual_yy(iDUT.y_offset));
+
+    // Check that the Knight achieved the desired heading (should be facing south).
+    ChkHeading(.clk(clk), .target_heading(12'h7FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check if Knight moved back to the starting location on the board.
+    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+
+    // Wait till the solution for the KnightsTour is complete or times out.
+    WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
 
     // Wait till the vertical component of the first move is made.
-    @(posedge send_resp);
+    WaitForMove(.send_resp(iDUT.send_resp), .clk(clk));
 
     // Check that the response received is 0x5A.
     ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // Wait till the horizontal component of the first move is made.
-    @(posedge send_resp);
+    WaitForMove(.send_resp(iDUT.send_resp), .clk(clk));
 
     // Check that the response received is 0x5A at the end of the first move.
     ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
@@ -87,15 +107,15 @@ module KnightsTour_tb();
     ChkPos(.clk(clk), .target_xx(3'h0), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the second L-shape move is made.
-    repeat(2) @(posedge send_resp);
+    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk));
 
-    // Check that the Knight is at (1,3) at the end of the first move.
+    // Check that the Knight is at (1,3) at the end of the second move.
     ChkPos(.clk(clk), .target_xx(3'h1), .target_yy(3'h3), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the third L-shape move is made.
-    repeat(2) @(posedge send_resp);
+    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk));
 
-    // Check that the Knight is at (3,4) at the end of the first move.
+    // Check that the Knight is at (3,4) at the end of the third move.
     ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h4), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
     /////////////////////////////////////////////////////////////////////////////////////////////////
   end

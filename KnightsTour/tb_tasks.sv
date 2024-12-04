@@ -48,20 +48,43 @@ package tb_tasks;
     end
   endtask
 
-   // Task to check if an acknowledge is received from the DUT.
-  task automatic WaitSendResp(ref send_resp, ref clk, ref heading_rdy);
-    repeat(25) @(posedge heading_rdy);
-    
-    // Wait 60000 clock cycles, and ensure that a response is received.
-    TimeoutTask(.sig(send_resp), .clk(clk) .clks2wait(60000), .signal("send_resp"));
+  // Task to check that a move was processed by cmd_proc.
+  task automatic WaitForMove(ref send_resp, ref clk);
+    // Wait till the move is complete and check that send_resp is asserted.
+    TimeoutTask(.sig(send_resp), .clk(clk), .clks2wait(3000000), .signal("send_resp"));
+  endtask
 
-    // Check that an acknowledge of 0x5A is received.
-    @(negedge clk) begin
-      if (resp !== ACK) begin
-        $display("ERROR: resp should have been 8'h5A but was 0x%h", resp);
-        $stop(); 
+  // Task to wait till a tour move is complete (2 individual moves).
+  task automatic WaitTourMove(ref send_resp, ref clk);
+    begin
+      // Wait till the first move is complete and check that send_resp is asserted.
+      WaitForMove(.send_resp(send_resp), .clk(clk));
+
+      // Wait till the second move is complete and check that send_resp is asserted.
+      WaitForMove(.send_resp(send_resp), .clk(clk));
+    end
+  endtask
+
+  // Task to wait till the y offset of the Knight is found and validates the position.
+  task automatic ChkOffset(ref tour_go, ref clk, input [2:0] target_yy, ref [2:0] actual_yy);
+    begin
+      // Wait till the calibration of the Y offset is complete (worst case takes 30000000 clocks).
+      TimeoutTask(.sig(tour_go), .clk(clk), .clks2wait(30000000), .signal("tour_go"));
+
+      // Check that the Knight found the correct y position that it was placed on the board.
+      @(negedge clk) begin
+        if (actual_yy !== target_yy) begin
+          $display("ERROR: y_offset should have been 0x%h but was 0x%h", target_yy, actual_yy);
+          $stop(); 
+        end
       end
     end
+  endtask
+
+  // Task to wait for the solution to the KnightsTour to be completed, otherwise times out.
+  task automatic WaitComputeSol(ref start_tour, ref clk);
+    // Wait 8000000 clock cycles for the solution to the KnightsTour to be computed.
+    TimeoutTask(.sig(start_tour), .clk(clk) .clks2wait(8000000), .signal("start_tour"));
   endtask
 
   // Task to check if a positive acknowledge is received from the DUT.
