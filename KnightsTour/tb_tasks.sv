@@ -4,6 +4,8 @@ package tb_tasks;
 
   localparam POS_ACK = 8'hA5;
   localparam ACK = 8'h5A;
+
+  typedef enum logic signed [11:0] {NORTH = 12'h000, WEST = 12'h3FF, SOUTH = 12'h7FF, EAST = 12'hBFF} heading_t;
   
   // Task to initialize all input signals to default values.
   task automatic Initialize(ref clk, ref RST_n, ref send_cmd, ref [15:0] cmd);
@@ -133,7 +135,7 @@ package tb_tasks;
   endtask
 
   // Task to check if the Knight heading is pointed in the correct direction.
-  task automatic ChkHeading(ref clk, input signed [11:0] target_heading, ref signed [11:0] actual_heading);
+  task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [11:0] actual_heading);
     @(negedge clk) begin
       // Check heading within KnightPhysics +/- 0x2C.
       if ((actual_heading < (target_heading - $signed(8'h2C))) || (actual_heading > (target_heading + $signed(8'h2C))) ) begin
