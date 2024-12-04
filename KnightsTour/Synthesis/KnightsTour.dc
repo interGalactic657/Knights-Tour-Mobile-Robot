@@ -15,7 +15,7 @@ read_file -format sverilog {../KnightsTour.sv ../reset_synch/reset_synch.sv \
 set current_design KnightsTour
 link
 
-set_max_area 0
+#set_max_area 0
 
 #####################################
 # Constrain and assign assign clock #
@@ -44,30 +44,14 @@ set_load 0.1 [all_outputs]
 set_wire_load_model -name 16000 -library saed32lvt_tt0p85v25c
 set_max_transition 0.15 [current_design]
 
-##########################
-# Now kick off synthesis #
-##########################
-compile -map_effort medium -area_effort high
+# Compile the design
+compile -map_effort medium
 
-#####################
-# Flatten hierarchy #
-#####################
+# Flatten to generate no hierarchy
 ungroup -all -flatten
 
-#######################################
-#Enable fixing of hold-time violations#
-set_fix_hold clk
-#######################################
-
-###############
-# 2nd Compile #
-###############
-set compile_incremental_mapping true
-compile -map_effort medium -area_effort high
-
-set_fix_hold clk
-
-compile -map_effort medium -area_effort high
+# Second compile
+compile -map_effort medium
 
 ####################################################
 # Take a look at max & min timings as well as area #

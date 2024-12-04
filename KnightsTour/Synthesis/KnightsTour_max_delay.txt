@@ -6,7 +6,7 @@ Report : timing
         -max_paths 1
 Design : KnightsTour
 Version: V-2023.12-SP5
-Date   : Mon Dec  2 18:05:05 2024
+Date   : Wed Dec  4 10:20:26 2024
 ****************************************
 
 Operating Conditions: tt0p85v25c   Library: saed32lvt_tt0p85v25c
@@ -51,36 +51,36 @@ Wire Load Model Mode: enclosed
                                                           0.08       0.95 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_11/S (FADDX1_LVT)
                                                           0.11       1.06 f
-  iCMD/U163/Y (XOR3X1_LVT)                                0.12       1.19 r
-  U7441/Y (INVX1_LVT)                                     0.04       1.22 f
-  U7016/Y (XOR2X1_LVT)                                    0.10       1.32 r
-  U5557/Y (OA21X1_LVT)                                    0.04       1.37 r
-  U5556/Y (OA21X1_LVT)                                    0.05       1.42 r
-  U6778/Y (MUX21X1_LVT)                                   0.05       1.47 r
-  U5553/Y (NAND2X0_LVT)                                   0.03       1.51 f
-  U7443/Y (INVX1_LVT)                                     0.03       1.54 r
-  U7017/Y (OA21X1_LVT)                                    0.05       1.59 r
-  U5550/Y (OA22X1_LVT)                                    0.05       1.63 r
-  U5549/Y (NAND4X0_LVT)                                   0.05       1.68 f
-  U7018/Y (AND3X1_LVT)                                    0.07       1.76 f
-  U6874/Y (INVX1_LVT)                                     0.07       1.82 r
-  U5274/Y (NAND3X0_LVT)                                   0.06       1.88 f
-  U7019/Y (INVX1_LVT)                                     0.06       1.95 r
-  U5264/Y (AO21X1_LVT)                                    0.05       2.00 r
-  U5263/Y (OA22X1_LVT)                                    0.05       2.04 r
-  U5262/Y (AO22X1_LVT)                                    0.05       2.09 r
-  U5261/Y (OR2X1_LVT)                                     0.05       2.14 r
-  U5260/Y (AO222X1_LVT)                                   0.07       2.21 r
-  U5259/Y (OA221X1_LVT)                                   0.05       2.26 r
-  U5258/Y (AO221X1_LVT)                                   0.05       2.31 r
-  U5257/Y (OA221X1_LVT)                                   0.05       2.36 r
-  U5256/Y (AO221X1_LVT)                                   0.05       2.41 r
-  U5255/Y (OA221X1_LVT)                                   0.05       2.46 r
-  U5254/Y (AO221X1_LVT)                                   0.05       2.51 r
-  U5253/Y (OA221X1_LVT)                                   0.05       2.56 r
-  U6196/Y (AO21X2_LVT)                                    0.04       2.60 r
-  iMTR/iRIGHT/PWM_sig_reg/D (DFFARX1_LVT)                 0.01       2.61 r
-  data arrival time                                                  2.61
+  iCMD/U165/Y (XOR3X1_LVT)                                0.13       1.19 r
+  U13220/Y (INVX1_LVT)                                    0.04       1.23 f
+  U12921/Y (XOR2X1_LVT)                                   0.10       1.32 r
+  U11520/Y (OA21X1_LVT)                                   0.04       1.37 r
+  U12919/Y (OAI21X1_LVT)                                  0.07       1.43 f
+  U11518/Y (AO22X1_LVT)                                   0.05       1.49 f
+  U13219/Y (INVX1_LVT)                                    0.03       1.52 r
+  U12920/Y (OA21X1_LVT)                                   0.04       1.56 r
+  U11515/Y (OA22X1_LVT)                                   0.05       1.61 r
+  U11514/Y (NAND4X0_LVT)                                  0.05       1.66 f
+  U12778/Y (AND3X1_LVT)                                   0.07       1.73 f
+  U12706/Y (INVX1_LVT)                                    0.06       1.80 r
+  U11235/Y (NAND3X0_LVT)                                  0.06       1.86 f
+  U12922/Y (INVX1_LVT)                                    0.06       1.92 r
+  U11225/Y (AO21X1_LVT)                                   0.05       1.97 r
+  U11224/Y (OA22X1_LVT)                                   0.05       2.02 r
+  U11223/Y (AO22X1_LVT)                                   0.05       2.07 r
+  U11222/Y (OR2X1_LVT)                                    0.05       2.11 r
+  U11221/Y (AO222X1_LVT)                                  0.07       2.18 r
+  U11220/Y (OA221X1_LVT)                                  0.05       2.23 r
+  U11219/Y (AO221X1_LVT)                                  0.05       2.29 r
+  U11218/Y (OA221X1_LVT)                                  0.05       2.33 r
+  U11217/Y (AO221X1_LVT)                                  0.05       2.39 r
+  U11216/Y (OA221X1_LVT)                                  0.05       2.43 r
+  U11215/Y (AO221X1_LVT)                                  0.05       2.49 r
+  U11214/Y (OA221X1_LVT)                                  0.05       2.54 r
+  U12508/Y (AO21X1_LVT)                                   0.04       2.57 r
+  U12509/Y (NBUFFX2_LVT)                                  0.04       2.61 r
+  iMTR/iRIGHT/PWM_sig_reg/D (DFFARX1_LVT)                 0.01       2.62 r
+  data arrival time                                                  2.62
 
   clock clk (rise edge)                                   3.00       3.00
   clock network delay (ideal)                             0.00       3.00
@@ -90,7 +90,7 @@ Wire Load Model Mode: enclosed
   data required time                                                 2.82
   --------------------------------------------------------------------------
   data required time                                                 2.82
-  data arrival time                                                 -2.61
+  data arrival time                                                 -2.62
   --------------------------------------------------------------------------
   slack (MET)                                                        0.21
 
