@@ -80,8 +80,8 @@ module KnightsTour_tb();
     // Check that a movement acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
-    // Send a command to move the Knight east by one square.
-    SendCmd(.cmd_to_send(16'h4BF1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    // Send a command to move the Knight east by one square (with fanfare).
+    SendCmd(.cmd_to_send(16'h5BF1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait for the Knight to begin moving before checking heading.
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
@@ -107,8 +107,8 @@ module KnightsTour_tb();
     // Check that a movement acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
-    // Send a command to move the Knight west by two squares.
-    SendCmd(.cmd_to_send(16'h43F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    // Send a command to move the Knight west by two squares (with fanfare).
+    SendCmd(.cmd_to_send(16'h53F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait for the Knight to begin moving before checking heading
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));

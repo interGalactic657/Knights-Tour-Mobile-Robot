@@ -48,6 +48,22 @@ package tb_tasks;
     end
   endtask
 
+   // Task to check if an acknowledge is received from the DUT.
+  task automatic WaitSendResp(ref send_resp, ref clk, ref heading_rdy);
+    repeat(25) @(posedge heading_rdy);
+    
+    // Wait 60000 clock cycles, and ensure that a response is received.
+    TimeoutTask(.sig(send_resp), .clk(clk) .clks2wait(60000), .signal("send_resp"));
+
+    // Check that an acknowledge of 0x5A is received.
+    @(negedge clk) begin
+      if (resp !== ACK) begin
+        $display("ERROR: resp should have been 8'h5A but was 0x%h", resp);
+        $stop(); 
+      end
+    end
+  endtask
+
   // Task to check if a positive acknowledge is received from the DUT.
   task automatic ChkPosAck(ref resp_rdy, ref clk, ref resp);
     // Wait 60000 clock cycles, and ensure that a response is received.
@@ -106,7 +122,7 @@ package tb_tasks;
 
   // Task to check if the Knight is actively moving forward after a certain time.
   task automatic WaitMoving(ref clk, ref signed [16:0] velocity_sum);
-    repeat(3000000) @(posedge clk) begin
+    repeat(3000000) @(negedge clk) begin
       // Check that the sum of the wheel velocities is higher than 0x200.
       if (velocity_sum < $signed(17'h00200)) begin
         $display("ERROR: velocity sum is not crossing 0x200 threshold\nvelocity sum: 0x%h", velocity_sum);

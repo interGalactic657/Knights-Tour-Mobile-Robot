@@ -71,11 +71,14 @@ module KnightsTour_tb();
     // Send a command to move the Knight west by one square.
     SendCmd(.cmd_to_send(16'h43F1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
-    // Wait for the Knight to begin moving before checking heading
+    // Wait for the Knight to begin moving before checking heading.
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
 
     // Check that the Knight achieved the desired heading
     ChkHeading(.clk(clk), .target_heading(12'h3FF), .actual_heading(iPHYS.heading_robot[19:8]));
+
+    // Check that send_resp is being asserted after calibration.
+    TimeoutTask(.sig(iDUT.send_resp), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
 
     // Check that a movement acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
