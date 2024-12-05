@@ -58,7 +58,6 @@ for subdir in test_subdirs:
                 # If needed, manually add signals to the waveform window for the simulation
                 # For example, you could add only necessary signals like `cmd_proc` signals
                 print(f"Adding necessary signals to the waveform for: {test_name}")
-                add_wave_command = f"vsim -c work.KnightsTour_tb -do 'add wave -position insert_point {/KnightsTour_tb/cmd_proc/*}; run -all; quit;'"
-                subprocess.run(add_wave_command, shell=True, check=True)
-
+                subprocess.run(f"vsim -gui work.KnightsTour_tb -do \"add wave -r KnightsTour_tb/*; run -all;\"",shell=True,check=True)
+                
 print("All tests completed.")
