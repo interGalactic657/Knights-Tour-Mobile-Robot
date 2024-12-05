@@ -46,9 +46,9 @@ for subdir in test_subdirs:
                 print(f"Compiling testbench: {file}")
                 subprocess.run(f"vlog {test_path}", shell=True, check=True)
 
-                # Run the simulation using vsim directly
+                ## Run the simulation
                 print(f"Running simulation for: {test_name}")
-                sim_command = f"vsim -c work.{test_name} -do 'run -all; quit;' > {log_file}"
+                sim_command = f"vsim -c work.KnightsTour_tb -do 'run -all; quit;' > {log_file}"
                 subprocess.run(sim_command, shell=True, check=True)
-
+                
 print("All tests completed.")
