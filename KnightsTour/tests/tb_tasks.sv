@@ -138,7 +138,7 @@ package tb_tasks;
   task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [19:0] actual_heading);
     @(negedge clk) begin
       // Check heading within KnightPhysics +/- 0x2C.
-      if ((actual_heading[19:8] < (target_heading - $signed(8'h2C))) || (actual_heading[19:8] > (target_heading + $signed(8'h2C))) ) begin
+      if ((actual_heading[19:8] < (target_heading - $signed(12'h02C))) || (actual_heading[19:8] > (target_heading + $signed(12'h02C))) ) begin
         $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
         $stop();
       end
