@@ -31,25 +31,40 @@ for test_file in test_files:
         print(f"Compiling test file: {test_file}")
         subprocess.run(f"vlog {test_path}", shell=True, check=True)
 
-# Compile and run testbenches from subdirectories: simple, move, logic
-test_subdirs = ["simple", "move", "logic"]
-for subdir in test_subdirs:
+# Map subdirectories to their test ranges
+test_mapping = {
+    "simple": range(1, 2),  # Only test_1
+    "move": range(2, 13),   # test_2 to test_12
+    "logic": range(13, 15)  # test_13 to test_14
+}
+
+# Helper function to extract the test number from filenames
+def extract_numeric_key(filename):
+    """Extracts numeric part of a filename for sorting."""
+    name, _ = os.path.splitext(filename)  # Split filename and extension
+    return int(''.join(filter(str.isdigit, name)))  # Extract and convert numeric part to int
+
+# Compile and run testbenches in the correct order
+for subdir, test_range in test_mapping.items():
     subdir_path = os.path.join(test_dir, subdir)
     if os.path.exists(subdir_path):
-        # Sort the list of files to ensure they are processed in the correct order
-        for file in sorted(os.listdir(subdir_path)):
-            if file.endswith(".sv"):
-                test_path = os.path.join(subdir_path, file)
-                test_name = os.path.splitext(file)[0]
-                log_file = os.path.join(output_dir, f"{test_name}.log")
+        # Filter and sort files in this subdirectory
+        test_files = [
+            file for file in os.listdir(subdir_path)
+            if file.endswith(".sv") and extract_numeric_key(file) in test_range
+        ]
+        for file in sorted(test_files, key=extract_numeric_key):
+            test_path = os.path.join(subdir_path, file)
+            test_name = os.path.splitext(file)[0]
+            log_file = os.path.join(output_dir, f"{test_name}.log")
 
-                # Compile the testbench
-                print(f"Compiling testbench: {file}")
-                subprocess.run(f"vlog {test_path}", shell=True, check=True)
+            # Compile the testbench
+            print(f"Compiling testbench: {file}")
+            subprocess.run(f"vlog {test_path}", shell=True, check=True)
 
-                # Run the simulation
-                print(f"Running simulation for: {test_name}")
-                sim_command = f"vsim -c work.KnightsTour_tb -do 'run -all; quit;' > {log_file}"
-                subprocess.run(sim_command, shell=True, check=True)
+            # Run the simulation
+            print(f"Running simulation for: {test_name}")
+            sim_command = f"vsim -c work.KnightsTour_tb -do 'run -all; quit;' > {log_file}"
+            subprocess.run(sim_command, shell=True, check=True)
 
 print("All tests completed.")
