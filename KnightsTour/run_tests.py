@@ -23,7 +23,7 @@ def create_or_open_project():
         print(f"Creating new ModelSim project at {project_file}...")
         # Create the project directory
         os.makedirs(project_dir, exist_ok=True)
-        # Initialize ModelSim project
+        # Create the project file using vsim
         subprocess.run(f"vsim -do \"vlib work; vmap work {library_dir};\"", shell=True, check=True)
         
     else:
@@ -42,6 +42,7 @@ def add_files_to_project():
         for file in files:
             if file.endswith(".sv"):
                 file_path = os.path.join(root, file)
+                print(f"Adding design file to the project: {file}")
                 subprocess.run(f"vsim -do \"vlog {file_path}\"", shell=True, check=True)
     
     # Add test files
@@ -49,10 +50,13 @@ def add_files_to_project():
     for test_file in test_files:
         test_path = os.path.join(test_dir, test_file)
         if os.path.exists(test_path):
+            print(f"Adding test file to the project: {test_file}")
             subprocess.run(f"vsim -do \"vlog {test_path}\"", shell=True, check=True)
 
 # Compile only the files that are out of date
 def compile_modified_files():
+    print("Compiling modified files...")
+
     # Compile design files
     for root, dirs, files in os.walk(design_dir):
         if "tests" in dirs:
@@ -84,6 +88,8 @@ def compile_modified_files():
 
 # Compile and run testbenches from subdirectories: simple, move, logic
 def compile_and_run_tests():
+    print("Running simulations for testbenches...")
+
     test_subdirs = ["simple", "move", "logic"]
     for subdir in test_subdirs:
         subdir_path = os.path.join(test_dir, subdir)
