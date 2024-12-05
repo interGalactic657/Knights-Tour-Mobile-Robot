@@ -68,6 +68,7 @@ for subdir, test_range in test_mapping.items():
             test_path = os.path.join(subdir_path, file)
             test_name = os.path.splitext(file)[0]
             log_file = os.path.join(output_dir, f"{test_name}.log")
+            wave_file = os.path.join(output_dir, f"{test_name}.wlf")
 
             # Compile the testbench
             print(f"Compiling testbench: {file}")
@@ -75,7 +76,13 @@ for subdir, test_range in test_mapping.items():
 
             # Run the simulation in command-line mode
             print(f"Running simulation for: {test_name}")
-            sim_command = f"vsim -c work.KnightsTour_tb -do 'run -all; quit;' > {log_file}"
+            sim_command = (
+                f"vsim -c work.KnightsTour_tb -do \""
+                f"add wave -r /*; "
+                f"run -all; "
+                f"write wave -file {wave_file}; "
+                f"quit;\" > {log_file}"
+            )
             subprocess.run(sim_command, shell=True, check=True)
 
             # Check the transcript for success or error
@@ -86,7 +93,11 @@ for subdir, test_range in test_mapping.items():
             elif result == "error":
                 print(f"{test_name}: Test failed. Launching ModelSim GUI...")
                 # Launch ModelSim GUI for debugging
-                subprocess.run(f"vsim -gui work.KnightsTour_tb -do 'run -all;'", shell=True, check=True)
+                subprocess.run(
+                    f"vsim -gui work.KnightsTour_tb -do \""
+                    f"add wave -r /*; "
+                    f"run -all;\"", shell=True, check=True
+                )
             else:
                 print(f"{test_name}: Test status unknown. Check log file: {log_file}")
 
