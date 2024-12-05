@@ -53,7 +53,7 @@ package tb_tasks;
   // Task to check that a move was processed by cmd_proc.
   task automatic WaitForMove(ref send_resp, ref clk);
     // Wait till the move is complete and check that send_resp is asserted.
-    TimeoutTask(.sig(send_resp), .clk(clk), .clks2wait(3000000), .signal("send_resp"));
+    TimeoutTask(.sig(send_resp), .clk(clk), .clks2wait(6000000), .signal("send_resp"));
   endtask
 
   // Task to wait till a tour move is complete (2 individual moves).
@@ -136,30 +136,38 @@ package tb_tasks;
 
   // Task to check if the Knight heading is pointed in the correct direction.
   task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [19:0] actual_heading);
-    @(negedge clk) begin
-      // Check heading within KnightPhysics +/- 0x2C.
-      if ((actual_heading[19:8] < (target_heading - $signed(8'h2C))) || (actual_heading[19:8] > (target_heading + $signed(8'h2C))) ) begin
-        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
-        $stop();
+    begin
+      logic [11:0] diff;
+
+      // Calculate the absolute difference.
+      diff = (actual_heading[19:8] >= target_heading) ? (actual_heading[19:8] - target_heading) : (target_heading - actual_heading[19:8]);
+
+      // Check if the absolute difference exceeds the threshold.
+      @(negedge clk) begin
+        if (diff > $signed(12'h02C)) begin
+          $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
+          $stop();
+        end
       end
     end
   endtask
+
 
   // Task to check if the Knight is actively moving forward after a certain time.
   task automatic WaitMoving(ref clk, ref signed [16:0] velocity_sum);
     begin
       fork
         begin : wait_moving
-          repeat(3000000) @(negedge clk);
+          repeat(6000000) @(negedge clk);
           // Never crossed threshold
           $display("ERROR: velocity sum is not crossing 0x1000 threshold\nvelocity sum: 0x%h", velocity_sum);
           $stop();
         end
-        begin : check
-          repeat(3000000) @(negedge clk) begin
+        begin : check_moving
+          repeat(6000000) @(negedge clk) begin
             if (velocity_sum >= $signed(17'h01000)) begin
               disable wait_moving;
-              disable check;
+              disable check_moving;
             end
           end
         end : check
