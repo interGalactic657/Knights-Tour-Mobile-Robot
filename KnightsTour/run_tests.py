@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
@@ -7,10 +8,15 @@ design_dir = os.path.join(root_dir, "designs")  # Design files directory
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
 library_dir = os.path.join(root_dir, "work")  # Simulation library directory
+log_file_path = os.path.join(output_dir, "simulation_output.log")  # Log file to capture all output
+transcript_log_path = os.path.join(output_dir, "transcript.log")  # Transcript log file for ModelSim output
 
 # Ensure output and library directories exist
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
+
+# Redirect all Python print output to the log file
+sys.stdout = open(log_file_path, 'w')
 
 # Initialize the .do file for ModelSim
 do_file_path = os.path.join(root_dir, "run_tests.do")
@@ -66,6 +72,7 @@ with open(do_file_path, "w") as do_file:
 
 # Run the generated .do file in ModelSim with GUI (without -novopt)
 print(f"Running ModelSim with .do file: {do_file_path}")
-subprocess.run(f"vsim -gui -do {do_file_path}", shell=True, check=True)
+# Redirecting the output of vsim to the log file, and also capturing ModelSim's transcript
+subprocess.run(f"vsim -gui -do {do_file_path} -log {transcript_log_path} >> {log_file_path} 2>&1", shell=True, check=True)
 
 print("All tests completed.")
