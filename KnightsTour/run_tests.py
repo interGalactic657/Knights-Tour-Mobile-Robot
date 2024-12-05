@@ -25,7 +25,7 @@ for root, dirs, files in os.walk(design_dir):
             file_path = os.path.join(root, file)
             print(f"Compiling design file: {file}")
             # Use +acc=all for full signal visibility
-            subprocess.run(f"vlog +acc=all {file_path}", shell=True, check=True)
+            subprocess.run(f"vlog +acc=all -O0 {file_path}", shell=True, check=True)
 
 # Compile shared test files
 test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
@@ -33,7 +33,7 @@ for test_file in test_files:
     test_path = os.path.join(test_dir, test_file)
     if os.path.exists(test_path):
         print(f"Compiling test file: {test_file}")
-        subprocess.run(f"vlog +acc=all {test_path}", shell=True, check=True)
+        subprocess.run(f"vlog +acc=all -O0 {test_path}", shell=True, check=True)
 
 # Map subdirectories to their test ranges
 test_mapping = {
@@ -76,13 +76,13 @@ for subdir, test_range in test_mapping.items():
 
             # Compile the testbench
             print(f"Compiling testbench: {file}")
-            subprocess.run(f"vlog +acc=all {test_path}", shell=True, check=True)
+            subprocess.run(f"vlog +acc=all -O0 {test_path}", shell=True, check=True)
 
             # Run the simulation in command-line mode
             print(f"Running simulation for: {test_name}")
             sim_command = (
                 f"vsim -c work.KnightsTour_tb -do \""
-                f"add wave -r /*; "  # Add top-level signals recursively
+                f"add wave -recursive /*; "  # Add all signals recursively
                 f"run -all; "
                 f"write wave -file {wave_file}; "  # Save waveform
                 f"quit;\" > {log_file}"
@@ -99,7 +99,7 @@ for subdir, test_range in test_mapping.items():
                 # Launch ModelSim GUI for debugging
                 subprocess.run(
                     f"vsim -gui work.KnightsTour_tb -do \""
-                    f"add wave -r /*; "  # Add top-level signals recursively
+                    f"add wave -recursive /*; "  # Add all signals recursively
                     f"run -all;\"", shell=True, check=True
                 )
             else:
