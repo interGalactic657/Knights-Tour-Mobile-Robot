@@ -139,7 +139,7 @@ package tb_tasks;
     @(negedge clk) begin
       // Check heading within KnightPhysics +/- 0x2C.
       if ((actual_heading[19:8] < (target_heading - $signed(8'h2C))) || (actual_heading[19:8] > (target_heading + $signed(8'h2C))) ) begin
-        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading);
+        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
         $stop();
       end
     end
