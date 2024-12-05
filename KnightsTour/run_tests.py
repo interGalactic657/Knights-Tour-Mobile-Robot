@@ -23,8 +23,17 @@ def create_or_open_project():
         print(f"Creating new ModelSim project at {project_file}...")
         # Create the project directory
         os.makedirs(project_dir, exist_ok=True)
-        # Create the project file using vsim
+        # Initialize ModelSim project (creates the .prj file)
         subprocess.run(f"vsim -do \"vlib work; vmap work {library_dir};\"", shell=True, check=True)
+        
+        # Create the project file (.prj)
+        with open(project_file, "w") as prj_file:
+            prj_file.write("# ModelSim Project File\n")
+            prj_file.write("vlib work\n")
+            prj_file.write(f"vmap work {library_dir}\n")
+        
+        # Add design and test files to the project
+        add_files_to_project()
         
     else:
         print(f"Opening existing ModelSim project at {project_file}...")
@@ -33,7 +42,7 @@ def create_or_open_project():
 # Add design and test files to the project
 def add_files_to_project():
     print("Adding files to the ModelSim project...")
-    
+
     # Add design files
     for root, dirs, files in os.walk(design_dir):
         if "tests" in dirs:
@@ -109,9 +118,6 @@ def compile_and_run_tests():
 def main():
     # Create/open the ModelSim project
     create_or_open_project()
-
-    # Add files to the project
-    add_files_to_project()
 
     # Compile only the files that are out of date
     compile_modified_files()
