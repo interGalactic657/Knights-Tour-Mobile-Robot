@@ -90,7 +90,7 @@ package tb_tasks;
   endtask
 
   // Task to check if a positive acknowledge is received from the DUT.
-  task automatic ChkPosAck(ref resp_rdy, ref clk, ref resp);
+  task automatic ChkPosAck(ref resp_rdy, ref clk, ref [7:0] resp);
     // Wait 60000 clock cycles, and ensure that a response is received.
     TimeoutTask(.sig(resp_rdy), .clk(clk), .clks2wait(60000), .signal("resp_rdy"));
 
@@ -104,7 +104,7 @@ package tb_tasks;
   endtask
 
   // Task to check if an acknowledge is received from the DUT.
-  task automatic ChkAck(ref resp_rdy, ref clk, ref resp);
+  task automatic ChkAck(ref resp_rdy, ref clk, ref [7:0] resp);
     // Wait 60000 clock cycles, and ensure that a response is received.
     TimeoutTask(.sig(resp_rdy), .clk(clk), .clks2wait(60000), .signal("resp_rdy"));
 
