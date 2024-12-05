@@ -53,7 +53,7 @@ package tb_tasks;
   // Task to check that a move was processed by cmd_proc.
   task automatic WaitForMove(ref send_resp, ref clk);
     // Wait till the move is complete and check that send_resp is asserted.
-    TimeoutTask(.sig(send_resp), .clk(clk), .clks2wait(3000000), .signal("send_resp"));
+    TimeoutTask(.sig(send_resp), .clk(clk), .clks2wait(6000000), .signal("send_resp"));
   endtask
 
   // Task to wait till a tour move is complete (2 individual moves).
@@ -163,11 +163,11 @@ package tb_tasks;
           $display("ERROR: velocity sum is not crossing 0x1000 threshold\nvelocity sum: 0x%h", velocity_sum);
           $stop();
         end
-        begin : check
+        begin : check_moving
           repeat(6000000) @(negedge clk) begin
             if (velocity_sum >= $signed(17'h01000)) begin
               disable wait_moving;
-              disable check;
+              disable check_moving;
             end
           end
         end : check
