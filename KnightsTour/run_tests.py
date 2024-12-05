@@ -80,7 +80,7 @@ for subdir, test_range in test_mapping.items():
             # Run the simulation in command-line mode
             print(f"Running simulation for: {test_name}")
             sim_command = (
-                f"vsim work.KnightsTour_tb -do \""
+                f"vsim -c work.KnightsTour_tb -do \""
                 f"add wave -internal *; "  # Add only internal signals to the wave window
                 f"run -all; "  # Run the simulation
                 f"write wave -file {wave_file}; "  # Save waveform even for passing tests
@@ -93,7 +93,6 @@ for subdir, test_range in test_mapping.items():
             result = check_transcript(log_file)
             if result == "success":
                 print(f"{test_name}: Test passed!")
-                continue  # Move to the next test
             elif result == "error":
                 print(f"{test_name}: Test failed. Launching ModelSim GUI...")
                 # Launch ModelSim GUI with +acc for visibility of all signals
