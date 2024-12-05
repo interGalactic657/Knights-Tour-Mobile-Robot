@@ -19,12 +19,13 @@ os.makedirs(library_dir, exist_ok=True)
 for root, dirs, files in os.walk(design_dir):
     if "tests" in dirs:
         dirs.remove("tests")  # Skip the `tests` subdirectory
-    
+
     for file in files:
         if file.endswith(".sv"):
             file_path = os.path.join(root, file)
             print(f"Compiling design file: {file}")
-            subprocess.run(f"vlog {file_path}", shell=True, check=True)
+            # Use +acc=all for full signal visibility
+            subprocess.run(f"vlog +acc=all {file_path}", shell=True, check=True)
 
 # Compile shared test files
 test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
@@ -32,7 +33,7 @@ for test_file in test_files:
     test_path = os.path.join(test_dir, test_file)
     if os.path.exists(test_path):
         print(f"Compiling test file: {test_file}")
-        subprocess.run(f"vlog {test_path}", shell=True, check=True)
+        subprocess.run(f"vlog +acc=all {test_path}", shell=True, check=True)
 
 # Map subdirectories to their test ranges
 test_mapping = {
@@ -75,15 +76,15 @@ for subdir, test_range in test_mapping.items():
 
             # Compile the testbench
             print(f"Compiling testbench: {file}")
-            subprocess.run(f"vlog {test_path}", shell=True, check=True)
+            subprocess.run(f"vlog +acc=all {test_path}", shell=True, check=True)
 
             # Run the simulation in command-line mode
             print(f"Running simulation for: {test_name}")
             sim_command = (
                 f"vsim -c work.KnightsTour_tb -do \""
-                f"add wave -r KnightsTour_tb/*; "  # Add only signals local to the testbench
+                f"add wave -r /*; "  # Add top-level signals recursively
                 f"run -all; "
-                f"write wave -file {wave_file}; "
+                f"write wave -file {wave_file}; "  # Save waveform
                 f"quit;\" > {log_file}"
             )
             subprocess.run(sim_command, shell=True, check=True)
@@ -98,10 +99,8 @@ for subdir, test_range in test_mapping.items():
                 # Launch ModelSim GUI for debugging
                 subprocess.run(
                     f"vsim -gui work.KnightsTour_tb -do \""
-                    f"add wave -r KnightsTour_tb/*; "  # Add local testbench signals
-                    f"run -all;\"",
-                    shell=True,
-                    check=True
+                    f"add wave -r /*; "  # Add top-level signals recursively
+                    f"run -all;\"", shell=True, check=True
                 )
             else:
                 print(f"{test_name}: Test status unknown. Check log file: {log_file}")
