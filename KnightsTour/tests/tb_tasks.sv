@@ -143,6 +143,7 @@ package tb_tasks;
         $stop();
       end
     end
+  endtask
 
   // Task to check if the Knight is actively moving forward after a certain time.
   task automatic WaitMoving(ref clk, ref signed [16:0] velocity_sum);
