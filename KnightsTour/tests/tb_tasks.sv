@@ -137,7 +137,7 @@ package tb_tasks;
   // Task to check if the Knight heading is pointed in the correct direction.
   task automatic ChkHeading(input logic clk, input heading_t target_heading, ref signed [19:0] actual_heading);
     begin
-      signed [11:0] diff;
+      logic signed [11:0] diff;
 
       @(negedge clk) begin
         // Calculate absolute difference.
