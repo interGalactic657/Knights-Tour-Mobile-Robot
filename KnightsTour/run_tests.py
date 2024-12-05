@@ -36,7 +36,8 @@ test_subdirs = ["simple", "move", "logic"]
 for subdir in test_subdirs:
     subdir_path = os.path.join(test_dir, subdir)
     if os.path.exists(subdir_path):
-        for file in os.listdir(subdir_path):
+        # Sort the list of files to ensure they are processed in the correct order
+        for file in sorted(os.listdir(subdir_path)):
             if file.endswith(".sv"):
                 test_path = os.path.join(subdir_path, file)
                 test_name = os.path.splitext(file)[0]
@@ -46,9 +47,9 @@ for subdir in test_subdirs:
                 print(f"Compiling testbench: {file}")
                 subprocess.run(f"vlog {test_path}", shell=True, check=True)
 
-                ## Run the simulation
+                # Run the simulation
                 print(f"Running simulation for: {test_name}")
                 sim_command = f"vsim -c work.KnightsTour_tb -do 'run -all; quit;' > {log_file}"
                 subprocess.run(sim_command, shell=True, check=True)
-                
+
 print("All tests completed.")
