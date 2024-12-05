@@ -97,18 +97,19 @@ module UART_tx(
     set_done = 1'b0; // By default, rdy is not asserted.
         		
 		case (state)
-		  IDLE : begin // In the IDLE state, check if trmt is asserted, else stay in the current state.
-        if(trmt) begin
-			      nxt_state = TRM; // If go is asserted, next state is TRM, and shifting data begins.
-            init = 1'b1; // Assert init, to initialize the operands and begin the shifting.
-        end
-      end
 		  TRM : begin // Transmit the data.
 		    if(bit_cnt >= 4'hA) begin
           set_done = 1'b1; // We are done transmitting, and assert done.
           nxt_state = IDLE; // Head back to the IDLE state to transmit a new byte of data.
         end else begin
           transmitting = 1'b1; // If the bit count is not 10, in decimal, we continue transmitting and stay in this state.
+        end
+      end
+
+      default : begin // Used as the IDLE state. Checks if trmt is asserted, else stay in the current state.
+        if(trmt) begin
+			      nxt_state = TRM; // If go is asserted, next state is TRM, and shifting data begins.
+            init = 1'b1; // Assert init, to initialize the operands and begin the shifting.
         end
       end
 		endcase

@@ -85,18 +85,19 @@ module UART_wrapper(
     capture_high = 1'b0; // By default, recirculate value in flop when high byte is not received.
         		
 		case (state)
-		  default : begin // As a default, used as the HIGH state, to avoid spurious events.
-        if(byte_rdy) begin
-            capture_high = 1'b1; // If a byte is recieved, capture the high byte. 
-            clr_rx_rdy = 1'b1; // Clear the rx_dy signal of the UART, indicating data was received.
-            nxt_state = LOW; // Next proceed to capture the low byte.
-        end
-      end
 		  LOW : begin // Receive the low byte.
 		    if(byte_rdy) begin
           set_cmd_rdy = 1'b1; // We have received the 16-bit command so assert cmd_rdy.
           clr_rx_rdy = 1'b1; // Clear the rx_dy signal of the UART, indicating data was received.
           nxt_state = HIGH; // Head back to the HIGH state to receive a new byte of data.
+        end
+      end
+
+      default : begin // As a default, used as the HIGH state, to avoid spurious events.
+        if(byte_rdy) begin
+            capture_high = 1'b1; // If a byte is recieved, capture the high byte. 
+            clr_rx_rdy = 1'b1; // Clear the rx_dy signal of the UART, indicating data was received.
+            nxt_state = LOW; // Next proceed to capture the low byte.
         end
       end
 		endcase

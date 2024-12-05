@@ -109,18 +109,19 @@ module UART_rx(
     set_rdy = 1'b0; // By default, rdy is not asserted.
         		
 		case (state)
-		  IDLE : begin // In the IDLE state, check if start bit is received, else stay in the current state.
-        if(!rx_stable) begin
-			      nxt_state = RCV; // If start bit is asserted, next state is RCV, and shifting data begins.
-            start = 1'b1; // Assert start, to initialize the operands and begin the shifting.
-        end
-      end
 		  RCV : begin // Receive the data
 		    if(bit_cnt >= 4'hA) begin
           set_rdy = 1'b1; // We are done receiving data, and assert rdy.
           nxt_state = IDLE; // Head back to the IDLE state to receive a new byte of data.
         end else
           receiving = 1'b1; // If the bit count is not 10, in decimal, we continue transmitting and stay in this state.
+      end
+
+      default : begin // Used as the IDLE state. Checks if start bit is received, else stay in the current state.
+        if(!rx_stable) begin
+			      nxt_state = RCV; // If start bit is asserted, next state is RCV, and shifting data begins.
+            start = 1'b1; // Assert start, to initialize the operands and begin the shifting.
+        end
       end
 		endcase
   end

@@ -120,24 +120,26 @@ module SPI_mnrch(
     set_done = 1'b0; // By default, we are not done transmitting data.
     
 		case (state)
-		  default : begin // Used as the IDLE state and checks if snd is asserted, else stay in the current state.
-        if(snd) begin
-			      init = 1'b1; // Assert init, to initialize the operands and begin the shifting.
-            ld_SCLK = 1'b1; // Load in SCLK_div with the initial value. 
-            nxt_state = TRMT; // If snd is asserted, next state is TRMT, and shifting data begins.
-        end else
-            ld_SCLK = 1'b1; // Load in SCLK_div with the initial value until we begin shifting. 
-      end
 		  TRMT : begin // Transmit the data.
 		    if(done16) // Wait till 16-bits have been transmitted/received.
           nxt_state = BACK_PORCH; // Head to the BACK_PORCH state to bring SS_n and SCLK back high (inactive state).
       end
+
       BACK_PORCH : begin // Bring system back to inactive state.
 		    if(full) begin // Wait till SCLK is about to fall the next clock cycle, to indicate were done with the transmission.
           set_done = 1'b1; // We are done transmitting, and assert done.
           ld_SCLK = 1'b1; // Load in SCLK_div with the initial value until we begin shifting. 
           nxt_state = IDLE; // Head back to the IDLE state to transmit a new packet of data.
         end
+      end
+
+      default : begin // Used as the IDLE state and checks if snd is asserted, else stay in the current state.
+        if(snd) begin
+			      init = 1'b1; // Assert init, to initialize the operands and begin the shifting.
+            ld_SCLK = 1'b1; // Load in SCLK_div with the initial value. 
+            nxt_state = TRMT; // If snd is asserted, next state is TRMT, and shifting data begins.
+        end else
+            ld_SCLK = 1'b1; // Load in SCLK_div with the initial value until we begin shifting. 
       end
 		endcase
   end
