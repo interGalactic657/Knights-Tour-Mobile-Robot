@@ -45,16 +45,17 @@ with open(do_file_path, "w") as do_file:
             for file in os.listdir(subdir_path):
                 if file.endswith(".sv"):
                     test_path = os.path.join(subdir_path, file)
-                    test_name = os.path.splitext(file)[0]
-                    log_file = os.path.join(output_dir, f"{test_name}.log")
-                    
+                    log_file = os.path.join(output_dir, f"{file}.log")
+                    wave_file = os.path.join(output_dir, f"{file}.wlf")
+
                     # Add the testbench to the .do file
                     print(f"Adding testbench to .do: {file}")
-                    do_file.write(f"vlog {test_path}\n")
-                    do_file.write(f"vsim work.{test_name}\n")
+                    do_file.write(f"vlog {test_path}\n")  # Compile the file
+                    do_file.write(f"vsim -novopt work.KnightsTour_tb\n")  # Always run `KnightsTour_tb`
                     do_file.write(f"add wave -r /*\n")  # Add all signals to the waveform
                     do_file.write(f"run -all\n")  # Run the simulation
-                    do_file.write(f"write wave -file {os.path.join(output_dir, test_name)}.wlf\n")
+                    do_file.write(f"write wave -file {wave_file}\n")  # Save the waveform
+                    do_file.write(f"log -file {log_file}\n")  # Save the log file
     
     # End the .do file
     do_file.write("quit\n")
