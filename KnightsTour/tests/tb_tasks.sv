@@ -170,7 +170,7 @@ package tb_tasks;
               disable check_moving;
             end
           end
-        end : check
+        end : check_moving
       join
     end
   endtask
