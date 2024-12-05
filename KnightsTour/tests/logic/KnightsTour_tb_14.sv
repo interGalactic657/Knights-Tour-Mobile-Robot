@@ -84,7 +84,7 @@ module KnightsTour_tb();
     ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h2), .actual_yy(iDUT.y_offset));
 
     // Check that the Knight achieved the desired heading (should be facing south).
-    ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot[19:8]));
+    ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot));
 
     // Check if Knight moved back to the starting location on the board.
     ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
