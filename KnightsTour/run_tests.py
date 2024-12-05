@@ -56,7 +56,9 @@ with open(do_file_path, "w") as do_file:
                     do_file.write(f"add wave -r /*\n")  # Add all signals to the waveform
                     do_file.write(f"run -all\n")  # Run the simulation
                     do_file.write(f"write wave -file {wave_file}\n")  # Save the waveform
-                    do_file.write(f"log -file {log_file}\n")  # Save the log file
+
+                    # Corrected logging command:
+                    do_file.write(f"log -flush /*\n")  # Log all signals (or specify signals as needed)
                     do_file.write(f"exit\n")  # Exit after each test
 
     # End the .do file
