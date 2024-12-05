@@ -135,11 +135,15 @@ package tb_tasks;
   endtask
 
   // Task to check if the Knight heading is pointed in the correct direction.
-  task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [19:0] actual_heading);
+  task automatic ChkHeading(input logic clk, input heading_t target_heading, ref signed [19:0] actual_heading);
     @(negedge clk) begin
-      // Check heading within KnightPhysics +/- 0x2C.
-      if ((actual_heading[19:8] < (target_heading - $signed(8'h2C))) || (actual_heading[19:8] > (target_heading + $signed(8'h2C))) ) begin
-        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
+      // Calculate absolute difference.
+      signed [11:0] diff;
+      diff = (actual_heading[19:8] >= target_heading) ? (actual_heading[19:8] - target_heading) : (target_heading - actual_heading[19:8]);
+
+      // Check if the difference is within the allowed range.
+      if (diff > $signed(12'h02C)) begin
+        $display("ERROR: Heading is more than 0x2C outside of the target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
         $stop();
       end
     end
@@ -149,7 +153,7 @@ package tb_tasks;
   task automatic WaitMoving(ref clk, ref signed [16:0] velocity_sum);
     begin
       repeat(3000000) @(negedge clk);
-      
+
       // Check that the sum of the wheel velocities is higher than 0x200.
       if (velocity_sum < $signed(17'h00200)) begin
           $display("ERROR: velocity sum is not crossing 0x200 threshold\nvelocity sum: 0x%h", velocity_sum);
