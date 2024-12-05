@@ -12,54 +12,60 @@ library_dir = os.path.join(root_dir, "work")  # Simulation library directory
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
 
-# List of all test directories (one for each test)
-test_directories = [f"test_{i}" for i in range(1, 15)]  # test_1, test_2, ..., test_14
-
-# Compile all design files
-def compile_design_files():
+# Initialize the .do file for ModelSim
+do_file_path = os.path.join(root_dir, "run_tests.do")
+with open(do_file_path, "w") as do_file:
+    # Write commands to create the library
+    do_file.write(f"vlib work\n")
+    
+    # Compile all design files (ignoring `tests/` subdirectories)
     for root, dirs, files in os.walk(design_dir):
+        if "tests" in dirs:
+            dirs.remove("tests")  # Skip the `tests` subdirectory
+        
         for file in files:
             if file.endswith(".sv"):
                 file_path = os.path.join(root, file)
-                print(f"Compiling design file: {file}")
-                subprocess.run(f"vlog {file_path}", shell=True, check=True)
+                print(f"Adding design file to .do: {file}")
+                do_file.write(f"vlog {file_path}\n")
+    
+    # Compile shared test files
+    test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
+    for test_file in test_files:
+        test_path = os.path.join(test_dir, test_file)
+        if os.path.exists(test_path):
+            print(f"Adding test file to .do: {test_file}")
+            do_file.write(f"vlog {test_path}\n")
+    
+    # Compile and run testbenches from subdirectories: simple, move, logic
+    test_subdirs = ["simple", "move", "logic"]
+    for subdir in test_subdirs:
+        subdir_path = os.path.join(test_dir, subdir)
+        if os.path.exists(subdir_path):
+            for file in os.listdir(subdir_path):
+                if file.endswith(".sv"):
+                    test_path = os.path.join(subdir_path, file)
+                    test_name = os.path.splitext(file)[0]
+                    log_file = os.path.join(output_dir, f"{test_name}.log")
+                    wave_file = os.path.join(output_dir, f"{test_name}.wlf")
 
-# Compile and run tests for each test directory
-def compile_and_run_tests():
-    for test_dir_name in test_directories:
-        testbench_dir = os.path.join(test_dir, test_dir_name)
+                    # Add the testbench to the .do file
+                    print(f"Adding testbench to .do: {file}")
+                    do_file.write(f"vlog {test_path}\n")  # Compile the file
+                    do_file.write(f"vsim work.KnightsTour_tb\n")  # Always run `KnightsTour_tb`
+                    do_file.write(f"add wave -r /*\n")  # Add all signals to the waveform
+                    do_file.write(f"run -all\n")  # Run the simulation
+                    do_file.write(f"write wave -file {wave_file}\n")  # Save the waveform
 
-        if os.path.exists(testbench_dir):
-            # Compile testbench-specific files (and ensure all design files are compiled)
-            for root, dirs, files in os.walk(testbench_dir):
-                for file in files:
-                    if file.endswith(".sv") and file != "KnightsTour_tb.sv":
-                        file_path = os.path.join(root, file)
-                        print(f"Compiling testbench file: {file}")
-                        subprocess.run(f"vlog {file_path}", shell=True, check=True)
+                    # Corrected logging command:
+                    do_file.write(f"log -flush /*\n")  # Log all signals (or specify signals as needed)
+                    do_file.write(f"exit\n")  # Exit after each test
 
-            # Run the simulation for the testbench
-            testbench_file = os.path.join(testbench_dir, "KnightsTour_tb.sv")
-            if os.path.exists(testbench_file):
-                test_name = f"{test_dir_name}_KnightsTour_tb"
-                log_file = os.path.join(output_dir, f"{test_name}.log")
-                wave_file = os.path.join(output_dir, f"{test_name}.wlf")
+    # End the .do file
+    do_file.write("quit\n")
 
-                print(f"Running simulation for: {test_name}")
-                sim_command = f"vsim -c work.KnightsTour_tb -do \"add wave -r /*; run -all; write wave -file {wave_file}; log -flush /*; quit;\" > {log_file}"
-                subprocess.run(sim_command, shell=True, check=True)
-            else:
-                print(f"Testbench file KnightsTour_tb.sv not found in {testbench_dir}. Skipping.")
+# Run the generated .do file in ModelSim with GUI (without -novopt)
+print(f"Running ModelSim with .do file: {do_file_path}")
+subprocess.run(f"vsim -gui -do {do_file_path}", shell=True, check=True)
 
-# Main function to orchestrate the process
-def main():
-    # Compile all design files once
-    compile_design_files()
-
-    # Compile and run tests for all test directories
-    compile_and_run_tests()
-
-    print("All tests completed.")
-
-if __name__ == "__main__":
-    main()
+print("All tests completed.")
