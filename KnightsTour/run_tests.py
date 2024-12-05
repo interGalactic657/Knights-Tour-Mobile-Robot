@@ -12,17 +12,12 @@ library_dir = os.path.join(root_dir, "work")  # Simulation library directory
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
 
-# Initialize and map simulation library
-subprocess.run(f"vlib {library_dir}", shell=True, check=True)
-subprocess.run(f"vmap work {library_dir}", shell=True, check=True)
-
-# Compile all design files (ignoring `tests` subdirectories)
+# No vmap required: Directly run vsim (assuming work library exists or is auto-created)
+# Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
-    # Skip the `tests` subdirectories
     if "tests" in dirs:
-        dirs.remove("tests")
-
-    # Compile .sv design files
+        dirs.remove("tests")  # Skip the `tests` subdirectory
+    
     for file in files:
         if file.endswith(".sv"):
             file_path = os.path.join(root, file)
