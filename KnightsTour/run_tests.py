@@ -1,10 +1,8 @@
 import os
 import subprocess
 
-# Define root directory as the current directory (KnightsTour)
-root_dir = os.path.abspath(os.path.dirname(__file__))  # This resolves the current working directory to the script's location
-
-# Define other directories relative to the root directory
+# Directories
+root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
 design_dir = os.path.join(root_dir, "designs")  # Design files directory
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
@@ -13,9 +11,6 @@ library_dir = os.path.join(root_dir, "work")  # Simulation library directory
 # Ensure output and library directories exist
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
-
-# Map the simulation library (work)
-subprocess.run(f"vmap work {library_dir}", shell=True, check=True)
 
 # Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
@@ -51,7 +46,7 @@ for subdir in test_subdirs:
                 print(f"Compiling testbench: {file}")
                 subprocess.run(f"vlog {test_path}", shell=True, check=True)
 
-                # Run the simulation
+                # Run the simulation using vsim directly
                 print(f"Running simulation for: {test_name}")
                 sim_command = f"vsim -c work.{test_name} -do 'run -all; quit;' > {log_file}"
                 subprocess.run(sim_command, shell=True, check=True)
