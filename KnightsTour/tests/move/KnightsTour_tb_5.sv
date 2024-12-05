@@ -83,7 +83,7 @@ module KnightsTour_tb();
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
 
     // Check that the Knight achieved the desired heading
-    ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot[19:8]));
+    ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot));
 
     // Wait till the move is complete and check that send_resp is asserted.
     WaitForMove(.send_resp(iDUT.send_resp), .clk(clk));
@@ -93,6 +93,10 @@ module KnightsTour_tb();
 
     // Check if Knight moved to desired position on board.
     ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+
+    // If we reached here, that means all test cases were successful.
+		$display("YAHOO!! All tests passed.");
+		$stop();
     ////////////////////////////////////////////////////////////////////////////////////////////////
   end
   
