@@ -80,10 +80,11 @@ for subdir, test_range in test_mapping.items():
             # Run the simulation in command-line mode
             print(f"Running simulation for: {test_name}")
             sim_command = (
-                f"vsim -c work.KnightsTour_tb -do \""
-                f"add wave -internal *; "  # Add only internal signals to the wave window
+                f"vsim work.KnightsTour_tb -do \""
+                f"add wave -internal *; "  # Only add internal signals to the wave window
                 f"run -all; "  # Run the simulation
                 f"write wave -file {wave_file}; "  # Save waveform even for passing tests
+                f"log -flush /*; "  # Log all signals
                 f"quit;\" > {log_file}"
             )
             subprocess.run(sim_command, shell=True, check=True)
