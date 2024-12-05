@@ -44,6 +44,17 @@ def extract_numeric_key(filename):
     name, _ = os.path.splitext(filename)  # Split filename and extension
     return int(''.join(filter(str.isdigit, name)))  # Extract and convert numeric part to int
 
+# Check transcript for pass or error
+def check_transcript(log_file):
+    """Check if the transcript contains success or error messages."""
+    with open(log_file, 'r') as f:
+        content = f.read()
+        if "YAHOO!! All tests passed." in content:
+            return "success"
+        elif "ERROR" in content:
+            return "error"
+    return "unknown"
+
 # Compile and run testbenches in the correct order
 for subdir, test_range in test_mapping.items():
     subdir_path = os.path.join(test_dir, subdir)
@@ -62,9 +73,21 @@ for subdir, test_range in test_mapping.items():
             print(f"Compiling testbench: {file}")
             subprocess.run(f"vlog {test_path}", shell=True, check=True)
 
-            # Run the simulation
+            # Run the simulation in command-line mode
             print(f"Running simulation for: {test_name}")
             sim_command = f"vsim -c work.KnightsTour_tb -do 'run -all; quit;' > {log_file}"
             subprocess.run(sim_command, shell=True, check=True)
+
+            # Check the transcript for success or error
+            result = check_transcript(log_file)
+            if result == "success":
+                print(f"{test_name}: Test passed!")
+                continue  # Move to the next test
+            elif result == "error":
+                print(f"{test_name}: Test failed. Launching ModelSim GUI...")
+                # Launch ModelSim GUI for debugging
+                subprocess.run(f"vsim -gui work.KnightsTour_tb -do 'run -all;'", shell=True, check=True)
+            else:
+                print(f"{test_name}: Test status unknown. Check log file: {log_file}")
 
 print("All tests completed.")
