@@ -23,19 +23,37 @@ def create_or_open_project():
         print(f"Creating new ModelSim project at {project_file}...")
         # Create the project directory
         os.makedirs(project_dir, exist_ok=True)
-        # Create the project file
-        with open(project_file, "w") as f:
-            f.write("# ModelSim Project File\n")
-
-        # Initialize project and add sources
+        # Initialize ModelSim project
         subprocess.run(f"vsim -do \"vlib work; vmap work {library_dir};\"", shell=True, check=True)
         
     else:
         print(f"Opening existing ModelSim project at {project_file}...")
         subprocess.run(f"vsim -do \"vlib work; vmap work {library_dir};\"", shell=True, check=True)
 
-# Compile all design files (only if they are out of date)
-def compile_design_files():
+# Add design and test files to the project
+def add_files_to_project():
+    print("Adding files to the ModelSim project...")
+    
+    # Add design files
+    for root, dirs, files in os.walk(design_dir):
+        if "tests" in dirs:
+            dirs.remove("tests")  # Skip the `tests` subdirectory
+        
+        for file in files:
+            if file.endswith(".sv"):
+                file_path = os.path.join(root, file)
+                subprocess.run(f"vsim -do \"vlog {file_path}\"", shell=True, check=True)
+    
+    # Add test files
+    test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
+    for test_file in test_files:
+        test_path = os.path.join(test_dir, test_file)
+        if os.path.exists(test_path):
+            subprocess.run(f"vsim -do \"vlog {test_path}\"", shell=True, check=True)
+
+# Compile only the files that are out of date
+def compile_modified_files():
+    # Compile design files
     for root, dirs, files in os.walk(design_dir):
         if "tests" in dirs:
             dirs.remove("tests")  # Skip the `tests` subdirectory
@@ -51,8 +69,7 @@ def compile_design_files():
                     print(f"Compiling out-of-date design file: {file}")
                     subprocess.run(f"vlog {file_path}", shell=True, check=True)
 
-# Compile shared test files (only if they are out of date)
-def compile_test_files():
+    # Compile shared test files
     test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
     for test_file in test_files:
         test_path = os.path.join(test_dir, test_file)
@@ -87,9 +104,11 @@ def main():
     # Create/open the ModelSim project
     create_or_open_project()
 
-    # Compile design and test files that are out of date
-    compile_design_files()
-    compile_test_files()
+    # Add files to the project
+    add_files_to_project()
+
+    # Compile only the files that are out of date
+    compile_modified_files()
 
     # Compile and run tests
     compile_and_run_tests()
