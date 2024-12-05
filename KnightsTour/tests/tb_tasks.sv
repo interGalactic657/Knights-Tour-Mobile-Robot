@@ -148,12 +148,20 @@ package tb_tasks;
   // Task to check if the Knight is actively moving forward after a certain time.
   task automatic WaitMoving(ref clk, ref signed [16:0] velocity_sum);
     begin
-      repeat(3000000) @(negedge clk);
-      // Check that the sum of the wheel velocities is higher than 0x200.
-      if (velocity_sum < $signed(17'h00200)) begin
-          $display("ERROR: velocity sum is not crossing 0x200 threshold\nvelocity sum: 0x%h", velocity_sum);
-          $stop();
+      integer cycles;
+      while (cycles < 3000000) begin
+        @(negedge clk);
+        // Check that the sum of the wheel velocities is higher than 0x200.
+        if (velocity_sum > $signed(17'h01000)
+          // Velocity crossed threshold, exit wait
+          return;
+            
+        cycles++;
       end
+
+      // Never crossed threshold
+      $display("ERROR: velocity sum is not crossing 0x1000 threshold\nvelocity sum: 0x%h", velocity_sum);
+      $stop();
     end
   endtask
 endpackage
