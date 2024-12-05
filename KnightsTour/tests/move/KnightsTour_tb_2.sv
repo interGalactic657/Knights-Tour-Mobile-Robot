@@ -82,7 +82,7 @@ module KnightsTour_tb();
 
     // Wait for the Knight to begin moving before checking heading.
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
-
+    
     // Check that the Knight achieved the desired heading
     ChkHeading(.clk(clk), .target_heading(WEST), .actual_heading(iPHYS.heading_robot));
 
