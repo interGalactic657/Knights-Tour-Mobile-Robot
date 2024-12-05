@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
@@ -7,18 +8,34 @@ design_dir = os.path.join(root_dir, "designs")  # Design files directory
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
 library_dir = os.path.join(root_dir, "work")  # Simulation library directory
+project_dir = os.path.join(root_dir, "KnightsTour_project")  # Project directory for ModelSim
 
 # Ensure output and library directories exist
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
 
-# Initialize the .do file for ModelSim
-do_file_path = os.path.join(root_dir, "run_tests.do")
-with open(do_file_path, "w") as do_file:
-    # Write commands to create the library
-    do_file.write(f"vlib work\n")
-    
-    # Compile all design files (ignoring `tests/` subdirectories)
+# ModelSim project filename
+project_file = os.path.join(project_dir, "KnightsTour_project.prj")
+
+# Create the ModelSim project if it doesn't exist
+def create_or_open_project():
+    if not os.path.exists(project_file):
+        print(f"Creating new ModelSim project at {project_file}...")
+        # Create the project directory
+        os.makedirs(project_dir, exist_ok=True)
+        # Create the project file
+        with open(project_file, "w") as f:
+            f.write("# ModelSim Project File\n")
+
+        # Initialize project and add sources
+        subprocess.run(f"vsim -do \"vlib work; vmap work {library_dir};\"", shell=True, check=True)
+        
+    else:
+        print(f"Opening existing ModelSim project at {project_file}...")
+        subprocess.run(f"vsim -do \"vlib work; vmap work {library_dir};\"", shell=True, check=True)
+
+# Compile all design files (only if they are out of date)
+def compile_design_files():
     for root, dirs, files in os.walk(design_dir):
         if "tests" in dirs:
             dirs.remove("tests")  # Skip the `tests` subdirectory
@@ -26,18 +43,30 @@ with open(do_file_path, "w") as do_file:
         for file in files:
             if file.endswith(".sv"):
                 file_path = os.path.join(root, file)
-                print(f"Adding design file to .do: {file}")
-                do_file.write(f"vlog {file_path}\n")
-    
-    # Compile shared test files
+                last_compile_time = os.path.getmtime(file_path)
+                compiled_file = os.path.join(library_dir, file.replace(".sv", ".vhi"))
+
+                # Compile if the file is out of date
+                if not os.path.exists(compiled_file) or os.path.getmtime(compiled_file) < last_compile_time:
+                    print(f"Compiling out-of-date design file: {file}")
+                    subprocess.run(f"vlog {file_path}", shell=True, check=True)
+
+# Compile shared test files (only if they are out of date)
+def compile_test_files():
     test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
     for test_file in test_files:
         test_path = os.path.join(test_dir, test_file)
         if os.path.exists(test_path):
-            print(f"Adding test file to .do: {test_file}")
-            do_file.write(f"vlog {test_path}\n")
-    
-    # Compile and run testbenches from subdirectories: simple, move, logic
+            last_compile_time = os.path.getmtime(test_path)
+            compiled_test_file = os.path.join(library_dir, test_file.replace(".sv", ".vhi"))
+
+            # Compile if the file is out of date
+            if not os.path.exists(compiled_test_file) or os.path.getmtime(compiled_test_file) < last_compile_time:
+                print(f"Compiling out-of-date test file: {test_file}")
+                subprocess.run(f"vlog {test_path}", shell=True, check=True)
+
+# Compile and run testbenches from subdirectories: simple, move, logic
+def compile_and_run_tests():
     test_subdirs = ["simple", "move", "logic"]
     for subdir in test_subdirs:
         subdir_path = os.path.join(test_dir, subdir)
@@ -49,23 +78,23 @@ with open(do_file_path, "w") as do_file:
                     log_file = os.path.join(output_dir, f"{test_name}.log")
                     wave_file = os.path.join(output_dir, f"{test_name}.wlf")
 
-                    # Add the testbench to the .do file
-                    print(f"Adding testbench to .do: {file}")
-                    do_file.write(f"vlog {test_path}\n")  # Compile the file
-                    do_file.write(f"vsim work.KnightsTour_tb\n")  # Always run `KnightsTour_tb`
-                    do_file.write(f"add wave -r /*\n")  # Add all signals to the waveform
-                    do_file.write(f"run -all\n")  # Run the simulation
-                    do_file.write(f"write wave -file {wave_file}\n")  # Save the waveform
+                    # Add the testbench to the project and run it
+                    print(f"Running testbench: {file}")
+                    subprocess.run(f"vsim work.KnightsTour_tb -do \"add wave -r /*; run -all; write wave -file {wave_file}; log -flush /*; quit;\"", shell=True, check=True)
 
-                    # Corrected logging command:
-                    do_file.write(f"log -flush /*\n")  # Log all signals (or specify signals as needed)
-                    do_file.write(f"exit\n")  # Exit after each test
+# Main function to orchestrate the process
+def main():
+    # Create/open the ModelSim project
+    create_or_open_project()
 
-    # End the .do file
-    do_file.write("quit\n")
+    # Compile design and test files that are out of date
+    compile_design_files()
+    compile_test_files()
 
-# Run the generated .do file in ModelSim with GUI (without -novopt)
-print(f"Running ModelSim with .do file: {do_file_path}")
-subprocess.run(f"vsim -gui -do {do_file_path}", shell=True, check=True)
+    # Compile and run tests
+    compile_and_run_tests()
 
-print("All tests completed.")
+    print("All tests completed.")
+
+if __name__ == "__main__":
+    main()
