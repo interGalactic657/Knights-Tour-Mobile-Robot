@@ -145,7 +145,7 @@ package tb_tasks;
 
         // Check if the difference is within the allowed range.
         if (diff > $signed(12'h02C)) begin
-          $display("ERROR: Heading is more than 0x2C outside of the target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
+          $display("ERROR: Heading is more than 0x02C outside of the target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
           $stop();
         end
       end
