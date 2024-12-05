@@ -136,14 +136,22 @@ package tb_tasks;
 
   // Task to check if the Knight heading is pointed in the correct direction.
   task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [19:0] actual_heading);
-    @(negedge clk) begin
-      // Check heading within KnightPhysics +/- 0x2C.
-      if ((actual_heading[19:8] < (target_heading - $signed(12'h02C))) || (actual_heading[19:8] > (target_heading + $signed(12'h02C))) ) begin
-        $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
-        $stop();
+    begin
+      logic [11:0] diff;
+
+      // Calculate the absolute difference.
+      diff = (actual_heading[19:8] >= target_heading) ? (actual_heading[19:8] - target_heading) : (target_heading - actual_heading[19:8]);
+
+      // Check if the absolute difference exceeds the threshold.
+      @(negedge clk) begin
+        if (diff > $signed(12'h02C)) begin
+          $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
+          $stop();
+        end
       end
     end
   endtask
+
 
   // Task to check if the Knight is actively moving forward after a certain time.
   task automatic WaitMoving(ref clk, ref signed [16:0] velocity_sum);
