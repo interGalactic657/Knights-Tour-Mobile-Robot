@@ -75,6 +75,10 @@ module KnightsTour_tb();
 
     // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+
+    // If we reached here, that means all test cases were successful.
+		$display("YAHOO!! All tests passed.");
+		$stop();
     /////////////////////////////////////////////////////////////////////////////////////////////////
   end
   
