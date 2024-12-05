@@ -46,7 +46,7 @@ package tb_tasks;
         @(negedge clk) send_cmd = 1'b0; // Deassert snd_cmd after one clock cycle.
 
         // Wait for 60000 clocks for cmd_sent to be asserted, else timeout.
-        TimeoutTask(.sig(cmd_sent), .clk(clk) .clks2wait(60000), .signal("cmd_sent"));
+        TimeoutTask(.sig(cmd_sent), .clk(clk), .clks2wait(60000), .signal("cmd_sent"));
     end
   endtask
 
@@ -86,13 +86,13 @@ package tb_tasks;
   // Task to wait for the solution to the KnightsTour to be completed, otherwise times out.
   task automatic WaitComputeSol(ref start_tour, ref clk);
     // Wait 8000000 clock cycles for the solution to the KnightsTour to be computed.
-    TimeoutTask(.sig(start_tour), .clk(clk) .clks2wait(8000000), .signal("start_tour"));
+    TimeoutTask(.sig(start_tour), .clk(clk), .clks2wait(8000000), .signal("start_tour"));
   endtask
 
   // Task to check if a positive acknowledge is received from the DUT.
   task automatic ChkPosAck(ref resp_rdy, ref clk, ref resp);
     // Wait 60000 clock cycles, and ensure that a response is received.
-    TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
+    TimeoutTask(.sig(resp_rdy), .clk(clk), .clks2wait(60000), .signal("resp_rdy"));
 
     // Check that a positive acknowledge of 0xA5 is received.
     @(negedge clk) begin
@@ -106,7 +106,7 @@ package tb_tasks;
   // Task to check if an acknowledge is received from the DUT.
   task automatic ChkAck(ref resp_rdy, ref clk, ref resp);
     // Wait 60000 clock cycles, and ensure that a response is received.
-    TimeoutTask(.sig(resp_rdy), .clk(clk) .clks2wait(60000), .signal("resp_rdy"));
+    TimeoutTask(.sig(resp_rdy), .clk(clk), .clks2wait(60000), .signal("resp_rdy"));
 
     // Check that an acknowledge of 0x5A is received.
     @(negedge clk) begin
