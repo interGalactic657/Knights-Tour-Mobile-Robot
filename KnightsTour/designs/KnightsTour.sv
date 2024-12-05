@@ -14,7 +14,7 @@ module KnightsTour(
   input rghtIR_n						// goes low if right IR encounters a rail
 );
  
-  localparam FAST_SIM = 0;
+  parameter FAST_SIM = 0;
 
   ////////////////////////
   // Internals signals //
@@ -111,6 +111,4 @@ module KnightsTour(
   // Instantiate spongeBob fanfare unit //
   ///////////////////////////////////////
   sponge #(FAST_SIM) ISPNG(.clk(clk),.rst_n(rst_n),.go(fanfare_go),.piezo(piezo),.piezo_n(piezo_n));
-  
-	  
 endmodule
