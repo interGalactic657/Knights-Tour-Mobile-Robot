@@ -18,31 +18,30 @@ module KnightsTour(
 
   ////////////////////////
   // Internals signals //
-  //////////////////////
-  wire rst_n;							// global synchronized reset
-  wire strt_cal;						// initiate gyro heading calibration
-  logic cal_done;						// done with gyro heading calibration
-  wire signed [10:0] lft_spd, rght_spd;	// signed motor controls
-  wire signed [11:0] error;
-  wire signed [11:0] heading;
-  wire lftIR,cntrIR,rghtIR;				// sampled IR signals
-  wire heading_rdy;						// new heading reading is ready
-  wire moving;							// clear I in PID and don't integrate yaw if not moving
-  wire send_resp;						// send either 0xA5 (done) or 0x5A (in progress)
-  wire resp_sent;
-  wire cmd_rdy;							// multiplexed cmd_rdy
-  wire cmd_rdy_UART;					// cmd ready from UART/Bluetooth  
-  wire [9:0] frwrd;						// forward speed
-  wire [15:0] cmd;						// multiplexed cmd from TourCmd
-  wire [15:0] cmd_UART;					// command from UART/Bluetooth
-  wire clr_cmd_rdy;
-  wire tour_go;
-  wire fanfare_go;
-  wire start_tour;						// done from TourLogic
-  wire [4:0] mv_indx;					// "address" of tour move
-  wire [7:0] move;						// 1-hot encoded Knight move
-  wire [7:0] resp;						// either 0xA5 (done), or 0x5A (in progress)
-  
+  ////////////////////////
+  logic rst_n;                           // global synchronized reset
+  logic strt_cal;                        // initiate gyro heading calibration
+  logic cal_done;                        // done with gyro heading calibration
+  logic signed [10:0] lft_spd, rght_spd; // signed motor controls
+  logic signed [11:0] error;
+  logic signed [11:0] heading;
+  logic lftIR, cntrIR, rghtIR;           // sampled IR signals
+  logic heading_rdy;                     // new heading reading is ready
+  logic moving;                          // clear I in PID and don't integrate yaw if not moving
+  logic send_resp;                       // send either 0xA5 (done) or 0x5A (in progress)
+  logic resp_sent;
+  logic cmd_rdy;                         // multiplexed cmd_rdy
+  logic cmd_rdy_UART;                    // cmd ready from UART/Bluetooth  
+  logic [9:0] frwrd;                     // forward speed
+  logic [15:0] cmd;                      // multiplexed cmd from TourCmd
+  logic [15:0] cmd_UART;                 // command from UART/Bluetooth
+  logic clr_cmd_rdy;
+  logic tour_go;
+  logic fanfare_go;
+  logic start_tour;                      // done from TourLogic
+  logic [4:0] mv_indx;                   // "address" of tour move
+  logic [7:0] move;                      // 1-hot encoded Knight move
+  logic [7:0] resp;                      // either 0xA5 (done), or 0x5A (in progress)  
   
   /////////////////////////////////////
   // Instantiate reset synchronizer //

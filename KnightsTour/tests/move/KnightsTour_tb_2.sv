@@ -22,6 +22,7 @@ module KnightsTour_tb();
   logic [7:0] resp;
   wire IR_en;
   wire lftIR_n,rghtIR_n,cntrIR_n;
+  wire piezo, piezo_n;
   
   //////////////////////
   // Instantiate DUT //
@@ -36,8 +37,8 @@ module KnightsTour_tb();
   /////////////////////////////////////////////////////
   // Instantiate RemoteComm to send commands to DUT //
   ///////////////////////////////////////////////////
-  RemoteComm_e iRMT(.clk(clk), .rst_n(RST_n), .RX(RX_TX), .TX(TX_RX), .cmd(cmd),
-             .send_cmd(send_cmd), .cmd_sent(cmd_sent), .resp_rdy(resp_rdy), .resp(resp));
+  RemoteComm iRMT(.clk(clk), .rst_n(RST_n), .RX(RX_TX), .TX(TX_RX), .cmd(cmd),
+             .snd_cmd(send_cmd), .cmd_snt(cmd_sent), .resp_rdy(resp_rdy), .resp(resp));
 				   
   //////////////////////////////////////////////////////
   // Instantiate model of Knight Physics (and board) //

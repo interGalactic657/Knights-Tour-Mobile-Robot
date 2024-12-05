@@ -78,7 +78,7 @@ module KnightsTour_tb();
 
     // If we reached here, that means all test cases were successful.
 		$display("YAHOO!! All tests passed.");
-		$finish();
+		$stop();
     /////////////////////////////////////////////////////////////////////////////////////////////////
   end
   
