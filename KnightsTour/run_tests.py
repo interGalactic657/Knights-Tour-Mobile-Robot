@@ -81,9 +81,9 @@ for subdir, test_range in test_mapping.items():
             print(f"Running simulation for: {test_name}")
             sim_command = (
                 f"vsim -c work.KnightsTour_tb -do \""
-                f"add wave -hierarchical *; "  # Only add testbench signals
+                f"add wave -internal *; "  # Add only internal signals to the wave window
                 f"run -all; "
-                f"write wave -file {wave_file}; "  # Save waveform
+                f"write wave -file {wave_file}; "  # Save waveform even for passing tests
                 f"quit;\" > {log_file}"
             )
             subprocess.run(sim_command, shell=True, check=True)
@@ -92,13 +92,12 @@ for subdir, test_range in test_mapping.items():
             result = check_transcript(log_file)
             if result == "success":
                 print(f"{test_name}: Test passed!")
-                continue  # Move to the next test
             elif result == "error":
                 print(f"{test_name}: Test failed. Launching ModelSim GUI...")
                 # Launch ModelSim GUI with +acc for visibility of all signals
                 subprocess.run(
                     f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
-                    f"add wave -hierarchical *; "  # Add only internal testbench signals
+                    f"add wave -internal *; "  # Add only internal testbench signals
                     f"run -all;\"", shell=True, check=True
                 )
             else:
