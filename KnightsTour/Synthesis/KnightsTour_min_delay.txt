@@ -7,15 +7,15 @@ Report : timing
         -max_paths 1
 Design : KnightsTour
 Version: V-2023.12-SP5
-Date   : Wed Dec  4 10:20:26 2024
+Date   : Thu Dec  5 17:08:51 2024
 ****************************************
 
 Operating Conditions: tt0p85v25c   Library: saed32lvt_tt0p85v25c
 Wire Load Model Mode: enclosed
 
-  Startpoint: iCMD/square_cnt_reg[3]
+  Startpoint: iTL/last_move_reg[0][4]
               (rising edge-triggered flip-flop clocked by clk)
-  Endpoint: iCMD/square_cnt_reg[3]
+  Endpoint: iTL/last_move_reg[0][4]
             (rising edge-triggered flip-flop clocked by clk)
   Path Group: clk
   Path Type: min
@@ -28,22 +28,21 @@ Wire Load Model Mode: enclosed
   --------------------------------------------------------------------------
   clock clk (rise edge)                                   0.00       0.00
   clock network delay (ideal)                             0.00       0.00
-  iCMD/square_cnt_reg[3]/CLK (DFFX1_LVT)                  0.00       0.00 r
-  iCMD/square_cnt_reg[3]/QN (DFFX1_LVT)                   0.07       0.07 r
-  U13183/Y (INVX1_LVT)                                    0.02       0.09 f
-  U11438/Y (AO22X1_LVT)                                   0.05       0.14 f
-  iCMD/square_cnt_reg[3]/D (DFFX1_LVT)                    0.01       0.15 f
-  data arrival time                                                  0.15
+  iTL/last_move_reg[0][4]/CLK (DFFX1_LVT)                 0.00       0.00 r
+  iTL/last_move_reg[0][4]/Q (DFFX1_LVT)                   0.08       0.08 f
+  U3618/Y (AO22X2_LVT)                                    0.05       0.13 f
+  iTL/last_move_reg[0][4]/D (DFFX1_LVT)                   0.01       0.14 f
+  data arrival time                                                  0.14
 
   clock clk (rise edge)                                   0.00       0.00
   clock network delay (ideal)                             0.00       0.00
   clock uncertainty                                       0.15       0.15
-  iCMD/square_cnt_reg[3]/CLK (DFFX1_LVT)                  0.00       0.15 r
+  iTL/last_move_reg[0][4]/CLK (DFFX1_LVT)                 0.00       0.15 r
   library hold time                                      -0.01       0.14
   data required time                                                 0.14
   --------------------------------------------------------------------------
   data required time                                                 0.14
-  data arrival time                                                 -0.15
+  data arrival time                                                 -0.14
   --------------------------------------------------------------------------
   slack (MET)                                                        0.00
 

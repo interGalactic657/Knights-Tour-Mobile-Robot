@@ -6,13 +6,13 @@ Report : timing
         -max_paths 1
 Design : KnightsTour
 Version: V-2023.12-SP5
-Date   : Wed Dec  4 10:20:26 2024
+Date   : Thu Dec  5 17:08:51 2024
 ****************************************
 
 Operating Conditions: tt0p85v25c   Library: saed32lvt_tt0p85v25c
 Wire Load Model Mode: enclosed
 
-  Startpoint: iNEMO/iINT/yaw_int_reg[16]
+  Startpoint: iCMD/desired_heading_reg[0]
               (rising edge-triggered flip-flop clocked by clk)
   Endpoint: iMTR/iRIGHT/PWM_sig_reg
             (rising edge-triggered flip-flop clocked by clk)
@@ -27,18 +27,19 @@ Wire Load Model Mode: enclosed
   --------------------------------------------------------------------------
   clock clk (rise edge)                                   0.00       0.00
   clock network delay (ideal)                             0.00       0.00
-  iNEMO/iINT/yaw_int_reg[16]/CLK (DFFARX1_LVT)            0.00       0.00 r
-  iNEMO/iINT/yaw_int_reg[16]/Q (DFFARX1_LVT)              0.11       0.11 r
+  iCMD/desired_heading_reg[0]/CLK (DFFX1_LVT)             0.00       0.00 r
+  iCMD/desired_heading_reg[0]/Q (DFFX1_LVT)               0.08       0.08 f
+  U2684/Y (NAND2X0_LVT)                                   0.05       0.14 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_1/CO (FADDX1_LVT)
-                                                          0.11       0.22 r
+                                                          0.09       0.22 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_2/CO (FADDX1_LVT)
                                                           0.08       0.30 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_3/CO (FADDX1_LVT)
-                                                          0.08       0.38 r
+                                                          0.08       0.39 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_4/CO (FADDX1_LVT)
-                                                          0.08       0.46 r
+                                                          0.08       0.47 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_5/CO (FADDX1_LVT)
-                                                          0.08       0.54 r
+                                                          0.08       0.55 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_6/CO (FADDX1_LVT)
                                                           0.08       0.63 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_7/CO (FADDX1_LVT)
@@ -46,41 +47,37 @@ Wire Load Model Mode: enclosed
   iCMD/sub_1_root_sub_0_root_add_190/U2_8/CO (FADDX1_LVT)
                                                           0.08       0.79 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_9/CO (FADDX1_LVT)
-                                                          0.08       0.87 r
+                                                          0.08       0.88 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_10/CO (FADDX1_LVT)
-                                                          0.08       0.95 r
+                                                          0.08       0.96 r
   iCMD/sub_1_root_sub_0_root_add_190/U2_11/S (FADDX1_LVT)
-                                                          0.11       1.06 f
-  iCMD/U165/Y (XOR3X1_LVT)                                0.13       1.19 r
-  U13220/Y (INVX1_LVT)                                    0.04       1.23 f
-  U12921/Y (XOR2X1_LVT)                                   0.10       1.32 r
-  U11520/Y (OA21X1_LVT)                                   0.04       1.37 r
-  U12919/Y (OAI21X1_LVT)                                  0.07       1.43 f
-  U11518/Y (AO22X1_LVT)                                   0.05       1.49 f
-  U13219/Y (INVX1_LVT)                                    0.03       1.52 r
-  U12920/Y (OA21X1_LVT)                                   0.04       1.56 r
-  U11515/Y (OA22X1_LVT)                                   0.05       1.61 r
-  U11514/Y (NAND4X0_LVT)                                  0.05       1.66 f
-  U12778/Y (AND3X1_LVT)                                   0.07       1.73 f
-  U12706/Y (INVX1_LVT)                                    0.06       1.80 r
-  U11235/Y (NAND3X0_LVT)                                  0.06       1.86 f
-  U12922/Y (INVX1_LVT)                                    0.06       1.92 r
-  U11225/Y (AO21X1_LVT)                                   0.05       1.97 r
-  U11224/Y (OA22X1_LVT)                                   0.05       2.02 r
-  U11223/Y (AO22X1_LVT)                                   0.05       2.07 r
-  U11222/Y (OR2X1_LVT)                                    0.05       2.11 r
-  U11221/Y (AO222X1_LVT)                                  0.07       2.18 r
-  U11220/Y (OA221X1_LVT)                                  0.05       2.23 r
-  U11219/Y (AO221X1_LVT)                                  0.05       2.29 r
-  U11218/Y (OA221X1_LVT)                                  0.05       2.33 r
-  U11217/Y (AO221X1_LVT)                                  0.05       2.39 r
-  U11216/Y (OA221X1_LVT)                                  0.05       2.43 r
-  U11215/Y (AO221X1_LVT)                                  0.05       2.49 r
-  U11214/Y (OA221X1_LVT)                                  0.05       2.54 r
-  U12508/Y (AO21X1_LVT)                                   0.04       2.57 r
-  U12509/Y (NBUFFX2_LVT)                                  0.04       2.61 r
-  iMTR/iRIGHT/PWM_sig_reg/D (DFFARX1_LVT)                 0.01       2.62 r
-  data arrival time                                                  2.62
+                                                          0.11       1.07 f
+  iCMD/U163/Y (XOR3X1_LVT)                                0.13       1.20 r
+  U3404/Y (INVX1_LVT)                                     0.04       1.24 f
+  U3155/Y (XOR2X1_LVT)                                    0.10       1.34 r
+  U2677/Y (OA221X1_LVT)                                   0.06       1.39 r
+  U2675/Y (OA221X1_LVT)                                   0.06       1.45 r
+  U2674/Y (OA22X1_LVT)                                    0.05       1.50 r
+  U2669/Y (NAND3X0_LVT)                                   0.04       1.55 f
+  U3156/Y (AND3X1_LVT)                                    0.08       1.62 f
+  U3033/Y (INVX1_LVT)                                     0.06       1.69 r
+  U2390/Y (NAND3X0_LVT)                                   0.06       1.75 f
+  U3034/Y (INVX1_LVT)                                     0.06       1.81 r
+  U2381/Y (OA21X1_LVT)                                    0.06       1.88 r
+  U2379/Y (OR2X1_LVT)                                     0.04       1.92 r
+  U2378/Y (AO22X1_LVT)                                    0.05       1.97 r
+  U2376/Y (OR2X1_LVT)                                     0.04       2.01 r
+  U2375/Y (AO222X1_LVT)                                   0.07       2.08 r
+  U2374/Y (OA221X1_LVT)                                   0.05       2.13 r
+  U2373/Y (AO221X1_LVT)                                   0.05       2.18 r
+  U2372/Y (OA221X1_LVT)                                   0.05       2.23 r
+  U2371/Y (AO221X1_LVT)                                   0.05       2.29 r
+  U2370/Y (OA221X1_LVT)                                   0.05       2.33 r
+  U2369/Y (AO221X1_LVT)                                   0.05       2.39 r
+  U2368/Y (OA221X1_LVT)                                   0.05       2.43 r
+  U4286/Y (AO21X2_LVT)                                    0.04       2.48 r
+  iMTR/iRIGHT/PWM_sig_reg/D (DFFARX1_LVT)                 0.01       2.49 r
+  data arrival time                                                  2.49
 
   clock clk (rise edge)                                   3.00       3.00
   clock network delay (ideal)                             0.00       3.00
@@ -90,9 +87,9 @@ Wire Load Model Mode: enclosed
   data required time                                                 2.82
   --------------------------------------------------------------------------
   data required time                                                 2.82
-  data arrival time                                                 -2.62
+  data arrival time                                                 -2.49
   --------------------------------------------------------------------------
-  slack (MET)                                                        0.21
+  slack (MET)                                                        0.33
 
 
 1
