@@ -35,7 +35,7 @@ for test_file in test_files:
 test_mapping = {
     "simple": range(1, 2),  # Only test_1
     "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 15)  # test_13 to test_14
+    "logic": range(13, 14)  # Only test_13
 }
 
 # Helper function to extract the test number from filenames

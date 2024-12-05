@@ -84,7 +84,7 @@ module KnightsTour_tb();
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
 
     // Check that the Knight achieved the desired heading
-    ChkHeading(.clk(clk), .target_heading(WEST), .actual_heading(iPHYS.heading_robot[19:8]));
+    ChkHeading(.clk(clk), .target_heading(WEST), .actual_heading(iPHYS.heading_robot));
 
     // Wait till the move is complete and check that send_resp is asserted.
     WaitForMove(.send_resp(iDUT.send_resp), .clk(clk));
