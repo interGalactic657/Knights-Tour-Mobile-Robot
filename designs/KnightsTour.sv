@@ -92,7 +92,7 @@ module KnightsTour(
   // Instantiate PID controller //
   ///////////////////////////////			 
   PID iCNTRL(.clk(clk),.rst_n(rst_n),.moving(moving),.err_vld(heading_rdy),.frwrd(frwrd),
-             .error(error),.lft_spd(lft_spd),.rght_spd(rght_spd),.LED());
+             .error(error),.lft_spd(lft_spd),.rght_spd(rght_spd));
 
   ///////////////////////////////////
   // Instantiate motor PWM driver //
