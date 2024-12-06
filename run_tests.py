@@ -55,15 +55,13 @@ for test_file in test_files:
 # Helper function to find the full hierarchy paths for signals
 def find_signals(signal_names):
     """Find the full hierarchy paths for the given signal names, prioritizing full paths if specified."""
-    signal_paths = []  # List to store valid signal paths
+    signal_paths = []
     for signal in signal_names:
-        # If the user provided a full path (contains '/'), add it directly
         if "/" in signal:
             signal_paths.append(signal)
             continue
 
         try:
-            # Use the correct find command to search for signals recursively
             result = subprocess.run(
                 f"vsim -c work.KnightsTour_tb -do \"find signals /KnightsTour_tb/{signal}* -recursive; quit;\"",
                 shell=True,
@@ -71,24 +69,28 @@ def find_signals(signal_names):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-
-            # Parse the output to extract valid signal paths
-            found_signal = False  # Flag to track if we've already added the signal
+            found_signal = False
             for part in result.stdout.split():
-                # Skip invalid paths or comment lines (those starting with '#')
                 if part.startswith("#") or not part.strip() or part.strip() in ["//", "-access/-debug"]:
                     continue
-
-                if "/" in part:  # Valid signal path will contain '/'
-                    # Extract the last part of the path (signal name) and compare it exactly
+                if "/" in part:
                     if part.strip().split("/")[-1] == signal and not found_signal:
-                        signal_paths.append(part.strip())  # Add the first exact match
-                        found_signal = True  # Mark that we've added this signal
+                        signal_paths.append(part.strip())
+                        found_signal = True
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
-
-    # Return a list of valid signal paths
     return signal_paths
+
+# Check transcript for pass or error
+def check_transcript(log_file):
+    """Check if the transcript contains success or error messages."""
+    with open(log_file, 'r') as f:
+        content = f.read()
+        if "YAHOO!! All tests passed." in content:
+            return "success"
+        elif "ERROR" in content:
+            return "error"
+    return "unknown"
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
@@ -97,45 +99,44 @@ def run_testbench(subdir, test_file, mode):
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
 
-    # Compile the testbench
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-    # Run the simulation
+    # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
     if mode == "cmd":
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""  # Command for command-line mode
-            f"add wave -internal *; "  # Add only internal signals to the wave window (default)
-            f"run -all; "  # Run the simulation
-            f"write wave -file {wave_file}; "  # Save waveform even for passing tests
-            f"log -flush /*; "  # Log all signals
-            f"quit;\" > {log_file}"
+            f"vsim -c work.KnightsTour_tb -do \""
+            f"add wave -internal *; run -all; write wave -file {wave_file}; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
+
+        # Check the transcript for success or error
+        result = check_transcript(log_file)
+        if result == "success":
+            print(f"{test_name}: YAHOO!! All tests passed.")
+        elif result == "error":
+            print(f"{test_name}: Test failed. Launching GUI for debugging...")
+            subprocess.run(
+                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"add wave -internal *; run -all;\"",
+                shell=True, check=True
+            )
     else:
-        # Ask if custom signals should be added
+        # GUI mode: Ask for custom signals, or add defaults
         use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
         if use_custom_signals in ["yes", "y"]:
             signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
             signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
             signal_paths = find_signals(signal_names)
-
-            # Add only the specified signals (no default internal signals)
             add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
         else:
-            # Add the default internal signals if no custom signals are specified
-            add_wave_command = "add wave -internal *;"  # Default: Add only internal testbench signals
+            add_wave_command = "add wave -internal *;"
 
-        # Run simulation with selected wave signals
-        sim_command = (
-            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""  # Command for GUI mode
-            f"{add_wave_command} "
-            f"run -all;\""
+        subprocess.run(
+            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
+            shell=True, check=True
         )
-        subprocess.run(sim_command, shell=True, check=True)
 
 # Run the specified test or all tests
 if args.number:
-    # Run a specific test by number
     for subdir, test_range in test_mapping.items():
         if args.number in test_range:
             subdir_path = os.path.join(test_dir, subdir)
@@ -147,7 +148,6 @@ if args.number:
                 run_testbench(subdir, test_file, args.mode)
             break
 else:
-    # Run all tests
     for subdir in ["simple", "move", "logic"]:
         subdir_path = os.path.join(test_dir, subdir)
         if os.path.exists(subdir_path):
