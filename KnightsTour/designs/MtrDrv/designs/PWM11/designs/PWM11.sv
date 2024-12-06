@@ -32,7 +32,7 @@ module PWM11(
 			cnt <= 11'h000;
 		else
 			// Increment the count.
-			cnt <= cnt + 1;
+			cnt <= cnt + 1'b1;
     
     // Infer a positive edge triggered flip flop with active low asynchronous
 	// reset, used as outputting the PWM signal.
