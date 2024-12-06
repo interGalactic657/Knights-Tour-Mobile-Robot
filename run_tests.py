@@ -35,6 +35,19 @@ test_mapping = {
     "logic": range(13, 14)  # test_13
 }
 
+# Function to determine if a file needs recompilation
+def needs_recompile(src_file):
+    """
+    Check if the source file needs recompilation by comparing timestamps.
+    """
+    compiled_file = os.path.join(library_dir, os.path.basename(src_file).replace(".sv", ".o"))
+
+    if not os.path.exists(compiled_file):
+        return True  # No compiled file exists, needs compilation
+
+    # Compare modification times
+    return os.path.getmtime(src_file) > os.path.getmtime(compiled_file)
+
 # Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
     if "tests" in dirs:
@@ -43,14 +56,18 @@ for root, dirs, files in os.walk(design_dir):
     for file in files:
         if file.endswith(".sv"):
             file_path = os.path.join(root, file)
-            subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
+            if needs_recompile(file_path):
+                print(f"Compiling design file: {file}")
+                subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
 # Compile shared test files
 test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
 for test_file in test_files:
     test_path = os.path.join(test_dir, test_file)
     if os.path.exists(test_path):
-        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+        if needs_recompile(test_path):
+            print(f"Compiling test file: {test_file}")
+            subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
 # Helper function to find the full hierarchy paths for signals
 def find_signals(signal_names):
@@ -99,7 +116,9 @@ def run_testbench(subdir, test_file, mode):
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
 
-    subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+    if needs_recompile(test_path):
+        print(f"Compiling testbench: {test_file}")
+        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
     # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
     if mode == "cmd":
