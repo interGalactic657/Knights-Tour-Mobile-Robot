@@ -79,19 +79,18 @@ def find_signals(signal_names):
                 text=True,
             )
             # Parse the output to extract valid signal paths
-            for line in result.stdout.splitlines():
-                if line.startswith("#") or not line.strip():  # Skip comment lines
+            # Split the output by space and process each part
+            for part in result.stdout.split():
+                # Skip invalid paths or comment lines (those starting with '#')
+                if part.startswith("#") or not part.strip():
                     continue
-                if "/" in line:  # Valid signal path will contain '/'
-                    signal_paths.add(line.strip())  # Add to set (duplicates automatically handled)
+                if "/" in part:  # Valid signal path will contain '/'
+                    signal_paths.add(part.strip())  # Add to set (duplicates automatically handled)
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
     
-    # If user has specified signals, prefer those first. If no user signals, return the first valid signal.
-    if signal_paths:
-        return list(signal_paths)
-    else:
-        return []  # Return empty list if no signals found
+    # If user has specified signals, prioritize those signals first.
+    return list(signal_paths)  # Return a list of unique signal paths
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
