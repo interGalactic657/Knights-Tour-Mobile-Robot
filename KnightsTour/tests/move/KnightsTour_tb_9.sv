@@ -2,7 +2,7 @@ module KnightsTour_tb();
 
   import tb_tasks::*;
 
-  localparam FAST_SIM = 1;
+  localparam FAST_SIM = 0;
   
   ///////////////////////////
   // Stimulus of type reg //
