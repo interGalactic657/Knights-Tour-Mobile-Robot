@@ -137,14 +137,18 @@ package tb_tasks;
   // Task to check if the Knight heading is pointed in the correct direction.
   task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [19:0] actual_heading);
     begin
-      logic [11:0] diff;
+      logic signed [11:0] error;
+      logic [11:0] error_abs;
 
-      // Calculate the absolute difference.
-      diff = (actual_heading[19:8] >= target_heading) ? (actual_heading[19:8] - target_heading) : (target_heading - actual_heading[19:8]);
+      // Compute the error.
+      error = actual_heading[19:8] - target_heading;
 
-      // Check if the absolute difference exceeds the threshold.
+      // Compute the absolute difference of the error.
+      error_abs = (diff[11]) ? -diff : diff;
+
+      // Check if the absolute error exceeds the threshold.
       @(negedge clk) begin
-        if (diff > 12'h02C) begin
+        if (error_abs > 12'h02C) begin
           $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
           $stop();
         end
@@ -159,13 +163,13 @@ package tb_tasks;
       fork
         begin : wait_moving
           repeat(6000000) @(negedge clk);
-          // Never crossed threshold
-          $display("ERROR: velocity sum is not crossing 0x1000 threshold\nvelocity sum: 0x%h", velocity_sum);
+          // Never crossed threshold.
+          $display("ERROR: velocity sum is not crossing 0xC000 threshold\nvelocity sum: 0x%h", velocity_sum);
           $stop();
         end
         begin : check_moving
           repeat(6000000) @(negedge clk) begin
-            if (velocity_sum >= $signed(17'h01000)) begin
+            if (velocity_sum >= $signed(17'h0C000)) begin
               disable wait_moving;
               disable check_moving;
             end
