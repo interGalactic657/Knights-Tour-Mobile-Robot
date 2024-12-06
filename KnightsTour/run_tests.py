@@ -86,15 +86,18 @@ def find_signals(signal_names):
                 if part.startswith("#") or not part.strip() or part.strip() == "//":
                     continue
                 if "/" in part:  # Valid signal path will contain '/'
-                    # Add only the first valid signal match for each signal
-                    if not found_signal:
+                    # If this signal is user-specified, use that first
+                    if signal in part and not found_signal:
                         signal_paths.append(part.strip())  # Add to the list
+                        found_signal = True  # Mark that we've added this signal
+                    elif not found_signal:
+                        signal_paths.append(part.strip())  # Add the first valid signal
                         found_signal = True  # Mark that we've added this signal
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
     
-    # Return a list of unique signal paths
-    return signal_paths  # The list will already contain only the first match for each signal
+    # Return a list of valid signal paths
+    return signal_paths  # This will contain only the first match for each signal
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
@@ -112,7 +115,7 @@ def run_testbench(subdir, test_file, mode):
         print(f"Running simulation for: {test_name} (command-line mode)")
         sim_command = (
             f"vsim -c work.KnightsTour_tb -do \""  # Command for command-line mode
-            f"add wave -internal *; "  # Add only internal signals to the wave window
+            f"add wave -internal *; "  # Add only internal signals to the wave window (by default)
             f"run -all; "  # Run the simulation
             f"write wave -file {wave_file}; "  # Save waveform even for passing tests
             f"log -flush /*; "  # Log all signals
@@ -128,10 +131,10 @@ def run_testbench(subdir, test_file, mode):
             signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
             signal_paths = find_signals(signal_names)
 
-            # Remove default internal signals if user specified signals
+            # Only add the specified signals, remove the default
             add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
         else:
-            # No custom signals, only add internal signals
+            # Add the default internal signals if no custom signals are specified
             add_wave_command = "add wave -internal *;"  # Default: Add only internal testbench signals
 
         # Run simulation with selected wave signals
