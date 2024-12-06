@@ -67,7 +67,7 @@ def find_test_info(test_number):
 
 def find_signals(signal_names):
     """Find the full hierarchy paths for the given signal names, prioritizing user-specified signals."""
-    signal_paths = set()  # Use a set to automatically filter duplicates
+    signal_paths = []  # List to store valid signal paths
     for signal in signal_names:
         try:
             # Launch vsim in batch mode to find signals
@@ -80,17 +80,21 @@ def find_signals(signal_names):
             )
             # Parse the output to extract valid signal paths
             # Split the output by space and process each part
+            found_signal = False  # Flag to track if we have already added the signal
             for part in result.stdout.split():
                 # Skip invalid paths or comment lines (those starting with '#')
                 if part.startswith("#") or not part.strip():
                     continue
                 if "/" in part:  # Valid signal path will contain '/'
-                    signal_paths.add(part.strip())  # Add to set (duplicates automatically handled)
+                    # Add only the first valid signal match for each signal
+                    if not found_signal:
+                        signal_paths.append(part.strip())  # Add to the list
+                        found_signal = True  # Mark that we've added this signal
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
     
-    # If user has specified signals, prioritize those signals first.
-    return list(signal_paths)  # Return a list of unique signal paths
+    # Return a list of unique signal paths
+    return signal_paths  # The list will already contain only the first match for each signal
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
