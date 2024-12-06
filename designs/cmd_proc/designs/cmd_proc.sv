@@ -120,9 +120,9 @@ module cmd_proc(
 
   generate // Decrement frwrd by different amounts based on whether FAST_SIM is enabled.
     if (FAST_SIM)
-      assign dec_amt = (opcode == CALY) ? 7'h40 : 7'h40;
+      assign dec_amt = 7'h40;
     else 
-      assign dec_amt = (opcode == CALY) ? 7'h04 : 7'h06;
+      assign dec_amt = 7'h06;
   endgenerate
   //////////////////////////////////////////////////////////////////////////
  
