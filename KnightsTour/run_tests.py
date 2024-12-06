@@ -66,7 +66,7 @@ def find_test_info(test_number):
     return None, None
 
 def find_signals(signal_names):
-    """Find the full hierarchy paths for the given signal names, ensuring only unique signals are added."""
+    """Find the full hierarchy paths for the given signal names, prioritizing user-specified signals."""
     signal_paths = set()  # Use a set to automatically filter duplicates
     for signal in signal_names:
         try:
@@ -80,11 +80,18 @@ def find_signals(signal_names):
             )
             # Parse the output to extract valid signal paths
             for line in result.stdout.splitlines():
-                if line.startswith("#") and "/" in line:  # Valid signal path will contain '/' and start with '#'
+                if line.startswith("#") or not line.strip():  # Skip comment lines
+                    continue
+                if "/" in line:  # Valid signal path will contain '/'
                     signal_paths.add(line.strip())  # Add to set (duplicates automatically handled)
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
-    return list(signal_paths)  # Convert set to list before returning
+    
+    # If user has specified signals, prefer those first. If no user signals, return the first valid signal.
+    if signal_paths:
+        return list(signal_paths)
+    else:
+        return []  # Return empty list if no signals found
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
@@ -118,7 +125,7 @@ def run_testbench(subdir, test_file, mode):
             signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
             signal_paths = find_signals(signal_names)
 
-            # If custom signals are specified, remove default internal signals
+            # Remove default internal signals if user specified signals
             add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
         else:
             # No custom signals, only add internal signals
