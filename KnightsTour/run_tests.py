@@ -35,29 +35,14 @@ test_mapping = {
     "logic": range(13, 14)  # test_13
 }
 
-# Function to compile a file only if out of date
-def compile_if_needed(src_file):
-    """Compiles a source file only if it is out of date."""
-    try:
-        # Run `vlog` with `-check` to avoid recompiling if the file is up to date
-        result = subprocess.run(
-            f"vlog -check {src_file}",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        # Check output to determine if recompilation was performed
-        if "Recompiling" in result.stdout:
-            print(f"Compiled: {os.path.basename(src_file)}")
-        elif "Up to date" in result.stdout:
-            pass  # File is already up to date; no need to print anything
-        else:
-            print(result.stdout)  # Log unexpected messages
-    except subprocess.CalledProcessError as e:
-        print(f"Error during compilation of {src_file}: {e.stderr}")
+# Function to ask for custom wave signals
+def get_custom_signals():
+    """Prompt the user for a list of custom wave signals."""
+    print("Enter the signals you want to add to the waveform, separated by commas (e.g., KnightsTour_tb/clk, KnightsTour_tb/RST_n):")
+    signals = input("Signals: ").strip()
+    return [signal.strip() for signal in signals.split(",") if signal.strip()]
 
-# Compile all design files (only if out of date)
+# Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
     if "tests" in dirs:
         dirs.remove("tests")  # Skip the `tests` subdirectory
@@ -65,14 +50,16 @@ for root, dirs, files in os.walk(design_dir):
     for file in files:
         if file.endswith(".sv"):
             file_path = os.path.join(root, file)
-            compile_if_needed(file_path)
+            print(f"Compiling design file: {file}")
+            subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
-# Compile shared test files (only if out of date)
+# Compile shared test files
 test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
 for test_file in test_files:
     test_path = os.path.join(test_dir, test_file)
     if os.path.exists(test_path):
-        compile_if_needed(test_path)
+        print(f"Compiling test file: {test_file}")
+        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
 # Helper function to find the subdirectory and filename for a test number
 def find_test_info(test_number):
@@ -93,12 +80,14 @@ def run_testbench(subdir, test_file, mode):
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
 
     # Compile the testbench
-    compile_if_needed(test_path)
+    print(f"Compiling testbench: {test_file}")
+    subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
     # Run the simulation
     if mode == "cmd":
+        print(f"Running simulation for: {test_name} (command-line mode)")
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""
+            f"vsim -c work.KnightsTour_tb -do \""  
             f"add wave -internal *; "  # Add only internal signals to the wave window
             f"run -all; "  # Run the simulation
             f"write wave -file {wave_file}; "  # Save waveform even for passing tests
@@ -107,11 +96,22 @@ def run_testbench(subdir, test_file, mode):
         )
         subprocess.run(sim_command, shell=True, check=True)
     else:
-        subprocess.run(
+        print(f"Running simulation for: {test_name} (GUI mode)")
+        # Ask if custom signals should be added
+        use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
+        if use_custom_signals in ["yes", "y"]:
+            custom_signals = get_custom_signals()
+            add_wave_command = " ".join([f"add wave {signal};" for signal in custom_signals])
+        else:
+            add_wave_command = "add wave -internal *;"  # Default: Add only internal testbench signals
+
+        # Run simulation with selected wave signals
+        sim_command = (
             f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
-            f"add wave -internal *; "  # Add only internal testbench signals
-            f"run -all;\"", shell=True, check=True
+            f"{add_wave_command} "
+            f"run -all;\""
         )
+        subprocess.run(sim_command, shell=True, check=True)
 
 # Run the specified test or all tests
 if args.number:
