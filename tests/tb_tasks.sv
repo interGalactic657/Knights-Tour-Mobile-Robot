@@ -146,7 +146,7 @@ package tb_tasks;
       // Compute the absolute difference of the error.
       error_abs = (diff[11]) ? -diff : diff;
 
-      // Check if the absolute difference exceeds the threshold.
+      // Check if the absolute error exceeds the threshold.
       @(negedge clk) begin
         if (error_abs > 12'h02C) begin
           $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
