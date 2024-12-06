@@ -66,8 +66,8 @@ def find_test_info(test_number):
     return None, None
 
 def find_signals(signal_names):
-    """Find the full hierarchy paths for the given signal names."""
-    signal_paths = []
+    """Find the full hierarchy paths for the given signal names, ensuring only unique signals are added."""
+    signal_paths = set()  # Use a set to automatically filter duplicates
     for signal in signal_names:
         try:
             # Launch vsim in batch mode to find signals
@@ -81,11 +81,10 @@ def find_signals(signal_names):
             # Parse the output to extract valid signal paths
             for line in result.stdout.splitlines():
                 if line.startswith("#") and "/" in line:  # Valid signal path will contain '/' and start with '#'
-                    signal_paths.append(line.strip())
+                    signal_paths.add(line.strip())  # Add to set (duplicates automatically handled)
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
-    return signal_paths
-
+    return list(signal_paths)  # Convert set to list before returning
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
@@ -118,8 +117,11 @@ def run_testbench(subdir, test_file, mode):
             signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
             signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
             signal_paths = find_signals(signal_names)
+
+            # If custom signals are specified, remove default internal signals
             add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
         else:
+            # No custom signals, only add internal signals
             add_wave_command = "add wave -internal *;"  # Default: Add only internal testbench signals
 
         # Run simulation with selected wave signals
