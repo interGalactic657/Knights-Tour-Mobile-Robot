@@ -144,7 +144,7 @@ package tb_tasks;
 
       // Check if the absolute difference exceeds the threshold.
       @(negedge clk) begin
-        if (diff > $signed(12'h02C)) begin
+        if (diff > 12'h02C) begin
           $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
           $stop();
         end
