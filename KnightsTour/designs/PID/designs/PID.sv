@@ -161,7 +161,7 @@ module PID(
 
   assign PID_term = P_ext + I_ext + D_ext;
 
-  always_ff(@(posedge clk)) begin
+  always_ff @(posedge clk) begin
       PID_term_PL <= PID_term;
   end
 
