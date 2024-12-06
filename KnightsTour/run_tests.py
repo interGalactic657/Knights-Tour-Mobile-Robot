@@ -72,7 +72,7 @@ def find_signals(signal_names):
         try:
             # Launch vsim in batch mode to find signals
             result = subprocess.run(
-                f"vsim -c work.KnightsTour_tb -do \"find /* {signal}; quit;\"",
+                f"vsim -c work.KnightsTour_tb -do \"find signals *{signal} -recursive; quit;\"",
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -80,7 +80,7 @@ def find_signals(signal_names):
             )
             # Parse the output to extract valid signal paths
             for line in result.stdout.splitlines():
-                if "/" in line and signal in line:  # Valid signal path will contain '/' and the signal name
+                if line.startswith("#") and "/" in line:  # Valid signal path will contain '/' and start with '#'
                     signal_paths.append(line.strip())
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
@@ -102,7 +102,7 @@ def run_testbench(subdir, test_file, mode):
     if mode == "cmd":
         print(f"Running simulation for: {test_name} (command-line mode)")
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""
+            f"vsim -c work.KnightsTour_tb -do \""  # Command for command-line mode
             f"add wave -internal *; "  # Add only internal signals to the wave window
             f"run -all; "  # Run the simulation
             f"write wave -file {wave_file}; "  # Save waveform even for passing tests
@@ -124,7 +124,7 @@ def run_testbench(subdir, test_file, mode):
 
         # Run simulation with selected wave signals
         sim_command = (
-            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
+            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""  # Command for GUI mode
             f"{add_wave_command} "
             f"run -all;\""
         )
@@ -147,7 +147,7 @@ else:
                 file for file in os.listdir(subdir_path)
                 if file.endswith(".sv")
             ]
-            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
+            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):  # Sort by number
                 run_testbench(subdir, file, args.mode)
 
 print("All tests completed.")
