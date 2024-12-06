@@ -144,7 +144,7 @@ package tb_tasks;
       error = actual_heading[19:8] - target_heading;
 
       // Compute the absolute difference of the error.
-      error_abs = (diff[11]) ? -diff : diff;
+      error_abs = (error[11]) ? -error : error;
 
       // Check if the absolute error exceeds the threshold.
       @(negedge clk) begin
