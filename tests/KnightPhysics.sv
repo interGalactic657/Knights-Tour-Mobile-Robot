@@ -127,6 +127,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			  rghtIR_n = 0;
 			else
 			  rghtIR_n = 1;
+			
           end
 		[12'h800:12'h848] : begin		// east of pure south
 		  yy = yy - omega_sum[16:13];
@@ -141,6 +142,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			  rghtIR_n = 0;
 			else
 			  rghtIR_n = 1;
+			
           end		  
 		[12'h000:12'h048] : begin						// west of pure north
 		    yy = yy + omega_sum[16:13];
@@ -156,12 +158,6 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			else
 			  lftIR_n = 1;
 			
-			// Modified board to have border, and all 3 IR signals will light up.
-			if (yy > 15'h5000) begin
-				lftIR_n = 0;
-				cntrIR_n = 0;
-				rghtIR_n = 0;
-			end
 		  end
 		[12'hFB8:12'hFFF] : begin						// east of pure north
 		    yy = yy + omega_sum[16:13];
@@ -176,13 +172,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			  lftIR_n = 0;
 			else
 			  lftIR_n = 1;
-			
-			// Modified board to have border, and all 3 IR signals will light up.
-			if (yy > 15'h5000) begin
-				lftIR_n = 0;
-				cntrIR_n = 0;
-				rghtIR_n = 0;
-			end
+
 		  end
 		default : if (omega_sum>17'h3c00) $display("PHYS ERR: not traveling orthogonal direction");
 	  endcase
@@ -197,7 +187,11 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 	  cntrIR_n = 1'b0;
 	else if (((yy[11:0]>12'h3E0) && (yy[11:0]<12'h460)) ||  ((yy[11:0]>12'hBA0) && (yy[11:0]<12'hC20)))
 	  cntrIR_n = 1'b0;
-	else
+	else if (yy > 15'h5000) begin // Modified board to have border, and all 3 IR signals will light up.
+	  lftIR_n = 0;
+	  cntrIR_n = 0;
+	  rghtIR_n = 0;
+	end else
 	  cntrIR_n = 1'b1;	  
   end
 	
