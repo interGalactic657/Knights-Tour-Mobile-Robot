@@ -65,27 +65,27 @@ def find_test_info(test_number):
                         return subdir, file
     return None, None
 
-# Function to find signal hierarchy paths
 def find_signals(signal_names):
     """Find the full hierarchy paths for the given signal names."""
     signal_paths = []
     for signal in signal_names:
         try:
-            # Use ModelSim's `find` command to locate the signal
+            # Launch vsim in batch mode to find signals
             result = subprocess.run(
-                f"vsim -c work.KnightsTour_tb -do \"find * {signal}; quit;\"",
+                f"vsim -c work.KnightsTour_tb -do \"find /* {signal}; quit;\"",
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            # Parse the result to extract signal paths
+            # Parse the output to extract valid signal paths
             for line in result.stdout.splitlines():
-                if signal in line:
+                if "/" in line and signal in line:  # Valid signal path will contain '/' and the signal name
                     signal_paths.append(line.strip())
         except subprocess.CalledProcessError as e:
             print(f"Error finding signal {signal}: {e.stderr}")
     return signal_paths
+
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
