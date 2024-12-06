@@ -40,7 +40,7 @@ module cmd_proc(
   ////////////////////////////////////////
   // Declare state types as enumerated //
   //////////////////////////////////////
-  typedef enum logic [2:0] {IDLE, CALIBRATE, MOVE, INCR, DECR, REVERSE, BACKUP} state_t;
+  typedef enum logic [2:0] {IDLE, CALIBRATE, MOVE, INCR, DECR, WAIT, REVERSE, BACKUP} state_t;
 
   ////////////////////////////////////////////
   // Declare command opcodes as enumerated //
@@ -65,6 +65,8 @@ module cmd_proc(
   logic fall_edge_pulse;               // Used to know when the Knight is off the board.
   logic square_done;                   // Indicates that one single square has been moved by the Knight
   logic came_back;                     // Indicates that the Knight returned to the original position after calibration.
+  logic [18:0] timer;                  // Used as a down counter to check cntrIR goes low after it expires.
+  logic timer_done;                    // Indicates that the timer has finished counting down.
   ////////////////////////////// PID Interface Logic ////////////////////////////////////
   logic signed [11:0] desired_heading; // Compute the desired heading based on the command given.
   logic signed [11:0] err_nudge;       // An error offset term to correct for when the robot wanders.
@@ -74,6 +76,8 @@ module cmd_proc(
   logic calibrate_y;                   // Indicates calibration of the y-position of the Knight.
   logic set_came_back;                 // Indicates that we came back to the starting location.
   logic reverse_heading;               // Indicates that we are reversing the heading of the Knight.
+  logic start_wait;                    // Allows timer to load in value to count down to wait for cntrIR to go low.
+  logic waiting;                       // Allows timer to count down once per clock.
   logic clr_frwrd;                     // Tells the Knight to ramp up its speed starting from 0.
   logic inc_frwrd;                     // Tells the Knight to ramp up its speed.
   logic dec_frwrd;                     // Tells the Knight to decrease up its speed.
@@ -196,6 +200,17 @@ module cmd_proc(
       came_back <= 1'b1; // We assert that we came back to the starting position.
   end
 
+  // Implement down counter to wait till cntrIR goes low after slowing down.
+  always_ff @(posedge clk) begin
+    if (start_wait)
+      timer <= 18'h24700; // Count down from 0x24700 to wait for the cntrIR signal to go low.
+    else if (waiting)
+      timer <= timer - 1'b1; // Decrement the counter once per clock cycle.
+  end
+
+  // The timer expired when it has reached zero.
+  assign timer_done = (timer == 12'h000);
+
   // Concatenate the incoming command with the correct offset after calibration.
   assign y_offset = (opcode == CALY) ? (4'h5 - square_cnt) : cmd[2:0]; 
   /////////////////////////////////////////////////////////////////////////////////
@@ -262,6 +277,8 @@ module cmd_proc(
     calibrate_y = 1'b0;     // By default, we are not calibrating the y-position of the Knight.
     set_came_back = 1'b0;   // By default, we did not come back to the starting position of the Knight.
     square_done = 1'b0;     // By default, we are not done moving a single square.
+    start_wait = 1'b0;      // By default, we are not waiting for the cntrIR to go low yet.
+    waiting = 1'b0;         // By default, we are not waiting for cntrIR to go low.
     reverse_heading = 1'b0; // By default, we are not reversing the heading of the Knight.
     moving = 1'b0;          // By default, the Knight is not moving.
     clr_frwrd = 1'b0;       // By default, the forward speed register is not cleared.
@@ -304,19 +321,8 @@ module cmd_proc(
         dec_frwrd = 1'b1; // Decrement speed.
         if (zero) begin // If forward speed reaches zero.
           if (opcode == CALY) begin // If we are calibrating the y-position, we need to check if the Knight is off the board.
-            if (!fall_edge_pulse) begin // If the Knight came to a stop but did not detect a falling edge on cntrIR, it means the Knight is off the board.
-              reverse_heading = 1'b1; // Reverse the heading of the Knight again by 180 degrees.
-              nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees. 
-            end else begin
-              if (came_back) begin // This is only true if we returned back to the starting position.
-                tour_go = 1'b1; // Assert tour_go once the y-position has been found and return to IDLE.
-                nxt_state = IDLE; // Return to IDLE.
-              end
-              else begin
-                calibrate_y = 1'b1; // Enable calibration of the y_offset.
-                nxt_state = MOVE; // If we are not yet off the board or did not return to the starting position, keep moving forward by one square.
-              end
-            end
+            start_wait = 1'b1; // Pulsed for one clock to load in the number of clocks to wait (i.e. a down counter).
+            nxt_state = WAIT; // Go to the wait state to see if we observe a falling edge on cntrIR.
           end else begin
             send_resp = 1'b1; // Send acknowledgment to Bluetooth if this was a normal move.
             nxt_state = IDLE; // Return to IDLE.
@@ -324,6 +330,25 @@ module cmd_proc(
         end 
         else
           moving = 1'b1; // Continue moving if not zero.
+      end
+
+      WAIT : begin // Wait a period of time for the cntrIR pulse to go low after slowing down.
+        waiting = 1'b1; // We are waiting for the cntrIR to go low.
+        // Wait till the timer runs out before checking.
+        if (timer_done) begin
+          if (!fall_edge_pulse) begin // If the Knight came to a stop but did not detect a falling edge on cntrIR, it means the Knight is off the board.
+              reverse_heading = 1'b1; // Reverse the heading of the Knight again by 180 degrees.
+              nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees. 
+          end else begin
+              if (came_back) begin // This is only true if we returned back to the starting position.
+                tour_go = 1'b1; // Assert tour_go once the y-position has been found and return to IDLE.
+                nxt_state = IDLE; // Return to IDLE.
+              end else begin
+                calibrate_y = 1'b1; // Enable calibration of the y_offset.
+                nxt_state = MOVE; // If we are not yet off the board or did not return to the starting position, keep moving forward by one square.
+              end
+          end
+        end
       end
 
       REVERSE : begin // Reverse the heading of the Knight by 90 degrees CW.
