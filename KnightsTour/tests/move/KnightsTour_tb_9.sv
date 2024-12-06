@@ -2,7 +2,7 @@ module KnightsTour_tb();
 
   import tb_tasks::*;
 
-  localparam FAST_SIM = 0;
+  localparam FAST_SIM = 1;
   
   ///////////////////////////
   // Stimulus of type reg //
@@ -58,7 +58,7 @@ module KnightsTour_tb();
       SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
       // Check that cal_done is being asserted after calibration.
-      TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(100000000), .signal("cal_done"));
+      TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
 
       // Check that a positive acknowledge is received from the DUT.
       ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
@@ -80,8 +80,6 @@ module KnightsTour_tb();
     // Send a command to move the Knight south by three squares.
     SendCmd(.cmd_to_send(16'h47F3), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
-    /*
-
     // Wait for the Knight to begin moving before checking heading
     WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
 
@@ -93,13 +91,6 @@ module KnightsTour_tb();
 
     // Check that a movement acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
-
-    */
-
-    repeat(10000000) @(posedge clk);
-    repeat(10000000) @(posedge clk);
-    repeat(10000000) @(posedge clk);
-    repeat(10000000) @(posedge clk);
 
     // Check if Knight moved to desired position on board.
     ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
