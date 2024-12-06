@@ -344,9 +344,10 @@ module cmd_proc(
       BACKUP : begin // State to move foraward in the reverse direction.
         inc_frwrd = 1'b1; // Increment forward speed.
         moving = 1'b1; // Continue moving.
-        if (move_done) // If movement is complete.
+        if (move_done) begin// If movement is complete.
           set_came_back = 1'b1; // Assert that we returned to the starting position.
-          nxt_state = DECR; // Go to the decrement speed state. 
+          nxt_state = DECR; // Go to the decrement speed state.
+        end 
       end
 
       default : begin // IDLE state - waits for a command
