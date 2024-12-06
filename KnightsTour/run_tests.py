@@ -35,13 +35,6 @@ test_mapping = {
     "logic": range(13, 14)  # test_13
 }
 
-# Function to ask for custom wave signals
-def get_custom_signals():
-    """Prompt the user for a list of custom wave signals."""
-    print("Enter the signals you want to add to the waveform, separated by commas (e.g., KnightsTour_tb/clk, KnightsTour_tb/RST_n):")
-    signals = input("Signals: ").strip()
-    return [signal.strip() for signal in signals.split(",") if signal.strip()]
-
 # Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
     if "tests" in dirs:
@@ -72,6 +65,28 @@ def find_test_info(test_number):
                         return subdir, file
     return None, None
 
+# Function to find signal hierarchy paths
+def find_signals(signal_names):
+    """Find the full hierarchy paths for the given signal names."""
+    signal_paths = []
+    for signal in signal_names:
+        try:
+            # Use ModelSim's `find` command to locate the signal
+            result = subprocess.run(
+                f"vsim -c work.KnightsTour_tb -do \"find * {signal}; quit;\"",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            # Parse the result to extract signal paths
+            for line in result.stdout.splitlines():
+                if signal in line:
+                    signal_paths.append(line.strip())
+        except subprocess.CalledProcessError as e:
+            print(f"Error finding signal {signal}: {e.stderr}")
+    return signal_paths
+
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
     test_path = os.path.join(test_dir, subdir, test_file)
@@ -87,7 +102,7 @@ def run_testbench(subdir, test_file, mode):
     if mode == "cmd":
         print(f"Running simulation for: {test_name} (command-line mode)")
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""  
+            f"vsim -c work.KnightsTour_tb -do \""
             f"add wave -internal *; "  # Add only internal signals to the wave window
             f"run -all; "  # Run the simulation
             f"write wave -file {wave_file}; "  # Save waveform even for passing tests
@@ -100,8 +115,10 @@ def run_testbench(subdir, test_file, mode):
         # Ask if custom signals should be added
         use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
         if use_custom_signals in ["yes", "y"]:
-            custom_signals = get_custom_signals()
-            add_wave_command = " ".join([f"add wave {signal};" for signal in custom_signals])
+            signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+            signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+            signal_paths = find_signals(signal_names)
+            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
         else:
             add_wave_command = "add wave -internal *;"  # Default: Add only internal testbench signals
 
