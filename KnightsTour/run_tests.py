@@ -83,7 +83,7 @@ def find_signals(signal_names):
             found_signal = False  # Flag to track if we have already added the signal
             for part in result.stdout.split():
                 # Skip invalid paths or comment lines (those starting with '#')
-                if part.startswith("#") or not part.strip():
+                if part.startswith("#") or not part.strip() or part.strip() == "//":
                     continue
                 if "/" in part:  # Valid signal path will contain '/'
                     # Add only the first valid signal match for each signal
