@@ -62,7 +62,6 @@ module cmd_proc(
   logic cntrIR_prev;                   // Previous cntrIR signal from the IR sensor.
   //////////////////////// Y-Calibration Logic ////////////////////////////////////////////
   logic [3:0] y_pos;                   // Indicates the current y-position of the Knight from the start of the board.
-  logic fall_edge_pulse;               // Used to know when the Knight is off the board.
   logic square_done;                   // Indicates that one single square has been moved by the Knight
   logic came_back;                     // Indicates that the Knight returned to the original position after calibration.
   logic [18:0] timer;                  // Used as a down counter to check cntrIR goes low after it expires.
@@ -186,10 +185,6 @@ module cmd_proc(
         y_pos <= 1'b0; // Clear the offset.
   end
 
-  // A fall-edge detector on cntrIR to know when we are off the board. We expect the cntrIR signal to previously be high
-  // but go low within a square after coming to a stop.
-  assign fall_edge_pulse = cntrIR_prev & ~cntrIR; 
-
   // Implement SR flop for detecting when we came back to the starting position during calibration.
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n)
@@ -203,12 +198,12 @@ module cmd_proc(
   // Implement down counter to wait till cntrIR goes low after slowing down.
   always_ff @(posedge clk) begin
     if (start_wait)
-      timer <= 18'h24700; // Count down from 0x24700 to wait for the cntrIR signal to go low.
+      timer <= 18'h249F0; // Count down from 0x249F0 to wait for the cntrIR signal to go low.
     else if (waiting)
       timer <= timer - 1'b1; // Decrement the counter once per clock cycle.
   end
 
-  // The timer expired when it has reached zero.
+  // The timer expires when it has reached zero.
   assign timer_done = (timer == 12'h000);
 
   // Concatenate the incoming command with the correct offset after calibration.
@@ -334,19 +329,16 @@ module cmd_proc(
 
       WAIT : begin // Wait a period of time for the cntrIR pulse to go low after slowing down.
         waiting = 1'b1; // We are waiting for the cntrIR to go low.
-        // Wait till the timer runs out before checking.
-        if (timer_done) begin
-          if (!fall_edge_pulse) begin // If the Knight came to a stop but did not detect a falling edge on cntrIR, it means the Knight is off the board.
-              reverse_heading = 1'b1; // Reverse the heading of the Knight again by 180 degrees.
-              nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees. 
+        if (timer_done) begin // Wait till the timer runs out before checking or check if cntrIR went low.
+            reverse_heading = 1'b1; // Reverse the heading of the Knight again by 180 degrees.
+            nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees. 
+        end else if (!cntrIR) begin
+          if (came_back) begin // This is only true if we returned back to the starting position.
+              tour_go = 1'b1; // Assert tour_go once the y-position has been found and return to IDLE.
+              nxt_state = IDLE; // Return to IDLE.
           end else begin
-              if (came_back) begin // This is only true if we returned back to the starting position.
-                tour_go = 1'b1; // Assert tour_go once the y-position has been found and return to IDLE.
-                nxt_state = IDLE; // Return to IDLE.
-              end else begin
-                calibrate_y = 1'b1; // Enable calibration of the y_offset.
-                nxt_state = MOVE; // If we are not yet off the board or did not return to the starting position, keep moving forward by one square.
-              end
+              calibrate_y = 1'b1; // Enable calibration of the y_offset.
+              nxt_state = MOVE; // If we are not yet off the board or did not return to the starting position, keep moving forward by one square.
           end
         end
       end
