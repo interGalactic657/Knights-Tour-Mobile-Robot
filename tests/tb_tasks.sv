@@ -137,24 +137,18 @@ package tb_tasks;
   // Task to check if the Knight heading is pointed in the correct direction.
   task automatic ChkHeading(ref clk, input heading_t target_heading, ref signed [19:0] actual_heading);
     begin
-      // logic [11:0] target_heading_abs;
-      // logic [11:0] actual_heading_abs;
-      logic signed [11:0] diff;
-      logic [11:0] diff_abs;
+      logic signed [11:0] error;
+      logic [11:0] error_abs;
 
-      // // Compute the absolute value of each heading.
-      // target_heading_abs = (target_heading[11]) ? -target_heading : target_heading;
-      // actual_heading_abs = (actual_heading[19]) ? -actual_heading[19:8] : actual_heading[19:8];
+      // Compute the error.
+      error = actual_heading[19:8] - target_heading;
 
-      // Calculate the absolute difference.
-      //diff = (actual_heading_abs >= target_heading_abs) ? (actual_heading_abs - target_heading_abs) : (target_heading_abs - actual_heading_abs);
-      diff = actual_heading[19:8] - target_heading;
-
-      diff_abs = (diff[11]) ? -diff : diff;
+      // Compute the absolute difference of the error.
+      error_abs = (diff[11]) ? -diff : diff;
 
       // Check if the absolute difference exceeds the threshold.
       @(negedge clk) begin
-        if (diff_abs > 12'h02C) begin
+        if (error_abs > 12'h02C) begin
           $display("ERROR: heading is more than 0x2C outside of target heading\ntarget: 0x%h\nactual: 0x%h", target_heading, actual_heading[19:8]);
           $stop();
         end
