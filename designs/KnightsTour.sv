@@ -14,7 +14,7 @@ module KnightsTour(
   input rghtIR_n						// goes low if right IR encounters a rail
 );
  
-  parameter FAST_SIM = 0;
+  localparam FAST_SIM = 0;
 
   ////////////////////////
   // Internals signals //
@@ -35,13 +35,15 @@ module KnightsTour(
   logic [9:0] frwrd;                     // forward speed
   logic [15:0] cmd;                      // multiplexed cmd from TourCmd
   logic [15:0] cmd_UART;                 // command from UART/Bluetooth
+  logic [2:0] y_offset;	                 // calibrated y_offset from cmd_proc
   logic clr_cmd_rdy;
   logic tour_go;
   logic fanfare_go;
   logic start_tour;                      // done from TourLogic
   logic [4:0] mv_indx;                   // "address" of tour move
   logic [7:0] move;                      // 1-hot encoded Knight move
-  logic [7:0] resp;                      // either 0xA5 (done), or 0x5A (in progress)  
+  logic [7:0] resp;                      // either 0xA5 (done), or 0x5A (in progress) 
+  
   
   /////////////////////////////////////
   // Instantiate reset synchronizer //
@@ -58,7 +60,7 @@ module KnightsTour(
   ////////////////////////////////////
   // Instantiate command processor //
   //////////////////////////////////  
-  cmd_proc #(FAST_SIM) iCMD(.clk(clk),.rst_n(rst_n),.cmd(cmd),.cmd_rdy(cmd_rdy),
+  cmd_proc #(FAST_SIM) iCMD(.clk(clk),.rst_n(rst_n),.cmd(cmd),.y_offset(y_offset),.cmd_rdy(cmd_rdy),
            .clr_cmd_rdy(clr_cmd_rdy),.send_resp(send_resp),.strt_cal(strt_cal),
 		   .cal_done(cal_done),.heading(heading),.heading_rdy(heading_rdy),.lftIR(lftIR),
 		   .cntrIR(cntrIR),.rghtIR(rghtIR),.error(error),.frwrd(frwrd),.moving(moving),
@@ -67,7 +69,7 @@ module KnightsTour(
   ///////////////////////////////////////////////////
   // Instantiate tour logic that solves the moves //
   /////////////////////////////////////////////////  
-  TourLogic iTL(.clk(clk),.rst_n(rst_n),.x_start(cmd[6:4]),.y_start(cmd[2:0]),
+  TourLogic iTL(.clk(clk),.rst_n(rst_n),.x_start(cmd[6:4]),.y_start(y_offset),
                 .go(tour_go),.done(start_tour),.indx(mv_indx),.move(move));
 				
   ///////////////////////////////////////////////////////////////
@@ -90,7 +92,7 @@ module KnightsTour(
   // Instantiate PID controller //
   ///////////////////////////////			 
   PID iCNTRL(.clk(clk),.rst_n(rst_n),.moving(moving),.err_vld(heading_rdy),.frwrd(frwrd),
-             .error(error),.lft_spd(lft_spd),.rght_spd(rght_spd));
+             .error(error),.lft_spd(lft_spd),.rght_spd(rght_spd),.LED());
 
   ///////////////////////////////////
   // Instantiate motor PWM driver //
@@ -110,4 +112,6 @@ module KnightsTour(
   // Instantiate spongeBob fanfare unit //
   ///////////////////////////////////////
   sponge #(FAST_SIM) ISPNG(.clk(clk),.rst_n(rst_n),.go(fanfare_go),.piezo(piezo),.piezo_n(piezo_n));
+  
+	  
 endmodule
