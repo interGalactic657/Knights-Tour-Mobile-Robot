@@ -1,5 +1,18 @@
 import os
 import subprocess
+import argparse
+
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="Run specific testbench or all testbenches in GUI or command-line mode.")
+parser.add_argument(
+    "-n", "--number", type=int, nargs="?", default=None,
+    help="Specify the testbench number to run (e.g., 1 for test_1). If not specified, runs all tests."
+)
+parser.add_argument(
+    "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
+    help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
+)
+args = parser.parse_args()
 
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
@@ -14,6 +27,13 @@ library_dir = os.path.join(root_dir, "work")  # Simulation library directory
 os.makedirs(transcript_dir, exist_ok=True)
 os.makedirs(waves_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
+
+# Mapping test numbers to subdirectories and file ranges
+test_mapping = {
+    "simple": range(1, 2),  # test_1
+    "move": range(2, 13),   # test_2 to test_12
+    "logic": range(13, 14)  # test_13
+}
 
 # Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
@@ -34,74 +54,75 @@ for test_file in test_files:
         print(f"Compiling test file: {test_file}")
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-# Map subdirectories to their test ranges
-test_mapping = {
-    "simple": range(1, 2),  # Only test_1
-    "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 14)  # Only test_13
-}
+# Helper function to find the subdirectory and filename for a test number
+def find_test_info(test_number):
+    for subdir, test_range in test_mapping.items():
+        if test_number in test_range:
+            subdir_path = os.path.join(test_dir, subdir)
+            if os.path.exists(subdir_path):
+                for file in os.listdir(subdir_path):
+                    if file.endswith(".sv") and f"_{test_number}" in file:
+                        return subdir, file
+    return None, None
 
-# Helper function to extract the test number from filenames
-def extract_numeric_key(filename):
-    """Extracts numeric part of a filename for sorting."""
-    name, _ = os.path.splitext(filename)  # Split filename and extension
-    return int(''.join(filter(str.isdigit, name)))  # Extract and convert numeric part to int
+# Function to run a specific testbench
+def run_testbench(subdir, test_file, mode):
+    test_path = os.path.join(test_dir, subdir, test_file)
+    test_name = os.path.splitext(test_file)[0]
+    log_file = os.path.join(transcript_dir, f"{test_name}.log")
+    wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
 
-# Check transcript for pass or error
-def check_transcript(log_file):
-    """Check if the transcript contains success or error messages."""
-    with open(log_file, 'r') as f:
-        content = f.read()
-        if "YAHOO!! All tests passed." in content:
-            return "success"
-        elif "ERROR" in content:
-            return "error"
-    return "unknown"
+    # Compile the testbench
+    print(f"Compiling testbench: {test_file}")
+    subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-# Compile and run testbenches in the correct order
-for subdir, test_range in test_mapping.items():
-    subdir_path = os.path.join(test_dir, subdir)
-    if os.path.exists(subdir_path):
-        # Filter and sort files in this subdirectory
-        test_files = [
-            file for file in os.listdir(subdir_path)
-            if file.endswith(".sv") and extract_numeric_key(file) in test_range
-        ]
-        for file in sorted(test_files, key=extract_numeric_key):
-            test_path = os.path.join(subdir_path, file)
-            test_name = os.path.splitext(file)[0]
-            log_file = os.path.join(transcript_dir, f"{test_name}.log")
-            wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
+    # Run the simulation
+    if mode == "cmd":
+        print(f"Running simulation for: {test_name} (command-line mode)")
+        sim_command = (
+            f"vsim -c work.KnightsTour_tb -do \""
+            f"add wave -internal *; "  # Add only internal signals to the wave window
+            f"run -all; "  # Run the simulation
+            f"write wave -file {wave_file}; "  # Save waveform even for passing tests
+            f"log -flush /*; "  # Log all signals
+            f"quit;\" > {log_file}"
+        )
+        subprocess.run(sim_command, shell=True, check=True)
+    else:
+        print(f"Running simulation for: {test_name} (GUI mode)")
+        subprocess.run(
+            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
+            f"add wave -internal *; "  # Add only internal testbench signals
+            f"run -all;\"", shell=True, check=True
+        )
 
-            # Compile the testbench
-            print(f"Compiling testbench: {file}")
-            subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
-
-            # Run the simulation in command-line mode
-            print(f"Running simulation for: {test_name}")
-            sim_command = (
-                f"vsim -c work.KnightsTour_tb -do \""
-                f"add wave -internal *; "  # Add only internal signals to the wave window
-                f"run -all; "  # Run the simulation
-                f"write wave -file {wave_file}; "  # Save waveform even for passing tests
-                f"log -flush /*; "  # Log all signals
-                f"quit;\" > {log_file}"
-            )
-            subprocess.run(sim_command, shell=True, check=True)
-
-            # Check the transcript for success or error
-            result = check_transcript(log_file)
-            if result == "success":
+    # Check the transcript for pass or error
+    if mode == "cmd":
+        with open(log_file, 'r') as f:
+            content = f.read()
+            if "YAHOO!! All tests passed." in content:
                 print(f"{test_name}: Test passed!")
-            elif result == "error":
-                print(f"{test_name}: Test failed. Launching ModelSim GUI...")
-                # Launch ModelSim GUI with +acc for visibility of all signals
-                subprocess.run(
-                    f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
-                    f"add wave -internal *; "  # Add only internal testbench signals
-                    f"run -all;\"", shell=True, check=True
-                )
-            else:
-                print(f"{test_name}: Test status unknown. Check log file: {log_file}")
+            elif "ERROR" in content:
+                print(f"{test_name}: Test failed. Check log file: {log_file}")
+
+# Run the specified test or all tests
+if args.number:
+    # Run a specific test by number
+    subdir, test_file = find_test_info(args.number)
+    if subdir and test_file:
+        run_testbench(subdir, test_file, args.mode)
+    else:
+        print(f"Test number {args.number} not found.")
+else:
+    # Run all tests
+    for subdir in ["simple", "move", "logic"]:
+        subdir_path = os.path.join(test_dir, subdir)
+        if os.path.exists(subdir_path):
+            test_files = [
+                file for file in os.listdir(subdir_path)
+                if file.endswith(".sv")
+            ]
+            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
+                run_testbench(subdir, file, args.mode)
 
 print("All tests completed.")
