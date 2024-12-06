@@ -1,25 +1,13 @@
 ###################################
 # Read in the verilog files first #
 ###################################
-read_file -format sverilog { \
-  ../designs/KnightsTour.sv \
-  ../designs/cmd_proc/designs/cmd_proc.sv \
-  ../designs/inert_intf/designs/inert_intf.sv \
-  ../designs/inert_intf/designs/gyro_intf/designs/inertial_integrator.sv \
-  ../designs/inert_intf/designs/gyro_intf/designs/SPI_mnrch.sv \
-  ../designs/IR_intf/designs/IR_intf.sv \
-  ../designs/MtrDrv/designs/MtrDrv.sv \
-  ../designs/MtrDrv/designs/PWM11/designs/PWM11.sv \
-  ../designs/PID/designs/PID.sv \
-  ../designs/reset_synch/designs/reset_synch.sv \
-  ../designs/sponge/designs/sponge.sv \
-  ../designs/TourCmd/designs/TourCmd.sv \
-  ../designs/TourLogic/designs/TourLogic.sv \
-  ../designs/UART_wrapper/designs/UART_wrapper.sv \
-  ../designs/UART_wrapper/designs/UART/designs/UART.sv \
-  ../designs/UART_wrapper/designs/UART/designs/UART_rx/designs/UART_rx.sv \
-  ../designs/UART_wrapper/designs/UART/designs/UART_tx/designs/UART_tx.sv \
-}
+read_file -format sverilog {../KnightsTour.sv ../reset_synch/reset_synch.sv \
+    ../inert_intf/inert_intf.sv ../inert_intf/gyro_intf/inertial_integrator.sv \
+    ../inert_intf/gyro_intf/SPI_mnrch.sv ../IR_intf/IR_intf.sv \
+    ../TourLogic/TourLogic.sv ../TourCmd/TourCmd.sv ../sponge/sponge.sv ../cmd_proc/cmd_proc.sv \
+    ../UART_wrapper/UART_wrapper.sv ../UART_wrapper/UART/UART.v \
+    ../UART_wrapper/UART/UART_rx/UART_rx.sv ../UART_wrapper/UART/UART_tx/UART_tx.sv \
+    ../PID/PID.sv ../MtrDrv/MtrDrv.sv ../MtrDrv/PWM11/PWM11.sv}
 
 ###################################
 # Set Current Design to top level #
@@ -34,7 +22,8 @@ set_max_area 12000
 create_clock -name "clk" -period 3 -waveform {0 1.5} {clk}
 set_dont_touch_network [find port clk]
 set_clock_uncertainty 0.15 [get_clocks]
-set_dont_touch_network [find port rst_n]
+set_dont_touch_network [find port]
+set_dont_touch_network [get_net iRST/rst_n]
 
 ##############################################
 # Constrain input timings and Drive strength #
@@ -56,19 +45,19 @@ set_wire_load_model -name 16000 -library saed32lvt_tt0p85v25c
 set_max_transition 0.15 [current_design]
 
 # Compile the design
-compile -map_effort high 
+compile -map_effort medium -area_effort high
 
 # Flatten to generate no hierarchy
 ungroup -all -flatten
 
 # Second compile
-compile -map_effort high 
+compile -map_effort medium -area_effort high
 
 # Fix hold time issues
 set_fix_hold clk
 
 # Final compile
-compile -map_effort medium -incremental_mapping
+compile -map_effort medium -incremental_mapping -only_hold_time -area_effort high
 
 ####################################################
 # Take a look at max & min timings as well as area #

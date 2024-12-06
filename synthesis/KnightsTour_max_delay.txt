@@ -6,7 +6,7 @@ Report : timing
         -max_paths 1
 Design : KnightsTour
 Version: V-2023.12-SP5
-Date   : Thu Dec  5 21:34:54 2024
+Date   : Fri Dec  6 10:48:54 2024
 ****************************************
 
 Operating Conditions: tt0p85v25c   Library: saed32lvt_tt0p85v25c
@@ -29,7 +29,7 @@ Wire Load Model Mode: enclosed
   clock network delay (ideal)                             0.00       0.00
   iNEMO/iINT/yaw_int_reg[0]/CLK (DFFARX1_LVT)             0.00       0.00 r
   iNEMO/iINT/yaw_int_reg[0]/Q (DFFARX1_LVT)               0.09       0.09 r
-  U2363/Y (AND2X1_LVT)                                    0.04       0.14 r
+  U8143/Y (AND2X1_LVT)                                    0.04       0.13 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_1/CO (FADDX1_LVT)
                                                           0.08       0.21 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_2/CO (FADDX1_LVT)
@@ -45,7 +45,7 @@ Wire Load Model Mode: enclosed
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_7/CO (FADDX1_LVT)
                                                           0.08       0.70 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_8/CO (FADDX1_LVT)
-                                                          0.08       0.79 r
+                                                          0.08       0.78 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_9/CO (FADDX1_LVT)
                                                           0.08       0.87 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_10/CO (FADDX1_LVT)
@@ -59,7 +59,7 @@ Wire Load Model Mode: enclosed
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_14/CO (FADDX1_LVT)
                                                           0.08       1.27 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_15/CO (FADDX1_LVT)
-                                                          0.08       1.36 r
+                                                          0.08       1.35 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_16/CO (FADDX1_LVT)
                                                           0.08       1.44 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_17/CO (FADDX1_LVT)
@@ -67,26 +67,26 @@ Wire Load Model Mode: enclosed
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_18/CO (FADDX1_LVT)
                                                           0.08       1.60 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_19/CO (FADDX1_LVT)
-                                                          0.08       1.68 r
+                                                          0.09       1.69 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_20/CO (FADDX1_LVT)
-                                                          0.08       1.76 r
+                                                          0.08       1.78 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_21/CO (FADDX1_LVT)
-                                                          0.08       1.85 r
+                                                          0.08       1.86 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_22/CO (FADDX1_LVT)
-                                                          0.08       1.93 r
+                                                          0.08       1.94 r
   iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_23/CO (FADDX1_LVT)
-                                                          0.08       2.01 r
-  iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_24/CO (FADDX1_LVT)
-                                                          0.08       2.09 r
-  iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_25/S (FADDX1_LVT)
-                                                          0.11       2.20 f
+                                                          0.08       2.02 r
+  iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_24/CO (FADDX2_LVT)
+                                                          0.08       2.11 r
+  iNEMO/iINT/add_1_root_add_0_root_add_179_2/U1_25/S (FADDX2_LVT)
+                                                          0.12       2.23 f
   iNEMO/iINT/add_0_root_add_0_root_add_179_2/U1_25/CO (FADDX1_LVT)
-                                                          0.09       2.29 f
+                                                          0.09       2.31 f
   iNEMO/iINT/add_0_root_add_0_root_add_179_2/U1_26/S (FADDX1_LVT)
-                                                          0.11       2.40 r
-  U2355/Y (AO22X1_LVT)                                    0.05       2.45 r
-  iNEMO/iINT/yaw_int_reg[26]/D (DFFARX1_LVT)              0.01       2.46 r
-  data arrival time                                                  2.46
+                                                          0.11       2.42 r
+  U8134/Y (AO22X1_LVT)                                    0.05       2.48 r
+  iNEMO/iINT/yaw_int_reg[26]/D (DFFARX1_LVT)              0.01       2.49 r
+  data arrival time                                                  2.49
 
   clock clk (rise edge)                                   3.00       3.00
   clock network delay (ideal)                             0.00       3.00
@@ -96,9 +96,9 @@ Wire Load Model Mode: enclosed
   data required time                                                 2.82
   --------------------------------------------------------------------------
   data required time                                                 2.82
-  data arrival time                                                 -2.46
+  data arrival time                                                 -2.49
   --------------------------------------------------------------------------
-  slack (MET)                                                        0.36
+  slack (MET)                                                        0.33
 
 
 1
