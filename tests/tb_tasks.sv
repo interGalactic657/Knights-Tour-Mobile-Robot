@@ -159,13 +159,13 @@ package tb_tasks;
       fork
         begin : wait_moving
           repeat(6000000) @(negedge clk);
-          // Never crossed threshold
-          $display("ERROR: velocity sum is not crossing 0x1000 threshold\nvelocity sum: 0x%h", velocity_sum);
+          // Never crossed threshold.
+          $display("ERROR: velocity sum is not crossing 0xC000 threshold\nvelocity sum: 0x%h", velocity_sum);
           $stop();
         end
         begin : check_moving
           repeat(6000000) @(negedge clk) begin
-            if (velocity_sum >= $signed(17'h01000)) begin
+            if (velocity_sum >= $signed(17'h0C000)) begin
               disable wait_moving;
               disable check_moving;
             end

@@ -230,7 +230,6 @@ module cmd_proc(
       end
 
       MOVE : begin // State to start moving.
-        move_cmd = 1'b1; // Command to move.
         moving = 1'b1;    // Adjusting the heading qualifies as moving.
         if (error_abs < 12'h02C) begin
           clr_frwrd = 1'b1; // Clear the forward register.
@@ -268,6 +267,7 @@ module cmd_proc(
               strt_cal = 1'b1; // Enable calibration.
             end
             default : begin // MOV and FANFARE opcodes.
+              move_cmd = 1'b1;  // Command to move.
               nxt_state = MOVE; // Command to move forward and slow down (optionally with fanfare).
             end
           endcase
