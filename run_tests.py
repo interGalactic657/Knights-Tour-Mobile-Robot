@@ -115,8 +115,18 @@ def run_testbench(subdir, test_file, mode):
             print(f"{test_name}: YAHOO!! All tests passed.")
         elif result == "error":
             print(f"{test_name}: Test failed. Launching GUI for debugging...")
+            # Prompt for custom signals when switching to GUI mode
+            use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
+            if use_custom_signals in ["yes", "y"]:
+                signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+                signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+                signal_paths = find_signals(signal_names)
+                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+            else:
+                add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
+
             subprocess.run(
-                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"add wave -internal *; run -all;\"",
+                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
                 shell=True, check=True
             )
     else:
@@ -158,4 +168,4 @@ else:
             for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
                 run_testbench(subdir, file, args.mode)
 
-print("All tests completed.")
+    print("All tests completed.")
