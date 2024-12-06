@@ -101,7 +101,7 @@ def run_testbench(subdir, test_file, mode):
         with open(log_file, 'r') as f:
             content = f.read()
             if "YAHOO!! All tests passed." in content:
-                print(f"{test_name}: Test passed!")
+                print(f"{test_name}: YAHOO!! All tests passed.")
             elif "ERROR" in content:
                 print(f"{test_name}: Test failed. Check log file: {log_file}")
 
