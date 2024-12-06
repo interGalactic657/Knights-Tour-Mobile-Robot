@@ -47,7 +47,7 @@ module PID(
   //Delay error valid signal by 1 clock cycle.
   always_ff @(posedge clk or negedge rst_n) begin
     if(!rst_n)
-      err_vld <= 1'b0;
+      err_vld1 <= 1'b0;
     else
       err_vld1 <= err_vld;
   end
@@ -181,4 +181,6 @@ module PID(
 
   // Saturate rght if PID is negative and raw value is negative.
   assign rght_spd = (PID_term[13] & raw_rght_spd[10]) ? 11'h3FF : raw_rght_spd;
+
+  
 endmodule

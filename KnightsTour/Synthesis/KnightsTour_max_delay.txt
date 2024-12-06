@@ -6,13 +6,13 @@ Report : timing
         -max_paths 1
 Design : KnightsTour
 Version: V-2023.12-SP5
-Date   : Thu Dec  5 17:08:51 2024
+Date   : Thu Dec  5 21:28:48 2024
 ****************************************
 
 Operating Conditions: tt0p85v25c   Library: saed32lvt_tt0p85v25c
 Wire Load Model Mode: enclosed
 
-  Startpoint: iCMD/desired_heading_reg[0]
+  Startpoint: iCNTRL/prev_err_reg[0]
               (rising edge-triggered flip-flop clocked by clk)
   Endpoint: iMTR/iRIGHT/PWM_sig_reg
             (rising edge-triggered flip-flop clocked by clk)
@@ -27,57 +27,62 @@ Wire Load Model Mode: enclosed
   --------------------------------------------------------------------------
   clock clk (rise edge)                                   0.00       0.00
   clock network delay (ideal)                             0.00       0.00
-  iCMD/desired_heading_reg[0]/CLK (DFFX1_LVT)             0.00       0.00 r
-  iCMD/desired_heading_reg[0]/Q (DFFX1_LVT)               0.08       0.08 f
-  U2684/Y (NAND2X0_LVT)                                   0.05       0.14 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_1/CO (FADDX1_LVT)
-                                                          0.09       0.22 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_2/CO (FADDX1_LVT)
-                                                          0.08       0.30 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_3/CO (FADDX1_LVT)
-                                                          0.08       0.39 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_4/CO (FADDX1_LVT)
-                                                          0.08       0.47 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_5/CO (FADDX1_LVT)
-                                                          0.08       0.55 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_6/CO (FADDX1_LVT)
-                                                          0.08       0.63 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_7/CO (FADDX1_LVT)
-                                                          0.08       0.71 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_8/CO (FADDX1_LVT)
-                                                          0.08       0.79 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_9/CO (FADDX1_LVT)
-                                                          0.08       0.88 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_10/CO (FADDX1_LVT)
-                                                          0.08       0.96 r
-  iCMD/sub_1_root_sub_0_root_add_190/U2_11/S (FADDX1_LVT)
-                                                          0.11       1.07 f
-  iCMD/U163/Y (XOR3X1_LVT)                                0.13       1.20 r
-  U3404/Y (INVX1_LVT)                                     0.04       1.24 f
-  U3155/Y (XOR2X1_LVT)                                    0.10       1.34 r
-  U2677/Y (OA221X1_LVT)                                   0.06       1.39 r
-  U2675/Y (OA221X1_LVT)                                   0.06       1.45 r
-  U2674/Y (OA22X1_LVT)                                    0.05       1.50 r
-  U2669/Y (NAND3X0_LVT)                                   0.04       1.55 f
-  U3156/Y (AND3X1_LVT)                                    0.08       1.62 f
-  U3033/Y (INVX1_LVT)                                     0.06       1.69 r
-  U2390/Y (NAND3X0_LVT)                                   0.06       1.75 f
-  U3034/Y (INVX1_LVT)                                     0.06       1.81 r
-  U2381/Y (OA21X1_LVT)                                    0.06       1.88 r
-  U2379/Y (OR2X1_LVT)                                     0.04       1.92 r
-  U2378/Y (AO22X1_LVT)                                    0.05       1.97 r
-  U2376/Y (OR2X1_LVT)                                     0.04       2.01 r
-  U2375/Y (AO222X1_LVT)                                   0.07       2.08 r
-  U2374/Y (OA221X1_LVT)                                   0.05       2.13 r
-  U2373/Y (AO221X1_LVT)                                   0.05       2.18 r
-  U2372/Y (OA221X1_LVT)                                   0.05       2.23 r
-  U2371/Y (AO221X1_LVT)                                   0.05       2.29 r
-  U2370/Y (OA221X1_LVT)                                   0.05       2.33 r
-  U2369/Y (AO221X1_LVT)                                   0.05       2.39 r
-  U2368/Y (OA221X1_LVT)                                   0.05       2.43 r
-  U4286/Y (AO21X2_LVT)                                    0.04       2.48 r
-  iMTR/iRIGHT/PWM_sig_reg/D (DFFARX1_LVT)                 0.01       2.49 r
-  data arrival time                                                  2.49
+  iCNTRL/prev_err_reg[0]/CLK (DFFARX1_LVT)                0.00       0.00 r
+  iCNTRL/prev_err_reg[0]/Q (DFFARX1_LVT)                  0.10       0.10 f
+  U42971/Y (NAND2X0_LVT)                                  0.05       0.14 r
+  U44374/Y (NAND2X0_LVT)                                  0.03       0.17 f
+  U44194/Y (NAND3X2_LVT)                                  0.08       0.25 r
+  U42964/Y (AO21X1_LVT)                                   0.05       0.31 r
+  U44201/Y (OR2X2_LVT)                                    0.05       0.35 r
+  U44360/Y (AO21X1_LVT)                                   0.06       0.41 r
+  U44496/Y (NAND2X0_LVT)                                  0.04       0.45 f
+  U44355/Y (NAND3X0_LVT)                                  0.05       0.50 r
+  U44354/Y (AO21X1_LVT)                                   0.06       0.57 r
+  U44357/Y (OR2X1_LVT)                                    0.05       0.62 r
+  U44393/Y (OA21X1_LVT)                                   0.05       0.67 r
+  U42945/Y (NAND2X0_LVT)                                  0.03       0.70 f
+  U44388/Y (NAND3X0_LVT)                                  0.04       0.74 r
+  U44302/Y (AO22X1_LVT)                                   0.05       0.79 r
+  U44385/Y (XOR3X2_LVT)                                   0.06       0.84 f
+  U44188/Y (OA21X1_LVT)                                   0.05       0.89 f
+  U44192/Y (OR2X1_LVT)                                    0.05       0.94 f
+  U44510/Y (AND2X1_LVT)                                   0.05       0.99 f
+  U42807/Y (AND2X1_LVT)                                   0.05       1.04 f
+  U44210/Y (AOI21X1_LVT)                                  0.06       1.10 r
+  U44277/Y (XOR2X1_LVT)                                   0.10       1.20 f
+  U44202/Y (XOR2X1_LVT)                                   0.10       1.30 r
+  U40244/Y (XNOR2X2_LVT)                                  0.09       1.38 f
+  U42756/Y (AND2X1_LVT)                                   0.05       1.43 f
+  U44326/Y (OAI22X1_LVT)                                  0.06       1.49 r
+  U42754/Y (OR2X1_LVT)                                    0.05       1.54 r
+  U44179/Y (AO221X1_LVT)                                  0.07       1.61 r
+  U42751/Y (AO22X1_LVT)                                   0.05       1.66 r
+  U42747/Y (AO21X1_LVT)                                   0.05       1.72 r
+  U42745/Y (NAND2X0_LVT)                                  0.03       1.75 f
+  U42744/Y (AND2X1_LVT)                                   0.04       1.79 f
+  U42743/Y (OA22X1_LVT)                                   0.05       1.84 f
+  U44485/Y (NBUFFX2_LVT)                                  0.05       1.88 f
+  U44207/Y (XOR3X1_LVT)                                   0.07       1.95 f
+  U44484/CO (FADDX1_LVT)                                  0.09       2.04 f
+  U44483/Y (INVX0_LVT)                                    0.04       2.07 r
+  U44482/Y (NBUFFX2_LVT)                                  0.04       2.12 r
+  U42663/Y (AO221X1_LVT)                                  0.07       2.18 r
+  U42662/Y (AO22X1_LVT)                                   0.05       2.23 r
+  U42661/Y (OR2X1_LVT)                                    0.04       2.27 r
+  U42660/Y (AO22X1_LVT)                                   0.05       2.33 r
+  U44521/Y (AND3X1_LVT)                                   0.05       2.38 r
+  U44880/Y (OA21X1_LVT)                                   0.05       2.42 r
+  U44879/Y (OR2X1_LVT)                                    0.04       2.46 r
+  U42651/Y (AO22X1_LVT)                                   0.05       2.52 r
+  U44478/Y (NAND2X0_LVT)                                  0.03       2.54 f
+  U44479/Y (NAND2X0_LVT)                                  0.03       2.58 r
+  U44480/Y (NAND2X0_LVT)                                  0.03       2.61 f
+  U44258/Y (OAI221X1_LVT)                                 0.06       2.67 r
+  U44470/Y (AO22X1_LVT)                                   0.05       2.72 r
+  U42632/Y (OA221X1_LVT)                                  0.05       2.77 r
+  U42631/Y (AO21X1_LVT)                                   0.04       2.81 r
+  iMTR/iRIGHT/PWM_sig_reg/D (DFFARX1_LVT)                 0.01       2.82 r
+  data arrival time                                                  2.82
 
   clock clk (rise edge)                                   3.00       3.00
   clock network delay (ideal)                             0.00       3.00
@@ -87,9 +92,9 @@ Wire Load Model Mode: enclosed
   data required time                                                 2.82
   --------------------------------------------------------------------------
   data required time                                                 2.82
-  data arrival time                                                 -2.49
+  data arrival time                                                 -2.82
   --------------------------------------------------------------------------
-  slack (MET)                                                        0.33
+  slack (MET)                                                        0.00
 
 
 1

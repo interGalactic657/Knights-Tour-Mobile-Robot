@@ -16,9 +16,9 @@ read_file -format sverilog { \
   ../designs/TourCmd/designs/TourCmd.sv \
   ../designs/TourLogic/designs/TourLogic.sv \
   ../designs/UART_wrapper/designs/UART_wrapper.sv \
-  ../designs/UART_wrapper/designs/UART/designs/UART.v \
+  ../designs/UART_wrapper/designs/UART/designs/UART.sv \
   ../designs/UART_wrapper/designs/UART/designs/UART_rx/designs/UART_rx.sv \
-  ../designs/UART_wrapper/designs/UART/UART_tx/designs/UART_tx.sv \
+  ../designs/UART_wrapper/designs/UART/designs/UART_tx/designs/UART_tx.sv \
 }
 
 ###################################
@@ -26,7 +26,7 @@ read_file -format sverilog { \
 ###################################
 set current_design KnightsTour
 link
-set_max_area 12000
+#set_max_area 12000
 
 #####################################
 # Constrain and assign assign clock #
@@ -56,19 +56,19 @@ set_wire_load_model -name 16000 -library saed32lvt_tt0p85v25c
 set_max_transition 0.15 [current_design]
 
 # Compile the design
-compile -map_effort medium -area_effort high
+compile -map_effort high 
 
 # Flatten to generate no hierarchy
 ungroup -all -flatten
 
 # Second compile
-compile -map_effort medium -area_effort high
+compile -map_effort high 
 
 # Fix hold time issues
 set_fix_hold clk
 
 # Final compile
-compile -map_effort medium -incremental_mapping -only_hold_time -area_effort high
+compile -map_effort medium -incremental_mapping
 
 ####################################################
 # Take a look at max & min timings as well as area #
