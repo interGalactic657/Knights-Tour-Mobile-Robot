@@ -304,7 +304,7 @@ module cmd_proc(
             if (!fall_edge_pulse) // If the Knight came to a stop but did not detect a falling edge on cntrIR, it means the Knight is off the board.
               reverse_heading = 1'b1; // Reverse the heading of the Knight again by 180 degrees.
               nxt_state = REVERSE; // Head to the REVERSE state to reverse the heading of the Knight CW by 180 degrees. 
-            else
+            else begin
               if (came_back) begin // This is only true if we returned back to the starting position.
                 tour_go = 1'b1; // Assert tour_go once the y-position has been found and return to IDLE.
                 nxt_state = IDLE; // Return to IDLE.
@@ -313,6 +313,7 @@ module cmd_proc(
                 calibrate_y = 1'b1; // Enable calibration of the y_offset.
                 nxt_state = MOVE; // If we are not yet off the board or did not return to the starting position, keep moving forward by one square.
               end
+            end
           end 
           else begin
             send_resp = 1'b1; // Send acknowledgment to Bluetooth if this was a normal move.
