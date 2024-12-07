@@ -96,6 +96,14 @@ def check_transcript(log_file):
             return "error"
     return "unknown"
 
+# Default signals if user doesn't specify custom ones
+default_signals = [
+    "clk", "RST_n", "iPHYS/xx", "iPHYS/yy", "heading", "heading_robot", "desired_heading", "omega_sum", 
+    "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "y_pos", "y_offset", 
+    "came_back", "off_board", "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", 
+    "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
+]
+
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode, debug_mode):
     test_path = os.path.join(test_dir, subdir, test_file)
@@ -117,9 +125,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     else:
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
+            # Find full hierarchy paths for the selected signals
+            signal_paths = find_signals(default_signals)
+            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
             sim_command = (
                 f"vsim -c -do \"" 
-                f"vsim -wlf {wave_file} work.KnightsTour_tb; add wave -internal *; run -all; log -flush /*; quit;\" > {log_file}"
+                f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit;\" > {log_file}"
             )
             subprocess.run(sim_command, shell=True, check=True)
 
@@ -137,7 +148,9 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                     signal_paths = find_signals(signal_names)
                     add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
                 else:
-                    add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
+                    # Find full hierarchy paths for the selected signals
+                    signal_paths = find_signals(default_signals)
+                    add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
 
                 subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
                     shell=True, check=True
@@ -152,7 +165,9 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 signal_paths = find_signals(signal_names)
                 add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
             else:
-                add_wave_command = "add wave -internal *;"
+                # Find full hierarchy paths for the selected signals
+                signal_paths = find_signals(default_signals)
+                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
 
             subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
                     shell=True, check=True
