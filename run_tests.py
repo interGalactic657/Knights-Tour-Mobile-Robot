@@ -127,11 +127,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         # Post-synthesis specific steps
         commands.append(
-            "vsim -c -do 'project open PostSynthesis.mpf; "
-            "project compileall; "
-            "vsim work.KnightsTour_tb -t ns -L ~/ece551/SAED32_lib "
-            "-Lf ~/ece551/SAED32_lib -voptargs=+acc;'"
+            f"vsim -c -do 'project open PostSynthesis.mpf; "
+            f"project compileall; "
+            f"vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~')}/ece551/SAED32_lib "
+            f"-Lf {os.path.expanduser('~')}/ece551/SAED32_lib -voptargs=+acc;'"
         )
+
     else:
         # Compile the test file
         commands.append(f"vlog +acc {test_path}")
