@@ -39,57 +39,24 @@ test_mapping = {
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Compile the relevant files for post-synthesis simulation
-def compile_post_synthesis_files():
-    """Compile only relevant files for post-synthesis simulation."""
-    # Files to be compiled for post-synthesis
-    files_to_compile = [
-        "KnightsTour.vg",          # Post-synthesis design file
-        "KnightPhysics.sv",        # Shared file for simulation
-        "RemoteComm.sv",           # Shared file for simulation
-        "SPI_iNEMO4.sv",           # Shared file for simulation
-        "tb_tasks.sv",             # Shared test file
-        os.path.join(test_dir, "simple", "KnightsTour_tb_0.sv")  # Testbench 0 in the simple folder
-    ]
+# Compile all design files (ignoring `tests/` subdirectories)
+for root, dirs, files in os.walk(design_dir):
+    if "tests" in dirs:
+        dirs.remove("tests")  # Skip the `tests` subdirectory
 
-    print("Compiling post-synthesis files...")
-    for file in files_to_compile:
-        file_path = os.path.join(design_dir, file) if not file.startswith("/") else file
-        subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
+    for file in files:
+        if file.endswith(".sv"):
+            file_path = os.path.join(root, file)
+            subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
-# Compile all design files (for regular simulation mode)
-def compile_design_files():
-    """Compile all design files except for tests."""
-    for root, dirs, files in os.walk(design_dir):
-        if "tests" in dirs:
-            dirs.remove("tests")  # Skip the `tests` subdirectory
+# Compile shared test files
+test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
+for test_file in test_files:
+    test_path = os.path.join(test_dir, test_file)
+    if os.path.exists(test_path):
+        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-        for file in files:
-            if file.endswith(".sv"):
-                file_path = os.path.join(root, file)
-                subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
-
-# Compile shared test files (for regular simulation mode)
-def compile_test_files():
-    """Compile shared test files."""
-    test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
-    for test_file in test_files:
-        test_path = os.path.join(test_dir, test_file)
-        if os.path.exists(test_path):
-            subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
-
-# Check transcript for pass or error
-def check_transcript(log_file):
-    """Check if the transcript contains success or error messages."""
-    with open(log_file, 'r') as f:
-        content = f.read()
-        if "YAHOO!! All tests passed." in content:
-            return "success"
-        elif "ERROR" in content:
-            return "error"
-    return "unknown"
-
-# Function to find the full hierarchy paths for signals
+# Helper function to find the full hierarchy paths for signals
 def find_signals(signal_names):
     """Find the full hierarchy paths for the given signal names, prioritizing full paths if specified."""
     signal_paths = []
@@ -118,7 +85,7 @@ def find_signals(signal_names):
             print(f"Error finding signal {signal}: {e.stderr}")
     return signal_paths
 
-# Run post-synthesis simulation
+# Function to run the post-synthesis simulation
 def run_post_synthesis_simulation():
     """Run the post-synthesis simulation with KnightsTour.vg and testbench 0."""
     design_file = os.path.join(design_dir, "KnightsTour.vg")
@@ -148,7 +115,7 @@ def run_post_synthesis_simulation():
     )
     subprocess.run(sim_command, shell=True, check=True)
 
-# Run the specified testbench
+# Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
     test_path = os.path.join(test_dir, subdir, test_file)
     test_name = os.path.splitext(test_file)[0]
@@ -169,38 +136,27 @@ def run_testbench(subdir, test_file, mode):
         result = check_transcript(log_file)
         if result == "error":
             print(f"{test_name}: Test failed. Launching GUI for debugging...")
-            # Prompt for custom signals when switching to GUI mode
-            use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
-            if use_custom_signals in ["yes", "y"]:
-                signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-                signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-                signal_paths = find_signals(signal_names)
-                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-            else:
-                add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
-
-            subprocess.run(
-                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-                shell=True, check=True
-            )
-
+            run_testbench_gui(test_name)
     else:
-        # GUI mode: Ask for custom signals, or add defaults
-        use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
-        if use_custom_signals in ["yes", "y"]:
-            signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-            signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-            signal_paths = find_signals(signal_names)
-            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-        else:
-            add_wave_command = "add wave -internal *;"
+        run_testbench_gui(test_name)
 
-        subprocess.run(
-            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-            shell=True, check=True
-        )
+def run_testbench_gui(test_name):
+    """Run the testbench in GUI mode and prompt for custom signals."""
+    use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
+    if use_custom_signals in ["yes", "y"]:
+        signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+        signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+        signal_paths = find_signals(signal_names)
+        add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+    else:
+        add_wave_command = "add wave -internal *;"
 
-# Main execution logic
+    subprocess.run(
+        f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
+        shell=True, check=True
+    )
+
+# Run post-synthesis simulation if specified
 if args.post_synthesis:
     run_post_synthesis_simulation()
 else:
@@ -224,7 +180,7 @@ else:
                     file for file in os.listdir(subdir_path)
                     if file.endswith(".sv")
                 ]
-                for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):  
+                for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
                     run_testbench(subdir, file, args.mode)
 
         print("All tests completed.")
