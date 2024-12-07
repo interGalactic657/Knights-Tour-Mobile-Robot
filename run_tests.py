@@ -34,20 +34,22 @@ os.makedirs(library_dir, exist_ok=True)
 
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
-    "simple": range(0, 2),  # test_0 and test_1
+    "simple": range(0, 2),  # test_1
     "move": range(2, 13),   # test_2 to test_12
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Function to compile the necessary design files
+# Function to compile the necessary design files based on mode
 def compile_files(is_post_synthesis=False):
     files_to_compile = []
 
     if is_post_synthesis:
         # In post-synthesis mode, compile KnightsTour.vg instead of KnightsTour.sv
+        print("Compiling KnightsTour.vg for post-synthesis simulation.")
         files_to_compile.append("KnightsTour.vg")  # Use .vg instead of .sv
     else:
         # In regular mode, compile KnightsTour.sv
+        print("Compiling KnightsTour.sv for regular simulation.")
         files_to_compile.append("KnightsTour.sv")
 
     # Common files to compile (these files are needed for both scenarios)
@@ -170,11 +172,10 @@ def run_testbench(subdir, test_file, mode):
             shell=True, check=True
         )
 
-# Main execution logic
+# Run the specified test or all tests
 if args.post_synthesis:
     run_post_synthesis_simulation()
 else:
-    # Regular simulation mode
     if args.number:
         for subdir, test_range in test_mapping.items():
             if args.number in test_range:
