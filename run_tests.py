@@ -14,7 +14,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-ps", "--post_synthesis", action="store_true",
-    help="Run post-synthesis tests (compiles KnightsTour.vg from the synthesis directory)."
+    help="Run post-synthesis tests (compiles KnightsTour.vg instead of KnightsTour.sv)."
 )
 args = parser.parse_args()
 
@@ -44,22 +44,12 @@ if args.post_synthesis:
 
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
-    "simple": range(0, 2),  # test_0 and test_1
+    "simple": range(1, 2),  # test_1
     "move": range(2, 13),   # test_2 to test_12
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Compile all design files (ignoring `tests/` subdirectories)
-for root, dirs, files in os.walk(design_dir):
-    if "tests" in dirs:
-        dirs.remove("tests")  # Skip the `tests` subdirectory
-
-    for file in files:
-        if file.endswith(".sv"):
-            file_path = os.path.join(root, file)
-            subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
-
-# Compile shared test files
+# Compile shared test files (common for all modes)
 test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
 for test_file in test_files:
     test_path = os.path.join(test_dir, test_file)
@@ -160,26 +150,38 @@ def run_testbench(subdir, test_file, mode):
         )
 
 # Run the specified test or all tests
-if args.number:
-    for subdir, test_range in test_mapping.items():
-        if args.number in test_range:
-            subdir_path = os.path.join(test_dir, subdir)
-            test_files = [
-                file for file in os.listdir(subdir_path)
-                if file.endswith(".sv") and f"_{args.number}" in file
-            ]
-            for test_file in test_files:
-                run_testbench(subdir, test_file, args.mode)
-            break
-else:
-    for subdir in ["simple", "move", "logic"]:
-        subdir_path = os.path.join(test_dir, subdir)
-        if os.path.exists(subdir_path):
-            test_files = [
-                file for file in os.listdir(subdir_path)
-                if file.endswith(".sv")
-            ]
-            for test_file in test_files:
-                run_testbench(subdir, test_file, args.mode)
+if args.post_synthesis:
+    # For post-synthesis, compile the necessary files and run test 0 in GUI mode
+    post_synthesis_files = [
+        "KnightsTour.vg", "KnightPhysics.sv", "RemoteComm.sv", "SPI_iNEMO4.sv", "tb_tasks.sv", "KnightsTour_tb_0.sv"
+    ]
+    for file in post_synthesis_files:
+        file_path = os.path.join(test_dir, "post_synthesis", file)
+        subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
-    print("All tests completed.")
+    # Run test 0 in GUI mode
+    run_testbench("post_synthesis", "KnightsTour_tb_0.sv", "gui")
+else:
+    if args.number:
+        for subdir, test_range in test_mapping.items():
+            if args.number in test_range:
+                subdir_path = os.path.join(test_dir, subdir)
+                test_files = [
+                    file for file in os.listdir(subdir_path)
+                    if file.endswith(".sv") and f"_{args.number}" in file
+                ]
+                for test_file in test_files:
+                    run_testbench(subdir, test_file, args.mode)
+                break
+    else:
+        for subdir in ["simple", "move", "logic"]:
+            subdir_path = os.path.join(test_dir, subdir)
+            if os.path.exists(subdir_path):
+                test_files = [
+                    file for file in os.listdir(subdir_path)
+                    if file.endswith(".sv")
+                ]
+                for test_file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))): 
+                    run_testbench(subdir, test_file, args.mode)
+
+        print("All tests completed.")
