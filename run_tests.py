@@ -103,9 +103,19 @@ def run_testbench(subdir, test_file, mode):
 
     # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
     if mode == "cmd":
+        # Prompt for custom signals when switching to GUI mode
+        use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
+        if use_custom_signals in ["yes", "y"]:
+            signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+            signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+            signal_paths = find_signals(signal_names)
+            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+        else:
+            add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
+        
         sim_command = (
             f"vsim -c work.KnightsTour_tb -do \""
-            f"vsim -wlf {wave_file} work.KnightsTour_tb; add wave -internal *; run -all; log -flush /*; quit;\" > {log_file}"
+            f"vsim -wlf {wave_file} work.KnightsTour_tb; {add_wave_command}; run -all; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
