@@ -135,11 +135,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             "-do", 
             'project open PostSynthesis.mpf; project compileall; '
             'vsim work.KnightsTour_tb -t ns -L /filespace/s/sjonnalagad2/ece551/SAED32_lib '
-            '-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc'
+            '-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc; '
+            f'log -flush /*;'  # Run without quitting immediately, log the results
         ]
 
         signals_to_use = ["clk", "RST_n", "send_resp", "resp"]
-        
+
         # Change working directory to post_synthesis directory.
         os.chdir(post_synthesis_dir)
     else:
