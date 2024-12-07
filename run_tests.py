@@ -118,24 +118,23 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
     wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
+    sim_command = " "
 
     if args.post_synthesis:
         # Change working directory to post_synthesis directory.
         os.chdir(post_synthesis_dir)
 
         # Run post-synthesis specific steps with expanded paths
-        subprocess.run(
-            f"vsim -c -do 'project open {os.path.expanduser('~/PostSynthesis.mpf')}; "
-            f"project compileall; vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~/ece551/SAED32_lib')} "
-            f"-Lf {os.path.expanduser('~/ece551/SAED32_lib')} -voptargs=+acc'",
-            shell=True, check=True)
+        sim_command += f"vsim -c -do 'project open {os.path.expanduser('~/PostSynthesis.mpf')}; " \
+              f"project compileall; vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~/ece551/SAED32_lib')} " \
+              f"-Lf {os.path.expanduser('~/ece551/SAED32_lib')} -voptargs=+acc'"
     else:
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
     if debug_mode == 2:
         # Change working directory to /output/waves for debugging
         os.chdir(waves_dir)
-        sim_command = (
+        sim_command += (
             f"vsim -view {test_name}.wlf -do {test_name}.do;"
         )
         subprocess.run(sim_command, shell=True, check=True)
@@ -153,7 +152,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
-            sim_command = ( f"vsim -c -do \"" 
+            sim_command += ( f"vsim -c -do \"" 
                 f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
                 )
             subprocess.run(sim_command, shell=True, check=True)
@@ -166,18 +165,18 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             elif result == "error":
                 if debug_mode == 0:
                     print(f"{test_name}: Test failed. Saving waveforms for later debug...")
-                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
+                    subprocess.run(sim_command.join(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""),
                         shell=True, check=True
                     )   
                 elif debug_mode == 1:
                     print(f"{test_name}: Test failed. Launching GUI for debugging...")
-                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                    subprocess.run(sim_command.join(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\""),
                             shell=True, check=True
                     )
 
         else:
             # GUI mode: Ask for custom signals, or add defaults
-            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+            subprocess.run(sim_command.join(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\""),
                     shell=True, check=True
                 )
 
