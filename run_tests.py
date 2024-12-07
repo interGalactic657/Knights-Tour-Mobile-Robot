@@ -32,7 +32,7 @@ os.makedirs(library_dir, exist_ok=True)
 test_mapping = {
     "simple": range(1, 2),  # test_1
     "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 16)  # test_13 and test_14
+    "logic": range(13, 16)  # test_13 and test_14 and test_15
 }
 
 # Compile all design files (ignoring `tests/` subdirectories)
@@ -97,7 +97,7 @@ def run_testbench(subdir, test_file, mode):
     test_path = os.path.join(test_dir, subdir, test_file)
     test_name = os.path.splitext(test_file)[0]
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
-    wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
+    wave_file = os.path.join(waves_dir, "vsim.wlf")
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
