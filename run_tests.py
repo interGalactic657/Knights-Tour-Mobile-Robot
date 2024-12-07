@@ -16,6 +16,10 @@ parser.add_argument(
     "-d", "--debug", type=int, choices=[0, 1], default=0,
     help="Enable debugging mode: 1 for debug, 0 for normal run."
 )
+parser.add_argument(
+    "-s", "--signals", type=str, nargs="*", default=None,
+    help="List of custom signals to add to the waveform (e.g., clk RST_n iPHYS/xx). If not provided, default signals are used."
+)
 args = parser.parse_args()
 
 # Directories
@@ -104,6 +108,16 @@ default_signals = [
     "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
 ]
 
+# Choose whether to use default or custom signals
+if args.signals:
+    signals_to_use = args.signals
+else:
+    signals_to_use = default_signals
+
+# Find full hierarchy paths for the selected signals
+signal_paths = find_signals(signals_to_use)
+add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode, debug_mode):
     test_path = os.path.join(test_dir, subdir, test_file)
@@ -125,9 +139,6 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     else:
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
-            # Find full hierarchy paths for the selected signals
-            signal_paths = find_signals(default_signals)
-            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
             sim_command = (
                 f"vsim -c -do \"" 
                 f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
@@ -140,35 +151,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 print(f"{test_name}: YAHOO!! All tests passed.")
             elif result == "error":
                 print(f"{test_name}: Test failed. Launching GUI for debugging...")
-                # Prompt for custom signals when switching to GUI mode
-                use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
-                if use_custom_signals in ["yes", "y"]:
-                    signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-                    signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-                    signal_paths = find_signals(signal_names)
-                    add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-                else:
-                    # Find full hierarchy paths for the selected signals
-                    signal_paths = find_signals(default_signals)
-                    add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-
                 subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
                     shell=True, check=True
                 )
 
         else:
             # GUI mode: Ask for custom signals, or add defaults
-            use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
-            if use_custom_signals in ["yes", "y"]:
-                signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-                signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-                signal_paths = find_signals(signal_names)
-                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-            else:
-                # Find full hierarchy paths for the selected signals
-                signal_paths = find_signals(default_signals)
-                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-
             subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
                     shell=True, check=True
                 )
