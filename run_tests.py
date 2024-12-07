@@ -115,7 +115,7 @@ def run_testbench(subdir, test_file, mode):
         
         sim_command = (
             f"vsim -c work.KnightsTour_tb -do \""
-            f"vsim -wlf {wave_file} work.KnightsTour_tb; {add_wave_command}; run -all; log -flush /*; quit;\" > {log_file}"
+            f"vsim -nowlfcollapse {wave_file} work.KnightsTour_tb; {add_wave_command}; run -all; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
