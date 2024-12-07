@@ -123,18 +123,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         # Change working directory to post_synthesis directory.
         os.chdir(post_synthesis_dir)
 
-        # Run post-synthesis specific steps
+        # Run post-synthesis specific steps with expanded paths
         subprocess.run(
-            [
-                "vsim", 
-                "-c", 
-                "-do", 
-                'project open PostSynthesis.mpf; project compileall; '
-                'vsim work.KnightsTour_tb -t ns -L /filespace/s/sjonnalagad2/ece551/SAED32_lib '
-                '-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc'
-            ],
-            check=True
-        )
+            f"vsim -c -do 'project open {os.path.expanduser('~/PostSynthesis.mpf')}; "
+            f"project compileall; vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~/ece551/SAED32_lib')} "
+            f"-Lf {os.path.expanduser('~/ece551/SAED32_lib')} -voptargs=+acc'",
+            shell=True, check=True)
     else:
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
