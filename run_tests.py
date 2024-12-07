@@ -12,6 +12,10 @@ parser.add_argument(
     "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
+parser.add_argument(
+    "-ps", "--post-synthesis", action="store_true",
+    help="Run post-synthesis simulation with KnightsTour.vg and testbench 0 in GUI mode."
+)
 args = parser.parse_args()
 
 # Directories
@@ -32,7 +36,7 @@ os.makedirs(library_dir, exist_ok=True)
 test_mapping = {
     "simple": range(1, 2),  # test_1
     "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 14)  # test_13
+    "logic": range(13, 15)  # test_13 and test_14
 }
 
 # Compile all design files (ignoring `tests/` subdirectories)
@@ -81,16 +85,35 @@ def find_signals(signal_names):
             print(f"Error finding signal {signal}: {e.stderr}")
     return signal_paths
 
-# Check transcript for pass or error
-def check_transcript(log_file):
-    """Check if the transcript contains success or error messages."""
-    with open(log_file, 'r') as f:
-        content = f.read()
-        if "YAHOO!! All tests passed." in content:
-            return "success"
-        elif "ERROR" in content:
-            return "error"
-    return "unknown"
+# Function to run the post-synthesis simulation
+def run_post_synthesis_simulation():
+    """Run the post-synthesis simulation with KnightsTour.vg and testbench 0."""
+    design_file = os.path.join(design_dir, "KnightsTour.vg")
+    testbench_file = os.path.join(test_dir, "simple", "KnightsTour_tb_0.sv")  # Corrected to simple directory
+    log_file = os.path.join(transcript_dir, "post_synthesis.log")
+    wave_file = os.path.join(waves_dir, "post_synthesis.wlf")
+
+    # Compile the synthesized design and testbench
+    print("Compiling post-synthesis design and testbench...")
+    subprocess.run(f"vlog +acc {design_file}", shell=True, check=True)
+    subprocess.run(f"vlog +acc {testbench_file}", shell=True, check=True)
+
+    # Run the simulation in GUI mode
+    print("Running post-synthesis simulation in GUI mode...")
+    use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
+    if use_custom_signals in ["yes", "y"]:
+        signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+        signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+        signal_paths = find_signals(signal_names)
+        add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+    else:
+        add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
+
+    sim_command = (
+        f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
+        f"{add_wave_command} run -all;\""
+    )
+    subprocess.run(sim_command, shell=True, check=True)
 
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode):
@@ -111,61 +134,53 @@ def run_testbench(subdir, test_file, mode):
 
         # Check the transcript for success or error
         result = check_transcript(log_file)
-        if result == "success":
-            print(f"{test_name}: YAHOO!! All tests passed.")
-        elif result == "error":
+        if result == "error":
             print(f"{test_name}: Test failed. Launching GUI for debugging...")
-            # Prompt for custom signals when switching to GUI mode
-            use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
-            if use_custom_signals in ["yes", "y"]:
-                signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-                signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-                signal_paths = find_signals(signal_names)
-                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-            else:
-                add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
-
-            subprocess.run(
-                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-                shell=True, check=True
-            )
+            run_testbench_gui(test_name)
     else:
-        # GUI mode: Ask for custom signals, or add defaults
-        use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
-        if use_custom_signals in ["yes", "y"]:
-            signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-            signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-            signal_paths = find_signals(signal_names)
-            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-        else:
-            add_wave_command = "add wave -internal *;"
+        run_testbench_gui(test_name)
 
-        subprocess.run(
-            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-            shell=True, check=True
-        )
+def run_testbench_gui(test_name):
+    """Run the testbench in GUI mode and prompt for custom signals."""
+    use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
+    if use_custom_signals in ["yes", "y"]:
+        signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+        signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+        signal_paths = find_signals(signal_names)
+        add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+    else:
+        add_wave_command = "add wave -internal *;"
 
-# Run the specified test or all tests
-if args.number:
-    for subdir, test_range in test_mapping.items():
-        if args.number in test_range:
-            subdir_path = os.path.join(test_dir, subdir)
-            test_files = [
-                file for file in os.listdir(subdir_path)
-                if file.endswith(".sv") and f"_{args.number}" in file
-            ]
-            for test_file in test_files:
-                run_testbench(subdir, test_file, args.mode)
-            break
+    subprocess.run(
+        f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
+        shell=True, check=True
+    )
+
+# Run post-synthesis simulation if specified
+if args.post_synthesis:
+    run_post_synthesis_simulation()
 else:
-    for subdir in ["simple", "move", "logic"]:
-        subdir_path = os.path.join(test_dir, subdir)
-        if os.path.exists(subdir_path):
-            test_files = [
-                file for file in os.listdir(subdir_path)
-                if file.endswith(".sv")
-            ]
-            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
-                run_testbench(subdir, file, args.mode)
+    # Run the specified test or all tests
+    if args.number:
+        for subdir, test_range in test_mapping.items():
+            if args.number in test_range:
+                subdir_path = os.path.join(test_dir, subdir)
+                test_files = [
+                    file for file in os.listdir(subdir_path)
+                    if file.endswith(".sv") and f"_{args.number}" in file
+                ]
+                for test_file in test_files:
+                    run_testbench(subdir, test_file, args.mode)
+                break
+    else:
+        for subdir in ["simple", "move", "logic"]:
+            subdir_path = os.path.join(test_dir, subdir)
+            if os.path.exists(subdir_path):
+                test_files = [
+                    file for file in os.listdir(subdir_path)
+                    if file.endswith(".sv")
+                ]
+                for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
+                    run_testbench(subdir, file, args.mode)
 
-    print("All tests completed.")
+        print("All tests completed.")
