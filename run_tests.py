@@ -98,6 +98,7 @@ def run_testbench(subdir, test_file, mode):
     test_name = os.path.splitext(test_file)[0]
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
+    wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
@@ -114,8 +115,8 @@ def run_testbench(subdir, test_file, mode):
             add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
         
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""
-            f"vsim -nowlfcompress -wlf {wave_file}; {add_wave_command}; run -all; log -flush /*; quit;\" > {log_file}"
+            f"vsim -wlf {wave_file} work.KnightsTour_tb  -voptargs=\"+acc\"-do \""
+            f"{add_wave_command}; run -all; log -flush /*; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
