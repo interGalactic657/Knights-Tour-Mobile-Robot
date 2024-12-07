@@ -118,6 +118,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
     wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
+    # Default or custom signals logic
+    if args.signals:
+        signals_to_use = args.signals
+    else:
+        signals_to_use = default_signals
+
     # Initialize command as an empty list
     command = []
 
@@ -131,6 +137,9 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             'vsim work.KnightsTour_tb -t ns -L /filespace/s/sjonnalagad2/ece551/SAED32_lib '
             '-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc'
         ]
+
+        signals_to_use = ["clk", "RST_n", "send_resp", "resp"]
+        
         # Change working directory to post_synthesis directory.
         os.chdir(post_synthesis_dir)
     else:
@@ -143,11 +152,6 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         command.append(f"vsim -view {test_name}.wlf -do {test_name}.do;")
         subprocess.run(command, shell=True, check=True)
     else:
-        # Default or custom signals logic
-        if args.signals:
-            signals_to_use = args.signals
-        else:
-            signals_to_use = default_signals
 
         # Find full hierarchy paths for the selected signals
         signal_paths = find_signals(signals_to_use)
