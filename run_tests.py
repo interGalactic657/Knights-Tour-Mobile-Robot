@@ -132,7 +132,6 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         sim_command.extend([
             "vsim",
             "-c",
-            "-do\"",
             f"project open {os.path.join(post_synthesis_dir, 'PostSynthesis.mpf')}; project compileall;\""
         ])
     else:
