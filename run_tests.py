@@ -39,18 +39,18 @@ test_mapping = {
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Compile all design files (ignoring `tests/` subdirectories)
+# Function to compile the necessary design files
 def compile_files(is_post_synthesis=False):
     files_to_compile = []
 
     if is_post_synthesis:
-        # Compile the post-synthesis version of the top-level design
+        # In post-synthesis mode, compile KnightsTour.vg instead of KnightsTour.sv
         files_to_compile.append("KnightsTour.vg")  # Use .vg instead of .sv
     else:
-        # Regular compilation: Compile KnightsTour.sv
+        # In regular mode, compile KnightsTour.sv
         files_to_compile.append("KnightsTour.sv")
 
-    # Common files to compile
+    # Common files to compile (these files are needed for both scenarios)
     files_to_compile.extend([
         "KnightPhysics.sv", 
         "RemoteComm.sv", 
