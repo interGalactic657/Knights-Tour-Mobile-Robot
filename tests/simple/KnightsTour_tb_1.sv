@@ -77,7 +77,7 @@ module KnightsTour_tb();
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // If we reached here, that means all test cases were successful.
-		$display("ERROR! ");
+		$display("YAHOO!! All tests passed.");
 		$stop();
     /////////////////////////////////////////////////////////////////////////////////////////////////
   end
