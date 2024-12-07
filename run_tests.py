@@ -14,13 +14,14 @@ parser.add_argument(
 )
 parser.add_argument(
     "-ps", "--post_synthesis", action="store_true",
-    help="Run post-synthesis tests (compile KnightsTour_tb_0.sv and include test 0)."
+    help="Run post-synthesis tests (compiles KnightsTour.vg from the synthesis directory)."
 )
 args = parser.parse_args()
 
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
 design_dir = os.path.join(root_dir, "designs")  # Design files directory
+synthesis_dir = os.path.join(root_dir, "synthesis")  # Directory for synthesis files (KnightsTour.vg)
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
 transcript_dir = os.path.join(output_dir, "transcript")  # Subdirectory for log files
@@ -32,6 +33,15 @@ os.makedirs(transcript_dir, exist_ok=True)
 os.makedirs(waves_dir, exist_ok=True)
 os.makedirs(library_dir, exist_ok=True)
 
+# If the -ps flag is passed, compile KnightsTour.vg from the synthesis directory
+if args.post_synthesis:
+    knights_tour_vg_path = os.path.join(synthesis_dir, "KnightsTour.vg")
+    if os.path.exists(knights_tour_vg_path):
+        subprocess.run(f"vlog +acc {knights_tour_vg_path}", shell=True, check=True)
+    else:
+        print(f"Error: KnightsTour.vg not found in {synthesis_dir}. Exiting.")
+        exit(1)
+
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
     "simple": range(0, 2),  # test_0 and test_1
@@ -39,21 +49,13 @@ test_mapping = {
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# If post-synthesis flag is passed, modify test mapping and compile .sv file
-if args.post_synthesis:
-    print("Running post-synthesis tests...")
-    test_mapping["simple"] = range(0, 2)  # Include test_0
-    design_file = "KnightsTour_tb_0.sv"  # Compile KnightsTour_tb_0.sv for post-synthesis tests
-else:
-    design_file = "KnightsTour.sv"  # Default design file for synthesis tests
-
 # Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
     if "tests" in dirs:
         dirs.remove("tests")  # Skip the `tests` subdirectory
 
     for file in files:
-        if file.endswith(".sv") or file.endswith(".vg"):
+        if file.endswith(".sv"):
             file_path = os.path.join(root, file)
             subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
@@ -116,7 +118,7 @@ def run_testbench(subdir, test_file, mode):
     # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
     if mode == "cmd":
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \"" 
+            f"vsim -c work.KnightsTour_tb -do \""  # Always use KnightsTour_tb as top level
             f"add wave -internal *; run -all; write wave -file {wave_file}; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
@@ -177,7 +179,7 @@ else:
                 file for file in os.listdir(subdir_path)
                 if file.endswith(".sv")
             ]
-            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
-                run_testbench(subdir, file, args.mode)
+            for test_file in test_files:
+                run_testbench(subdir, test_file, args.mode)
 
     print("All tests completed.")
