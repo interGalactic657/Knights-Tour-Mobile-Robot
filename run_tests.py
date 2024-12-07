@@ -36,7 +36,7 @@ os.makedirs(library_dir, exist_ok=True)
 test_mapping = {
     "simple": range(0, 2),  # test_0 and test_1
     "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 15)  # test_13 and test_14
+    "logic": range(13, 16)  # test_13 and test_14 and test_15
 }
 
 # If post-synthesis flag is passed, modify test mapping and compile .sv file
