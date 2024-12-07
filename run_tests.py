@@ -34,7 +34,7 @@ os.makedirs(library_dir, exist_ok=True)
 
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
-    "simple": range(1, 2),  # test_1
+    "simple": range(0, 2),  # test_0 and test_1
     "move": range(2, 13),   # test_2 to test_12
     "logic": range(13, 15)  # test_13 and test_14
 }
