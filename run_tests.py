@@ -119,33 +119,27 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
     wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
+    commands = []  # List to accumulate commands
+
     if args.post_synthesis:
-        # Change working directory to post_synthesis directory.
+        # Change working directory to post_synthesis directory
         os.chdir(post_synthesis_dir)
 
-        # Run post-synthesis specific steps
-        subprocess.run(
-            [
-                "vsim", 
-                "-c", 
-                "-do", 
-                'project open PostSynthesis.mpf; project compileall; '
-                'vsim work.KnightsTour_tb -t ns -L /filespace/s/sjonnalagad2/ece551/SAED32_lib '
-                '-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc'
-            ],
-            check=True
+        # Post-synthesis specific steps
+        commands.append(
+            "vsim -c -do 'project open PostSynthesis.mpf; "
+            "project compileall; "
+            "vsim work.KnightsTour_tb -t ns -L ~/ece551/SAED32_lib "
+            "-Lf ~/ece551/SAED32_lib -voptargs=+acc;'"
         )
     else:
-        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+        # Compile the test file
+        commands.append(f"vlog +acc {test_path}")
 
+    # Debug mode handling
     if debug_mode == 2:
-        # Change working directory to /output/waves for debugging
         os.chdir(waves_dir)
-        sim_command = (
-            f"vsim -view {test_name}.wlf -do {test_name}.do;"
-        )
-        subprocess.run(sim_command, shell=True, check=True)
-
+        commands.append(f"vsim -view {test_name}.wlf -do {test_name}.do;")
     else:
         # Choose whether to use default or custom signals
         if args.signals:
@@ -157,35 +151,46 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         signal_paths = find_signals(signals_to_use)
         add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
 
-        # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
+        # Command-line mode
         if mode == "cmd":
-            sim_command = ( f"vsim -c -do \"" 
-                f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
-                )
-            subprocess.run(sim_command, shell=True, check=True)
-            
+            sim_command = f"vsim -c -do 'vsim -wlf {wave_file} work.KnightsTour_tb; {add_wave_command}; run -all; log -flush /*; quit -f;'"
+            commands.append(sim_command)
+
             # Check the transcript for success or error
             result = check_transcript(log_file)
-            
             if result == "success":
                 print(f"{test_name}: YAHOO!! All tests passed.")
             elif result == "error":
                 if debug_mode == 0:
                     print(f"{test_name}: Test failed. Saving waveforms for later debug...")
-                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
-                        shell=True, check=True
-                    )   
+                    waveform_command = (
+                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" "
+                        f"-do \"{add_wave_command} run -all; write format wave "
+                        "-window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                        "log -flush /*; quit -f;\""
+                    )
+                    commands.append(waveform_command)
                 elif debug_mode == 1:
                     print(f"{test_name}: Test failed. Launching GUI for debugging...")
-                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                            shell=True, check=True
+                    gui_command = (
+                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" "
+                        f"-do \"{add_wave_command} run -all; write format wave "
+                        "-window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                        "log -flush /*;\""
                     )
-
+                    commands.append(gui_command)
         else:
-            # GUI mode: Ask for custom signals, or add defaults
-            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                    shell=True, check=True
-                )
+            # GUI mode
+            gui_command = (
+                f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" "
+                f"-do \"{add_wave_command} run -all; write format wave "
+                "-window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\""
+            )
+            commands.append(gui_command)
+
+    # Run all accumulated commands at once
+    for command in commands:
+        subprocess.run(command, shell=True, check=True)
 
 # Run the specified test or all tests
 if args.number:
@@ -206,7 +211,7 @@ else:
         subdir_path = os.path.join(test_dir, subdir)
         if os.path.exists(subdir_path):
             test_files = [
-            file for file in os.listdir(subdir_path)
+                file for file in os.listdir(subdir_path)
                 if file.endswith(".sv")
             ]
             for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))): 
