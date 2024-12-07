@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module KnightsTour_tb();
 
   import tb_tasks::*;
@@ -69,6 +70,9 @@ module KnightsTour_tb();
     //////////////////////////////////////////
     // Send a command to calibrate the gyro of the Knight.
     SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+
+    // Wait for cal_done to be asserted.
+    repeat(10000000) @(posedge clk);
 
     // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
