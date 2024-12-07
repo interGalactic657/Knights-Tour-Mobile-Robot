@@ -139,11 +139,11 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
-            subprocess.run(sim_command, shell=True, check=True)
-
             sim_command = ( f"vsim -c -do \"" 
                 f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
                 )
+            subprocess.run(sim_command, shell=True, check=True)
+            
             # Check the transcript for success or error
             result = check_transcript(log_file)
             
