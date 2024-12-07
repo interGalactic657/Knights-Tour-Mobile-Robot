@@ -12,6 +12,10 @@ parser.add_argument(
     "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
+parser.add_argument(
+    "-d", "--debug", type=int, choices=[0, 1], default=0,
+    help="Enable debugging mode: 1 for debug, 0 for normal run."
+)
 args = parser.parse_args()
 
 # Directories
@@ -92,58 +96,82 @@ def check_transcript(log_file):
             return "error"
     return "unknown"
 
+# Default signals if user doesn't specify custom ones
+default_signals = [
+    "clk", "RST_n", "iPHYS/xx", "iPHYS/yy", "heading", "heading_robot", "desired_heading", "omega_sum", 
+    "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "y_pos", "y_offset", 
+    "came_back", "off_board", "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", 
+    "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
+]
+
 # Function to run a specific testbench
-def run_testbench(subdir, test_file, mode):
+def run_testbench(subdir, test_file, mode, debug_mode):
     test_path = os.path.join(test_dir, subdir, test_file)
     test_name = os.path.splitext(test_file)[0]
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
+    wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-    # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
-    if mode == "cmd":
+    if debug_mode == 1:
+        # Change working directory to /output/waves for debugging
+        os.chdir(waves_dir)
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""
-            f"add wave -internal *; run -all; write wave -file {wave_file}; log -flush /*; quit;\" > {log_file}"
+            f"vsim -view {test_name}.wlf -do {test_name}.do"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
-        # Check the transcript for success or error
-        result = check_transcript(log_file)
-        if result == "success":
-            print(f"{test_name}: YAHOO!! All tests passed.")
-        elif result == "error":
-            print(f"{test_name}: Test failed. Launching GUI for debugging...")
-            # Prompt for custom signals when switching to GUI mode
-            use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
+    else:
+        # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
+        if mode == "cmd":
+            # Find full hierarchy paths for the selected signals
+            signal_paths = find_signals(default_signals)
+            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+            sim_command = (
+                f"vsim -c -do \"" 
+                f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit;\" > {log_file}"
+            )
+            subprocess.run(sim_command, shell=True, check=True)
+
+            # Check the transcript for success or error
+            result = check_transcript(log_file)
+            if result == "success":
+                print(f"{test_name}: YAHOO!! All tests passed.")
+            elif result == "error":
+                print(f"{test_name}: Test failed. Launching GUI for debugging...")
+                # Prompt for custom signals when switching to GUI mode
+                use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
+                if use_custom_signals in ["yes", "y"]:
+                    signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+                    signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+                    signal_paths = find_signals(signal_names)
+                    add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+                else:
+                    # Find full hierarchy paths for the selected signals
+                    signal_paths = find_signals(default_signals)
+                    add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+
+                subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                    shell=True, check=True
+                )
+
+        else:
+            # GUI mode: Ask for custom signals, or add defaults
+            use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
             if use_custom_signals in ["yes", "y"]:
                 signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
                 signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
                 signal_paths = find_signals(signal_names)
                 add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
             else:
-                add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
+                # Find full hierarchy paths for the selected signals
+                signal_paths = find_signals(default_signals)
+                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
 
-            subprocess.run(
-                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-                shell=True, check=True
-            )
-    else:
-        # GUI mode: Ask for custom signals, or add defaults
-        use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
-        if use_custom_signals in ["yes", "y"]:
-            signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-            signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-            signal_paths = find_signals(signal_names)
-            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-        else:
-            add_wave_command = "add wave -internal *;"
-
-        subprocess.run(
-            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-            shell=True, check=True
-        )
+            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                    shell=True, check=True
+                )
 
 # Run the specified test or all tests
 if args.number:
@@ -155,7 +183,7 @@ if args.number:
                 if file.endswith(".sv") and f"_{args.number}" in file
             ]
             for test_file in test_files:
-                run_testbench(subdir, test_file, args.mode)
+                run_testbench(subdir, test_file, args.mode, args.debug)
             break
 else:
     for subdir in ["simple", "move", "logic"]:
@@ -165,7 +193,7 @@ else:
                 file for file in os.listdir(subdir_path)
                 if file.endswith(".sv")
             ]
-            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
-                run_testbench(subdir, file, args.mode)
+            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))): 
+                run_testbench(subdir, file, args.mode, args.debug)
 
     print("All tests completed.")
