@@ -20,13 +20,16 @@ parser.add_argument(
     "-s", "--signals", type=str, nargs="*", default=None,
     help="List of custom signals to add to the waveform (e.g., clk RST_n iPHYS/xx). If not provided, default signals are used."
 )
+parser.add_argument("-ps", "--post_synthesis", action="store_true",help="Run post-synthesis simulation tasks.")
 args = parser.parse_args()
+
 
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
 design_dir = os.path.join(root_dir, "designs")  # Design files directory
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
+post_synthesis_dir = os.path.join(root_dir, "tests", "post_synthesis") # Directory for post synthesis tests
 transcript_dir = os.path.join(output_dir, "transcript")  # Subdirectory for log files
 waves_dir = os.path.join(output_dir, "waves")  # Subdirectory for waveform files
 library_dir = os.path.join(root_dir, "work")  # Simulation library directory
@@ -40,7 +43,7 @@ os.makedirs(library_dir, exist_ok=True)
 test_mapping = {
     "simple": range(1, 2),  # test_1
     "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 16)  # test_13 and test_14 and test_15
+    "logic": range(13, 15)  # test_13 and test_14
 }
 
 # Compile all design files (ignoring `tests/` subdirectories)
@@ -116,7 +119,24 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
     wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
-    subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+    if args.post_synthesis:
+        # Change working directory to post_synthesis directory.
+        os.chdir(post_synthesis_dir)
+
+        # Run post-synthesis specific steps
+        subprocess.run(
+            [
+                "vsim", 
+                "-c", 
+                "-do", 
+                'project open PostSynthesis.mpf; project compileall; '
+                'vsim work.KnightsTour_tb -t ns -L /filespace/s/sjonnalagad2/ece551/SAED32_lib '
+                '-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc'
+            ],
+            check=True
+        )
+    else:
+        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
     if debug_mode == 2:
         # Change working directory to /output/waves for debugging
@@ -179,12 +199,14 @@ if args.number:
             for test_file in test_files:
                 run_testbench(subdir, test_file, args.mode, args.debug)
             break
+elif args.post_synthesis:
+    run_testbench("post_synthesis", "KnightsTour_tb_0.sv", args.mode, args.debug)
 else:
     for subdir in ["simple", "move", "logic"]:
         subdir_path = os.path.join(test_dir, subdir)
         if os.path.exists(subdir_path):
             test_files = [
-                file for file in os.listdir(subdir_path)
+            file for file in os.listdir(subdir_path)
                 if file.endswith(".sv")
             ]
             for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))): 
