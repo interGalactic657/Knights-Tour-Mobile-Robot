@@ -122,7 +122,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         # Change working directory to /output/waves for debugging
         os.chdir(waves_dir)
         sim_command = (
-            f"vsim -view {test_name}.wlf -do {test_name}.do; dataset close {test_name};"
+            f"vsim -view {test_name}.wlf -do {test_name}.do;"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
