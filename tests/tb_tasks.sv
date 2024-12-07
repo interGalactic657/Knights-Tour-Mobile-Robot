@@ -65,7 +65,7 @@ package tb_tasks;
   // Task to wait till all moves of the tour are complete.
   task automatic WaitTourDone(ref send_resp, ref clk);
       // Wait till all 25 moves are complete.
-      repeat(25) WaitForMove(.send_resp(send_resp), .clk(clk));
+      repeat(40) WaitForMove(.send_resp(send_resp), .clk(clk));
   endtask
 
   // Task to wait till the y offset of the Knight is found and validates the position.
