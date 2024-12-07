@@ -98,6 +98,7 @@ def run_testbench(subdir, test_file, mode):
     test_name = os.path.splitext(test_file)[0]
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
+    wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
@@ -125,10 +126,10 @@ def run_testbench(subdir, test_file, mode):
             else:
                 add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
 
-            subprocess.run(
-                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
+            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
                 shell=True, check=True
             )
+
     else:
         # GUI mode: Ask for custom signals, or add defaults
         use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
