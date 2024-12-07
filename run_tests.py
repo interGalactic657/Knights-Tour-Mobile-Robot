@@ -97,7 +97,7 @@ def run_testbench(subdir, test_file, mode):
     test_path = os.path.join(test_dir, subdir, test_file)
     test_name = os.path.splitext(test_file)[0]
     log_file = os.path.join(transcript_dir, f"{test_name}.log")
-    wave_file = os.path.join(waves_dir, "vsim.wlf")
+    wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
@@ -105,7 +105,7 @@ def run_testbench(subdir, test_file, mode):
     if mode == "cmd":
         sim_command = (
             f"vsim -c work.KnightsTour_tb -do \""
-            f"add wave -internal *; run -all; write wave -file {wave_file}; log -flush /*; quit;\" > {log_file}"
+            f"add wave -internal *; run -all; -wlf {wave_file}; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
