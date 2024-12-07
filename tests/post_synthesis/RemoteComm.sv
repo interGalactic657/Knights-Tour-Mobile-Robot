@@ -4,6 +4,7 @@
 // recieved and sends it as two            //
 // 8-bit bytes over UART.                 //
 ///////////////////////////////////////////
+`timescale 1ns/1ps
 module RemoteComm(
   input logic clk,   // 50MHz system clock.
   input logic rst_n, // Asynchronous active low reset.
