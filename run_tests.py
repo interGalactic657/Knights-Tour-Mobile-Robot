@@ -12,6 +12,10 @@ parser.add_argument(
     "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
+parser.add_argument(
+    "-ps", "--post_synthesis", action="store_true",
+    help="Run post-synthesis tests (compile KnightsTour_tb_0.sv and include test 0)."
+)
 args = parser.parse_args()
 
 # Directories
@@ -30,10 +34,18 @@ os.makedirs(library_dir, exist_ok=True)
 
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
-    "simple": range(1, 2),  # test_1
+    "simple": range(0, 2),  # test_0 and test_1
     "move": range(2, 13),   # test_2 to test_12
     "logic": range(13, 15)  # test_13 and test_14
 }
+
+# If post-synthesis flag is passed, modify test mapping and compile .sv file
+if args.post_synthesis:
+    print("Running post-synthesis tests...")
+    test_mapping["simple"] = range(0, 2)  # Include test_0
+    design_file = "KnightsTour_tb_0.sv"  # Compile KnightsTour_tb_0.sv for post-synthesis tests
+else:
+    design_file = "KnightsTour.sv"  # Default design file for synthesis tests
 
 # Compile all design files (ignoring `tests/` subdirectories)
 for root, dirs, files in os.walk(design_dir):
@@ -41,7 +53,7 @@ for root, dirs, files in os.walk(design_dir):
         dirs.remove("tests")  # Skip the `tests` subdirectory
 
     for file in files:
-        if file.endswith(".sv"):
+        if file.endswith(".sv") or file.endswith(".vg"):
             file_path = os.path.join(root, file)
             subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
@@ -104,7 +116,7 @@ def run_testbench(subdir, test_file, mode):
     # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
     if mode == "cmd":
         sim_command = (
-            f"vsim -c work.KnightsTour_tb -do \""
+            f"vsim -c work.KnightsTour_tb -do \"" 
             f"add wave -internal *; run -all; write wave -file {wave_file}; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
