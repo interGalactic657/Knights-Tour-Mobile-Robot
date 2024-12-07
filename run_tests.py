@@ -105,7 +105,7 @@ def run_testbench(subdir, test_file, mode):
     if mode == "cmd":
         sim_command = (
             f"vsim -c work.KnightsTour_tb -do \""
-            f"add wave -internal *; run -all; vsim -wlf {wave_file}; log -flush /*; quit;\" > {log_file}"
+            f"vsim -wlf {wave_file} work.KnightsTour_tb; add wave -internal *; run -all; log -flush /*; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
