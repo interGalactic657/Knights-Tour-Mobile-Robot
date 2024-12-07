@@ -139,26 +139,26 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
-            sim_command = (
-                f"vsim -c -do \"" 
-                f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
-            )
             subprocess.run(sim_command, shell=True, check=True)
 
+            sim_command = ( f"vsim -c -do \"" 
+                f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
+                )
             # Check the transcript for success or error
             result = check_transcript(log_file)
+            
             if result == "success":
                 print(f"{test_name}: YAHOO!! All tests passed.")
             elif result == "error":
-                print(f"{test_name}: Test failed. Launching GUI for debugging...")
-
                 if debug_mode == 0:
+                    print(f"{test_name}: Test failed. Saving waveforms for later debug...")
                     subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
                         shell=True, check=True
-                    )
+                    )   
                 elif debug_mode == 1:
+                    print(f"{test_name}: Test failed. Launching GUI for debugging...")
                     subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                        shell=True, check=True
+                            shell=True, check=True
                     )
 
         else:
