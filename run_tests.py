@@ -129,7 +129,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         commands.append(
             f"vsim -c -do 'project open PostSynthesis.mpf; "
             f"project compileall; "
-            f"vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~')}/ece551/SAED32_lib "
+            f"vsim -c work.KnightsTour_tb -t ns -L {os.path.expanduser('~')}/ece551/SAED32_lib "
             f"-Lf {os.path.expanduser('~')}/ece551/SAED32_lib -voptargs=+acc;'"
         )
 
