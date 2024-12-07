@@ -115,8 +115,8 @@ def run_testbench(subdir, test_file, mode):
             add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
         
         sim_command = (
-            f"vsim -wlf {wave_file} work.KnightsTour_tb  -voptargs=\"+acc\"-do \""
-            f"{add_wave_command}; run -all; log -flush /*; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; quit;\" > {log_file}"
+            f"vsim -c work.KnightsTour_tb -do \""
+            f"vsim -wlf {wave_file}; {add_wave_command}; run -all; log -flush /*; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; quit;\" > {log_file}"
         )
         subprocess.run(sim_command, shell=True, check=True)
 
