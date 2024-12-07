@@ -133,7 +133,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             "vsim",
             "-c",
             "-do",
-            f"\"project open {os.path.join(post_synthesis_dir, 'PostSynthesis.mpf')}; project compileall;\""
+            f"project open {os.path.join(post_synthesis_dir, 'PostSynthesis.mpf')}; project compileall;\""
         ])
     else:
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
