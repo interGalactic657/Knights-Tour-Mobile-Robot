@@ -13,8 +13,8 @@ parser.add_argument(
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
 parser.add_argument(
-    "-ps", "--post_synthesis", action="store_true", 
-    help="Run post-synthesis simulation using KnightsTour.vg instead of KnightsTour.sv."
+    "-ps", "--post_synthesis", action="store_true",
+    help="Run post-synthesis tests (compile KnightsTour_tb_0.sv and include test 0)."
 )
 args = parser.parse_args()
 
@@ -39,23 +39,30 @@ test_mapping = {
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Function to compile only the necessary files (testbench)
-def compile_testbench(is_post_synthesis=False):
-    if is_post_synthesis:
-        # In post-synthesis mode, compile KnightsTour.vg and relevant files only
-        print("Compiling testbench for post-synthesis simulation...")
-        subprocess.run(f"vlog +acc {os.path.join(design_dir, 'KnightsTour.vg')}", shell=True, check=True)
-    else:
-        # In regular mode, compile the standard testbench
-        print("Compiling testbench for regular simulation...")
-        subprocess.run(f"vlog +acc {os.path.join(design_dir, 'KnightsTour.sv')}", shell=True, check=True)
+# If post-synthesis flag is passed, modify test mapping and compile .sv file
+if args.post_synthesis:
+    print("Running post-synthesis tests...")
+    test_mapping["simple"] = range(0, 2)  # Include test_0
+    design_file = "KnightsTour_tb_0.sv"  # Compile KnightsTour_tb_0.sv for post-synthesis tests
+else:
+    design_file = "KnightsTour.sv"  # Default design file for synthesis tests
 
-    # Compile necessary testbench-related files
-    test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
-    for test_file in test_files:
-        test_path = os.path.join(test_dir, test_file)
-        if os.path.exists(test_path):
-            subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+# Compile all design files (ignoring `tests/` subdirectories)
+for root, dirs, files in os.walk(design_dir):
+    if "tests" in dirs:
+        dirs.remove("tests")  # Skip the `tests` subdirectory
+
+    for file in files:
+        if file.endswith(".sv") or file.endswith(".vg"):
+            file_path = os.path.join(root, file)
+            subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
+
+# Compile shared test files
+test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
+for test_file in test_files:
+    test_path = os.path.join(test_dir, test_file)
+    if os.path.exists(test_path):
+        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
 # Helper function to find the full hierarchy paths for signals
 def find_signals(signal_names):
@@ -120,7 +127,6 @@ def run_testbench(subdir, test_file, mode):
             print(f"{test_name}: YAHOO!! All tests passed.")
         elif result == "error":
             print(f"{test_name}: Test failed. Launching GUI for debugging...")
-
             # Prompt for custom signals when switching to GUI mode
             use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
             if use_custom_signals in ["yes", "y"]:
@@ -152,31 +158,26 @@ def run_testbench(subdir, test_file, mode):
         )
 
 # Run the specified test or all tests
-if args.post_synthesis:
-    print("Running in post-synthesis mode...")
-    compile_testbench(is_post_synthesis=True)
-    run_testbench("simple", "test_0.sv", args.mode)
-else:
-    if args.number:
-        for subdir, test_range in test_mapping.items():
-            if args.number in test_range:
-                subdir_path = os.path.join(test_dir, subdir)
-                test_files = [
-                    file for file in os.listdir(subdir_path)
-                    if file.endswith(".sv") and f"_{args.number}" in file
-                ]
-                for test_file in test_files:
-                    run_testbench(subdir, test_file, args.mode)
-                break
-    else:
-        for subdir in ["simple", "move", "logic"]:
+if args.number:
+    for subdir, test_range in test_mapping.items():
+        if args.number in test_range:
             subdir_path = os.path.join(test_dir, subdir)
-            if os.path.exists(subdir_path):
-                test_files = [
-                    file for file in os.listdir(subdir_path)
-                    if file.endswith(".sv")
-                ]
-                for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))): 
-                    run_testbench(subdir, file, args.mode)
+            test_files = [
+                file for file in os.listdir(subdir_path)
+                if file.endswith(".sv") and f"_{args.number}" in file
+            ]
+            for test_file in test_files:
+                run_testbench(subdir, test_file, args.mode)
+            break
+else:
+    for subdir in ["simple", "move", "logic"]:
+        subdir_path = os.path.join(test_dir, subdir)
+        if os.path.exists(subdir_path):
+            test_files = [
+                file for file in os.listdir(subdir_path)
+                if file.endswith(".sv")
+            ]
+            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))):
+                run_testbench(subdir, file, args.mode)
 
-        print("All tests completed.")
+    print("All tests completed.")
