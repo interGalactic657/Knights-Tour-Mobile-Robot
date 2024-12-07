@@ -81,13 +81,13 @@ module KnightsTour_tb();
     SendCmd(.cmd_to_send(16'h7020), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the Knight found out its position on the board.
-    ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h2), .actual_yy(iDUT.y_offset));
+    ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h0), .actual_yy(iDUT.y_offset));
 
     // Check that the Knight achieved the desired heading (should be facing south).
     ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot));
 
     // Check if Knight moved back to the starting location on the board.
-    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h0), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the solution for the KnightsTour is complete or times out.
     WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
