@@ -39,53 +39,44 @@ test_mapping = {
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Compile all design files (ignoring `tests/` subdirectories)
-for root, dirs, files in os.walk(design_dir):
-    if "tests" in dirs:
-        dirs.remove("tests")  # Skip the `tests` subdirectory
+# Compile the relevant files for post-synthesis simulation
+def compile_post_synthesis_files():
+    """Compile only relevant files for post-synthesis simulation."""
+    design_file = os.path.join(design_dir, "KnightsTour.vg")  # Post-synthesis design file
+    testbench_file = os.path.join(test_dir, "simple", "KnightsTour_tb_0.sv")  # Testbench 0 in simple folder
+    shared_files = ["KnightPhysics.sv", "RemoteComm.sv"]
 
-    for file in files:
-        if file.endswith(".sv"):
-            file_path = os.path.join(root, file)
-            subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
+    # Compile the necessary files for post-synthesis simulation
+    print("Compiling post-synthesis files...")
+    subprocess.run(f"vlog +acc {design_file}", shell=True, check=True)
+    subprocess.run(f"vlog +acc {testbench_file}", shell=True, check=True)
+    
+    for file in shared_files:
+        file_path = os.path.join(test_dir, file)
+        subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
-# Compile shared test files
-test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
-for test_file in test_files:
-    test_path = os.path.join(test_dir, test_file)
-    if os.path.exists(test_path):
-        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+# Compile all design files (for regular simulation mode)
+def compile_design_files():
+    """Compile all design files except for tests."""
+    for root, dirs, files in os.walk(design_dir):
+        if "tests" in dirs:
+            dirs.remove("tests")  # Skip the `tests` subdirectory
 
-# Helper function to find the full hierarchy paths for signals
-def find_signals(signal_names):
-    """Find the full hierarchy paths for the given signal names, prioritizing full paths if specified."""
-    signal_paths = []
-    for signal in signal_names:
-        if "/" in signal:
-            signal_paths.append(signal)
-            continue
+        for file in files:
+            if file.endswith(".sv"):
+                file_path = os.path.join(root, file)
+                subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
-        try:
-            result = subprocess.run(
-                f"vsim -c work.KnightsTour_tb -do \"find signals /KnightsTour_tb/{signal}* -recursive; quit;\"",
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            found_signal = False
-            for part in result.stdout.split():
-                if part.startswith("#") or not part.strip() or part.strip() in ["//", "-access/-debug"]:
-                    continue
-                if "/" in part:
-                    if part.strip().split("/")[-1] == signal and not found_signal:
-                        signal_paths.append(part.strip())
-                        found_signal = True
-        except subprocess.CalledProcessError as e:
-            print(f"Error finding signal {signal}: {e.stderr}")
-    return signal_paths
+# Compile shared test files (for regular simulation mode)
+def compile_test_files():
+    """Compile shared test files."""
+    test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
+    for test_file in test_files:
+        test_path = os.path.join(test_dir, test_file)
+        if os.path.exists(test_path):
+            subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-# Function to run the post-synthesis simulation
+# Run post-synthesis simulation
 def run_post_synthesis_simulation():
     """Run the post-synthesis simulation with KnightsTour.vg and testbench 0."""
     design_file = os.path.join(design_dir, "KnightsTour.vg")
@@ -115,7 +106,7 @@ def run_post_synthesis_simulation():
     )
     subprocess.run(sim_command, shell=True, check=True)
 
-# Function to run a specific testbench
+# Run a specific testbench
 def run_testbench(subdir, test_file, mode):
     test_path = os.path.join(test_dir, subdir, test_file)
     test_name = os.path.splitext(test_file)[0]
