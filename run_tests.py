@@ -21,7 +21,7 @@ args = parser.parse_args()
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
 design_dir = os.path.join(root_dir, "designs")  # Design files directory
-synthesis_dir = os.path.join(root_dir, "synthesis")  # Directory for synthesis files (KnightsTour.vg)
+post_synthesis_dir = os.path.join(root_dir, "tests/post_synthesis")  # Directory for synthesis files (KnightsTour.vg)
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
 transcript_dir = os.path.join(output_dir, "transcript")  # Subdirectory for log files
@@ -35,11 +35,11 @@ os.makedirs(library_dir, exist_ok=True)
 
 # If the -ps flag is passed, compile KnightsTour.vg from the synthesis directory
 if args.post_synthesis:
-    knights_tour_vg_path = os.path.join(synthesis_dir, "KnightsTour.vg")
+    knights_tour_vg_path = os.path.join(post_synthesis_dir, "KnightsTour.vg")
     if os.path.exists(knights_tour_vg_path):
         subprocess.run(f"vlog +acc {knights_tour_vg_path}", shell=True, check=True)
     else:
-        print(f"Error: KnightsTour.vg not found in {synthesis_dir}. Exiting.")
+        print(f"Error: KnightsTour.vg not found in {post_synthesis_dir}. Exiting.")
         exit(1)
 
 # Mapping test numbers to subdirectories and file ranges
