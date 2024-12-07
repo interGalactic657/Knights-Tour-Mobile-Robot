@@ -128,12 +128,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         signals_to_use = ["clk", "RST_n", "send_resp", "resp"]
 
-        # Extend sim_command for post-synthesis tasks
+       # Correct and validate the simulation command
         sim_command.extend([
             "vsim",
             "-c",
             "-do",
-            "project open PostSynthesis.mpf; project compileall;"
+            f"\"project open {os.path.join(post_synthesis_dir, 'PostSynthesis.mpf')}; project compileall;\""
         ])
     else:
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
