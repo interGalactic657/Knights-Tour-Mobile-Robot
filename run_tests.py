@@ -210,7 +210,7 @@ if args.number:
                 run_testbench(subdir, test_file, args.mode, args.debug)
             break
 elif args.post_synthesis:
-    run_testbench("post_synthesis", "KnightsTour_tb_0.sv", args.mode, args.debug)
+    run_testbench(None, "KnightsTour_tb_0.sv", args.mode, args.debug)
 else:
     for subdir in ["simple", "move", "logic"]:
         subdir_path = os.path.join(test_dir, subdir)
