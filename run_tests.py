@@ -156,6 +156,9 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         sim_command = " "
 
         if args.post_synthesis:
+            # Change working directory to post_synthesis directory.
+            os.chdir(post_synthesis_dir)
+            
             sim_command += (
                 f"vsim work.KnightsTour_tb -t ns "
                 f"-L /filespace/s/sjonnalagad2/ece551/SAED32_lib "
