@@ -111,7 +111,7 @@ default_signals = [
     "mv_indx", "move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
 ]
 
-# Function to run a specific testbench
+# Testbench to run.
 def run_testbench(subdir, test_file, mode, debug_mode):
     test_path = os.path.join(test_dir, subdir, test_file)
     test_name = os.path.splitext(test_file)[0]
@@ -121,28 +121,26 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
     commands = []  # List to accumulate commands
 
+    # If post-synthesis steps are required
     if args.post_synthesis:
-        # Change working directory to post_synthesis directory
         os.chdir(post_synthesis_dir)
-
-        # Post-synthesis specific steps
         commands.append(
             f"vsim -c -do 'project open PostSynthesis.mpf; "
             f"project compileall; "
-            f"vsim -c work.KnightsTour_tb -t ns -L {os.path.expanduser('~')}/ece551/SAED32_lib "
+            f"vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~')}/ece551/SAED32_lib "
             f"-Lf {os.path.expanduser('~')}/ece551/SAED32_lib -voptargs=+acc;'"
         )
-
     else:
         # Compile the test file
         commands.append(f"vlog +acc {test_path}")
 
-    # Debug mode handling
+    # Prepare the signal handling and debug modes
     if debug_mode == 2:
         os.chdir(waves_dir)
+        # Wrap everything in a do-file for debugging view
         commands.append(f"vsim -view {test_name}.wlf -do {test_name}.do;")
     else:
-        # Choose whether to use default or custom signals
+        # Choose whether to use custom signals or default ones
         if args.signals:
             signals_to_use = args.signals
         else:
@@ -152,9 +150,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         signal_paths = find_signals(signals_to_use)
         add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
 
-        # Command-line mode
+        # Build the full command to run in simulation
         if mode == "cmd":
-            sim_command = f"vsim -c -do 'vsim -wlf {wave_file} work.KnightsTour_tb; {add_wave_command}; run -all; log -flush /*; quit -f;'"
+            sim_command = (
+                f"vsim -c -do 'vsim -wlf {wave_file} work.KnightsTour_tb; "
+                f"{add_wave_command}; run -all; log -flush /*; quit -f;'"
+            )
             commands.append(sim_command)
 
             # Check the transcript for success or error
@@ -189,7 +190,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             )
             commands.append(gui_command)
 
-    # Run all accumulated commands at once
+    # Finally, run the accumulated commands as a group
     for command in commands:
         subprocess.run(command, shell=True, check=True)
 
