@@ -132,6 +132,54 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             shell=True,
             check=True
         )
+        if debug_mode == 2:
+            # Change working directory to /output/waves for debugging
+            os.chdir(waves_dir)
+            sim_command = (
+                f"vsim -view {test_name}.wlf -do {test_name}.do;"
+            )
+            subprocess.run(sim_command, shell=True, check=True)
+
+        else:
+            # Choose whether to use default or custom signals
+            if args.signals:
+                signals_to_use = args.signals
+            else:
+                signals_to_use = default_signals
+
+            # Find full hierarchy paths for the selected signals
+            signal_paths = find_signals(signals_to_use)
+            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+
+            # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
+            if mode == "cmd":
+                sim_command = ( f"vsim -c -do \"" 
+                    f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
+                    )
+                subprocess.run(sim_command, shell=True, check=True)
+                
+                # Check the transcript for success or error
+                result = check_transcript(log_file)
+                
+                if result == "success":
+                    print(f"{test_name}: YAHOO!! All tests passed.")
+                elif result == "error":
+                    if debug_mode == 0:
+                        print(f"{test_name}: Test failed. Saving waveforms for later debug...")
+                        subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
+                            shell=True, check=True
+                        )   
+                    elif debug_mode == 1:
+                        print(f"{test_name}: Test failed. Launching GUI for debugging...")
+                        subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                                shell=True, check=True
+                        )
+
+            else:
+                # GUI mode: Ask for custom signals, or add defaults
+                subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                        shell=True, check=True
+                    )
     else:
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
