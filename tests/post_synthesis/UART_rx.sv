@@ -3,6 +3,7 @@
 // This design will infer a UART reciever     //
 // block.                                    //
 //////////////////////////////////////////////
+`timescale 1ns/1ps
 module UART_rx(
   input logic clk,   // 50MHz system clock.
   input logic rst_n, // Asynchronous active low reset.
