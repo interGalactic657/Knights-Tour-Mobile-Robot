@@ -153,9 +153,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     # Post-synthesis-specific simulation command
     if args.post_synthesis:
         sim_command.extend([
-            f"vsim work.KnightsTour_tb -t ns "
-            f"-L /filespace/s/sjonnalagad2/ece551/SAED32_lib "
-            f"-Lf /filespace/s/sjonnalagad2/ece551/SAED32_lib -voptargs=+acc;"
+        "vsim",
+        "work.KnightsTour_tb",
+        "-t", "ns",
+        "-L", "~/ece551/SAED32_lib",
+        "-Lf", "~/ece551/SAED32_lib",
+        "-voptargs=+acc"
         ])
 
     # Find full hierarchy paths for the selected signals
