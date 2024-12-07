@@ -126,7 +126,7 @@ def run_testbench(subdir, test_file, mode):
             else:
                 add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
 
-            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit;\"",
+            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
                 shell=True, check=True
             )
 
@@ -141,10 +141,9 @@ def run_testbench(subdir, test_file, mode):
         else:
             add_wave_command = "add wave -internal *;"
 
-        subprocess.run(
-            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
-            shell=True, check=True
-        )
+        subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                shell=True, check=True
+            )
 
 # Run the specified test or all tests
 if args.number:
