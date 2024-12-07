@@ -34,49 +34,28 @@ os.makedirs(library_dir, exist_ok=True)
 
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
-    "simple": range(0, 2),  # test_1
+    "simple": range(0, 2),  # test_0 and test_1
     "move": range(2, 13),   # test_2 to test_12
     "logic": range(13, 15)  # test_13 and test_14
 }
 
-# Function to compile the necessary design files based on mode
-def compile_files(is_post_synthesis=False):
-    files_to_compile = []
-
+# Function to compile only the necessary files (testbench)
+def compile_testbench(is_post_synthesis=False):
     if is_post_synthesis:
-        # In post-synthesis mode, compile KnightsTour.vg instead of KnightsTour.sv
-        print("Compiling KnightsTour.vg for post-synthesis simulation.")
-        files_to_compile.append("KnightsTour.vg")  # Use .vg instead of .sv
+        # In post-synthesis mode, compile KnightsTour.vg and relevant files only
+        print("Compiling testbench for post-synthesis simulation...")
+        subprocess.run(f"vlog +acc {os.path.join(design_dir, 'KnightsTour.vg')}", shell=True, check=True)
     else:
-        # In regular mode, compile KnightsTour.sv
-        print("Compiling KnightsTour.sv for regular simulation.")
-        files_to_compile.append("KnightsTour.sv")
+        # In regular mode, compile the standard testbench
+        print("Compiling testbench for regular simulation...")
+        subprocess.run(f"vlog +acc {os.path.join(design_dir, 'KnightsTour.sv')}", shell=True, check=True)
 
-    # Common files to compile (these files are needed for both scenarios)
-    files_to_compile.extend([
-        "KnightPhysics.sv", 
-        "RemoteComm.sv", 
-        "SPI_iNEMO4.sv",
-        "tb_tasks.sv"
-    ])
-
-    # Compile the specified files
-    for file in files_to_compile:
-        file_path = os.path.join(design_dir, file)
-        subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
-
-# Function to run post-synthesis simulation for Testbench 0 in GUI mode
-def run_post_synthesis_simulation():
-    # Compile the necessary files for post-synthesis
-    print("Running post-synthesis simulation...")
-    compile_files(is_post_synthesis=True)
-    
-    # Run simulation in GUI mode for Testbench 0 (from the 'simple' directory)
-    print("Running Testbench 0 in GUI mode...")
-    subprocess.run(
-        f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"run -all;\"",
-        shell=True, check=True
-    )
+    # Compile necessary testbench-related files
+    test_files = ["tb_tasks.sv", "KnightPhysics.sv", "SPI_iNEMO4.sv"]
+    for test_file in test_files:
+        test_path = os.path.join(test_dir, test_file)
+        if os.path.exists(test_path):
+            subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
 # Helper function to find the full hierarchy paths for signals
 def find_signals(signal_names):
@@ -174,7 +153,9 @@ def run_testbench(subdir, test_file, mode):
 
 # Run the specified test or all tests
 if args.post_synthesis:
-    run_post_synthesis_simulation()
+    print("Running in post-synthesis mode...")
+    compile_testbench(is_post_synthesis=True)
+    run_testbench("simple", "test_0.sv", args.mode)
 else:
     if args.number:
         for subdir, test_range in test_mapping.items():
