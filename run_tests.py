@@ -169,26 +169,36 @@ def run_testbench(subdir, test_file, mode):
         result = check_transcript(log_file)
         if result == "error":
             print(f"{test_name}: Test failed. Launching GUI for debugging...")
-            run_testbench_gui(test_name)
-    else:
-        run_testbench_gui(test_name)
+            # Prompt for custom signals when switching to GUI mode
+            use_custom_signals = input("Do you want to add custom wave signals for debugging? (yes/no): ").strip().lower()
+            if use_custom_signals in ["yes", "y"]:
+                signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+                signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+                signal_paths = find_signals(signal_names)
+                add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+            else:
+                add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
 
-def run_testbench_gui(test_name):
-    """Run the testbench in GUI mode."""
-    use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
-    if use_custom_signals in ["yes", "y"]:
-        signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
-        signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
-        signal_paths = find_signals(signal_names)
-        add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-    else:
-        add_wave_command = "add wave -internal *;"  # Default to internal testbench signals
+            subprocess.run(
+                f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
+                shell=True, check=True
+            )
 
-    sim_command = (
-        f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \""
-        f"{add_wave_command} run -all;\""
-    )
-    subprocess.run(sim_command, shell=True, check=True)
+    else:
+        # GUI mode: Ask for custom signals, or add defaults
+        use_custom_signals = input("Do you want to add custom wave signals? (yes/no): ").strip().lower()
+        if use_custom_signals in ["yes", "y"]:
+            signal_names = input("Enter the signal names (comma-separated, e.g., cal_done, send_resp): ").strip()
+            signal_names = [name.strip() for name in signal_names.split(",") if name.strip()]
+            signal_paths = find_signals(signal_names)
+            add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+        else:
+            add_wave_command = "add wave -internal *;"
+
+        subprocess.run(
+            f"vsim -gui work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all;\"",
+            shell=True, check=True
+        )
 
 # Main execution logic
 if args.post_synthesis:
