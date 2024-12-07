@@ -13,8 +13,8 @@ parser.add_argument(
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
 parser.add_argument(
-    "-d", "--debug", type=int, choices=[0, 1], default=0,
-    help="Enable debugging mode: 1 for debug, 0 for normal run."
+    "-d", "--debug", type=int, choices=[0, 1, 2], default=0,
+    help="Enable debugging mode: 0 for normal run, 1 for debug while running, 2 for debug after running"
 )
 parser.add_argument(
     "-s", "--signals", type=str, nargs="*", default=None,
@@ -108,16 +108,6 @@ default_signals = [
     "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
 ]
 
-# Choose whether to use default or custom signals
-if args.signals:
-    signals_to_use = args.signals
-else:
-    signals_to_use = default_signals
-
-# Find full hierarchy paths for the selected signals
-signal_paths = find_signals(signals_to_use)
-add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
-
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode, debug_mode):
     test_path = os.path.join(test_dir, subdir, test_file)
@@ -128,7 +118,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-    if debug_mode == 1:
+    if debug_mode == 2:
         # Change working directory to /output/waves for debugging
         os.chdir(waves_dir)
         sim_command = (
@@ -137,6 +127,16 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         subprocess.run(sim_command, shell=True, check=True)
 
     else:
+        # Choose whether to use default or custom signals
+        if args.signals:
+            signals_to_use = args.signals
+        else:
+            signals_to_use = default_signals
+
+        # Find full hierarchy paths for the selected signals
+        signal_paths = find_signals(signals_to_use)
+        add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
             sim_command = (
@@ -151,9 +151,15 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 print(f"{test_name}: YAHOO!! All tests passed.")
             elif result == "error":
                 print(f"{test_name}: Test failed. Launching GUI for debugging...")
-                subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
-                    shell=True, check=True
-                )
+
+                if debug_mode == 0:
+                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
+                        shell=True, check=True
+                    )
+                elif debug_mode == 1:
+                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                        shell=True, check=True
+                    )
 
         else:
             # GUI mode: Ask for custom signals, or add defaults
