@@ -110,6 +110,10 @@ default_signals = [
     "came_back", "off_board", "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "send_resp", "resp",
     "mv_indx", "move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
 ]
+
+import os
+import subprocess
+
 # Function to run a specific testbench
 def run_testbench(subdir, test_file, mode, debug_mode):
     test_path = os.path.join(test_dir, subdir, test_file)
@@ -128,11 +132,11 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         signals_to_use = ["clk", "RST_n", "send_resp", "resp"]
 
-       # Correct and validate the simulation command
+        # Correct and validate the simulation command for project
         sim_command.extend([
             "vsim",
             "-c",
-            f"\"project open {os.path.join(post_synthesis_dir, 'PostSynthesis.mpf')}; project compileall; quit\""
+            f"project open {os.path.join(post_synthesis_dir, 'PostSynthesis.mpf')}; project compileall; quit"
         ])
     else:
         subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
@@ -153,12 +157,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     # Post-synthesis-specific simulation command
     if args.post_synthesis:
         sim_command.extend([
-        "vsim",
-        "work.KnightsTour_tb",
-        "-t", "ns",
-        "-L", "~/ece551/SAED32_lib",
-        "-Lf", "~/ece551/SAED32_lib",
-        "-voptargs=+acc"
+            "vsim",
+            "work.KnightsTour_tb",
+            "-t", "ns",
+            "-L", "~/ece551/SAED32_lib",
+            "-Lf", "~/ece551/SAED32_lib",
+            "-voptargs=+acc"
         ])
 
     # Find full hierarchy paths for the selected signals
@@ -167,7 +171,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
     if mode == "cmd":
         sim_command.extend([
-            f"vsim -c -do \"vsim -wlf {wave_file} work.KnightsTour_tb;"
+            f"vsim -c -do \"vsim -wlf {wave_file} work.KnightsTour_tb; "
             f"{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
         ])
         subprocess.run(" ".join(sim_command), shell=True, check=True)
