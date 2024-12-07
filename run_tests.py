@@ -120,18 +120,16 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
     if args.post_synthesis:
+        sim_command = ""
+
         # Change working directory to post_synthesis directory.
         os.chdir(post_synthesis_dir)
 
         # Run post-synthesis specific steps
-        sim_command = f"vsim -c -do 'project open {os.path.expanduser('~/PostSynthesis.mpf')}; " \
+        sim_command += f"vsim -c -do 'project open {os.path.expanduser('~/PostSynthesis.mpf')}; " \
                       f"project compileall; vsim work.KnightsTour_tb -t ns -L {os.path.expanduser('~/ece551/SAED32_lib')} " \
                       f"-Lf {os.path.expanduser('~/ece551/SAED32_lib')} -voptargs=+acc'"
-        subprocess.run(
-            sim_command,
-            shell=True,
-            check=True
-        )
+    
         if debug_mode == 2:
             # Change working directory to /output/waves for debugging
             os.chdir(waves_dir)
@@ -145,7 +143,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             if args.signals:
                 signals_to_use = args.signals
             else:
-                signals_to_use = default_signals
+                signals_to_use = ["clk", "RST_n", "send_resp", "resp"]
 
             # Find full hierarchy paths for the selected signals
             signal_paths = find_signals(signals_to_use)
@@ -153,7 +151,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
             # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
             if mode == "cmd":
-                sim_command = ( f"vsim -c -do \"" 
+                sim_command += ( f"vsim -c -do \"" 
                     f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
                     )
                 subprocess.run(sim_command, shell=True, check=True)
