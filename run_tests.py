@@ -44,7 +44,7 @@ if args.post_synthesis:
 
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
-    "simple": range(1, 2),  # test_1
+    "simple": range(0, 2),  # test_0 and test_1
     "move": range(2, 13),   # test_2 to test_12
     "logic": range(13, 15)  # test_13 and test_14
 }
@@ -156,7 +156,7 @@ if args.post_synthesis:
         "KnightsTour.vg", "KnightPhysics.sv", "RemoteComm.sv", "SPI_iNEMO4.sv", "tb_tasks.sv", "KnightsTour_tb_0.sv"
     ]
     for file in post_synthesis_files:
-        file_path = os.path.join(test_dir, "post_synthesis", file)
+        file_path = os.path.join(post_synthesis_dir, file)
         subprocess.run(f"vlog +acc {file_path}", shell=True, check=True)
 
     # Run test 0 in GUI mode
