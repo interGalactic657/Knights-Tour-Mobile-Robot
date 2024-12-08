@@ -57,9 +57,12 @@ package tb_tasks;
   endtask
 
   // Task to wait till a tour move is complete (2 individual moves).
-  task automatic WaitTourMove(ref send_resp, ref clk);
+  task automatic WaitTourMove(ref send_resp, ref clk, ref [14:0] actual_xx, ref [14:0] actual_yy);
       // Wait till two moves are complete.
       repeat(2) WaitForMove(.send_resp(send_resp), .clk(clk));
+
+      $display("Coordinate on the board: (%d, %d)", actual_xx[14:12], actual_yy[14:12]);
+      $display("x_pos: 0x%h, y_pos: 0x%h", actual_xx, actual_yy); 
   endtask
 
   // Task to wait till all moves of the tour are complete.
@@ -69,14 +72,14 @@ package tb_tasks;
   endtask
 
   // Task to wait till the y offset of the Knight is found and validates the position.
-  task automatic ChkOffset(ref tour_go, ref clk, input [2:0] target_yy, ref [2:0] actual_yy);
+  task automatic ChkOffset(ref tour_go, ref clk, input [2:0] target_yy, ref [14:0] actual_yy);
     begin
       // Wait till the calibration of the Y offset is complete (worst case takes 30000000 clocks).
       TimeoutTask(.sig(tour_go), .clk(clk), .clks2wait(30000000), .signal("tour_go"));
 
       // Check that the Knight found the correct y position that it was placed on the board.
       @(negedge clk) begin
-        if (actual_yy !== target_yy) begin
+        if (actual_yy !== target_yy[14:12]) begin
           $display("ERROR: y_offset should have been 0x%h but was 0x%h", target_yy, actual_yy);
           $stop(); 
         end
