@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 package tb_tasks;
 
   localparam CAL_GYRO = 16'h2000;
