@@ -43,9 +43,16 @@ module RemoteComm(
   
 
   // Store the low byte of the 16-bit command when snd_cmd is asserted.
-  always_ff @(posedge clk) begin
-      if (snd_cmd)
+  always_ff @(posedge clk or negedge rst_n) begin
+      if(!rst_n)
+      begin
+        low_byte <= 8'h00; // Reset the low byte to 0 when the system is reset.
+      end
+      else
+      begin
+      (snd_cmd)
         low_byte <= cmd[7:0];
+      end
   end
 
   // Select the high byte to send when sel_high is asserted otherwise send the low_byte.
