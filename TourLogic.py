@@ -26,7 +26,7 @@ orig_moves = [
 
 rows, cols = 5, 5  # Dimensions of the chessboard
 visited_squares = [[0 for _ in range(cols)] for _ in range(rows)]
-solution_path = []  # List to keep track of the path (in hex values)
+solution_path = []  # List to keep track of the path (in coordinates)
 
 
 def get_valid_moves(square):
@@ -83,48 +83,14 @@ def compute_solution(square, move_count=1):
     return False  # Backtrack if no solution found in this path
 
 
-def convert_to_hex_path():
+def write_coordinates_to_file(coordinate_path, filename="coordinates_output.txt"):
     """
-    Converts the path of (x, y) positions to the corresponding hex values using the `moves` dictionary.
-    """
-    hex_path = []
-    for i in range(1, len(solution_path)):
-        prev_x, prev_y = solution_path[i - 1]
-        curr_x, curr_y = solution_path[i]
-        move = (curr_x - prev_x, curr_y - prev_y)  # Calculate the move (dx, dy)
-        if move in moves:
-            hex_path.append(moves[move])  # Add the corresponding hex value (as integer)
-        else:
-            print(f"Invalid move from {(prev_x, prev_y)} to {(curr_x, curr_y)}")
-    return hex_path
-
-
-def write_solution_to_file(hex_path, filename="hex_solution_output.txt"):
-    """
-    Writes the solution path (in hex) to a file in the format:
-    @00 01
-    @01 08
-    @02 10
-    ...
+    Writes the solution path (in coordinates) to a file, one tuple per line.
     """
     with open(filename, 'w') as file:
-        for i, hex_value in enumerate(hex_path):
-            if i != len(hex_path) - 1:
-                file.write(f"@{i:02X} {hex_value:02X}\n")
-            else:
-                file.write(f"@{i:02X} {hex_value:02X}")
+        for coord in coordinate_path:
+            file.write(f"{coord}\n")
 
-def write_solution_to_file(path, filename="solution_output.txt"):
-    """
-    Writes the solution path (in coordinates) to a file in the format:
-    (x, y)
-    
-    :param path: List of coordinates corresponding to the knight's moves.
-    :param filename: Name of the output file (default is "solution_output.txt").
-    """
-    with open(filename, 'w') as file:
-        for (x, y) in path:
-            file.write(f"({x}, {y})\n")
 
 def main():
     # Parse command line arguments
@@ -137,11 +103,7 @@ def main():
     y_start = args.y
 
     if compute_solution((x_start, y_start)):
-        print("Solution found!")
-        write_solution_to_file(solution_path[1:], filename="solution_output.txt")
-        print("Path written to solution_output.txt.")
-        # Write the hex path to a file
-        write_solution_to_file(convert_to_hex_path())
+        write_coordinates_to_file(solution_path)  # Write the coordinates to a file
     else:
         print("No solution exists.")
 
