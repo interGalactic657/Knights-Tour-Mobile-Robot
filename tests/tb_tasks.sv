@@ -66,9 +66,9 @@ package tb_tasks;
   endtask
 
   // Task to wait till all moves of the tour are complete.
-  task automatic WaitTourDone(ref send_resp, ref clk);
+  task automatic WaitTourDone(ref send_resp, ref clk, ref [14:0] actual_xx, ref [14:0] actual_yy);
     // Wait till all 24 moves are done.
-    repeat(24) WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    repeat(24) WaitTourMove(.send_resp(send_resp), .clk(clk), .actual_xx(actual_xx), .actual_yy(actual_yy));
   endtask
 
   // Task to wait till the y offset of the Knight is found and validates the position.

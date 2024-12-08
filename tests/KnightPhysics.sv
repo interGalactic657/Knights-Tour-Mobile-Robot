@@ -8,6 +8,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
   // Default to center square (x = 2.5, y = 2.5)
   parameter [14:0] start_xx = 15'h2800;
   parameter [14:0] start_yy = 15'h2800;
+  parameter signed [15:0] start_heading = 16'h0000;
 
   input clk;				// 50MHz clock
   input RST_n;				// unsynchronized raw reset input
@@ -205,7 +206,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
   initial begin
 	omega_lft = 16'h0000;
 	omega_rght = 16'h0000;
-	heading_robot = 16'h0000;
+	heading_robot = start_heading;
 	xx = start_xx;
 	yy = start_yy;	
 	lftIR_n = 1;

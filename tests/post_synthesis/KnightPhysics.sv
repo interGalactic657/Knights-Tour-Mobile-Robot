@@ -6,7 +6,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
   // model of the gaurdrails and IR sensors.    //
   ///////////////////////////////////////////////
 
-  // Default to center square (x = 2.5, y = 2.5)
+  // Default to center square (x = 2.5, y = 2.5) and heading to north
   parameter [14:0] start_xx = 15'h2800;
   parameter [14:0] start_yy = 15'h2800;
 
