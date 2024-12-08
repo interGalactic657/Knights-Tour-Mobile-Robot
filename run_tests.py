@@ -104,7 +104,7 @@ def check_transcript(log_file):
 default_signals = [
     "clk", "RST_n", "iPHYS/xx", "iPHYS/yy", "heading", "heading_robot", "desired_heading", "omega_sum", 
     "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "y_pos", "y_offset", 
-    "came_back", "off_board", "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "send_resp", "resp",
+    "came_back", "off_board", "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "send_resp", "resp", "resp_rdy"
     "mv_indx", "move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
 ]
 
