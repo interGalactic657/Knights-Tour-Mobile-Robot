@@ -1,13 +1,25 @@
 ###################################
 # Read in the verilog files first #
 ###################################
-read_file -format sverilog {../KnightsTour.sv ../reset_synch/reset_synch.sv \
-    ../inert_intf/inert_intf.sv ../inert_intf/gyro_intf/inertial_integrator.sv \
-    ../inert_intf/gyro_intf/SPI_mnrch.sv ../IR_intf/IR_intf.sv \
-    ../TourLogic/TourLogic.sv ../TourCmd/TourCmd.sv ../sponge/sponge.sv ../cmd_proc/cmd_proc.sv \
-    ../UART_wrapper/UART_wrapper.sv ../UART_wrapper/UART/UART.v \
-    ../UART_wrapper/UART/UART_rx/UART_rx.sv ../UART_wrapper/UART/UART_tx/UART_tx.sv \
-    ../PID/PID.sv ../MtrDrv/MtrDrv.sv ../MtrDrv/PWM11/PWM11.sv}
+read_file -format sverilog { \
+  ../designs/KnightsTour.sv \
+  ../designs/cmd_proc/designs/cmd_proc.sv \
+  ../designs/inert_intf/designs/inert_intf.sv \
+  ../designs/inert_intf/designs/gyro_intf/designs/inertial_integrator.sv \
+  ../designs/inert_intf/designs/gyro_intf/designs/SPI_mnrch.sv \
+  ../designs/IR_intf/designs/IR_intf.sv \
+  ../designs/MtrDrv/designs/MtrDrv.sv \
+  ../designs/MtrDrv/designs/PWM11/designs/PWM11.sv \
+  ../designs/PID/designs/PID.sv \
+  ../designs/reset_synch/designs/reset_synch.sv \
+  ../designs/sponge/designs/sponge.sv \
+  ../designs/TourCmd/designs/TourCmd.sv \
+  ../designs/TourLogic/designs/TourLogic.sv \
+  ../designs/UART_wrapper/designs/UART_wrapper.sv \
+  ../designs/UART_wrapper/designs/UART/designs/UART.sv \
+  ../designs/UART_wrapper/designs/UART/designs/UART_rx/designs/UART_rx.sv \
+  ../designs/UART_wrapper/designs/UART/designs/UART_tx/designs/UART_tx.sv \
+}
 
 ###################################
 # Set Current Design to top level #

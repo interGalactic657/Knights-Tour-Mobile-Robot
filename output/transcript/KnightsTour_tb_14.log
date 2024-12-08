@@ -1,0 +1,15 @@
+Reading pref.tcl
+
+# 2023.2_1
+
+# vsim -c work.KnightsTour_tb -do "add wave -internal *; run -all; write wave -file /filespace/k/kondagopinat/ece551/Knights-Tour-Mobile-Robot/output/waves/KnightsTour_tb_14.wlf; log -flush /*; quit;" 
+# Start time: 12:00:34 on Dec 06,2024
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# ** Error (suppressible): /filespace/k/kondagopinat/ece551/Knights-Tour-Mobile-Robot/tests/logic/KnightsTour_tb_14.sv(84): (vopt-7063) Failed to find 'y_offset' in hierarchical name 'iDUT.y_offset'.
+#         Region: KnightsTour_tb
+# Optimization failed
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=1, Warnings=1.
+# Error loading design
+# End time: 12:00:34 on Dec 06,2024, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 1
