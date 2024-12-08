@@ -99,13 +99,13 @@ module KnightsTour_tb();
     ChkPos(.clk(clk), .target_xx(3'h0), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the second L-shape move is made.
-    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk));
+    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Check that the Knight is at (1,3) at the end of the second move.
     ChkPos(.clk(clk), .target_xx(3'h1), .target_yy(3'h3), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the third L-shape move is made.
-    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk));
+    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Check that the Knight is at (3,4) at the end of the third move.
     ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h4), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
