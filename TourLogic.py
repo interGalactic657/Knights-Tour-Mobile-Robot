@@ -83,7 +83,7 @@ def compute_solution(square, move_count=1):
     return False  # Backtrack if no solution found in this path
 
 
-def write_coordinates_to_file(coordinate_path, filename="coordinates_output.txt"):
+def write_coordinates_to_file(coordinate_path, filename="solution_output.txt"):
     """
     Writes the solution path (in coordinates) to a file, one tuple per line.
     """
@@ -103,6 +103,7 @@ def main():
     y_start = args.y
 
     if compute_solution((x_start, y_start)):
+        print("Solution Found!")
         write_coordinates_to_file(solution_path)  # Write the coordinates to a file
     else:
         print("No solution exists.")
