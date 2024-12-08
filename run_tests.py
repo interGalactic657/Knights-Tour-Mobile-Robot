@@ -13,8 +13,8 @@ parser.add_argument(
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
 parser.add_argument(
-    "-d", "--debug", type=int, choices=[0, 1, 2], default=0,
-    help="Enable debugging mode: 0 for normal run, 1 for debug while running, 2 for debug after running"
+    "-d", "--debug", type=int, choices=[0, 1, 2, 3], default=0,
+    help="Enable debugging mode: 0 will not enable debugging waves (if test passes), 1 will enable debugging waves for later (even if test might pass), 2 is debugging waves while running, 3 for debugging saved waves"
 )
 parser.add_argument(
     "-s", "--signals", type=str, nargs="*", default=None,
@@ -118,12 +118,10 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
     subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
-    if debug_mode == 2:
+    if debug_mode == 3:
         # Change working directory to /output/waves for debugging
         os.chdir(waves_dir)
-        sim_command = (
-            f"vsim -view {test_name}.wlf -do {test_name}.do;"
-        )
+        sim_command = f"vsim -view {test_name}.wlf -do {test_name}.do;"
         subprocess.run(sim_command, shell=True, check=True)
 
     else:
@@ -139,33 +137,55 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
         # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
         if mode == "cmd":
-            sim_command = ( f"vsim -c -do \"" 
-                f"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
-                )
-            subprocess.run(sim_command, shell=True, check=True)
-            
-            # Check the transcript for success or error
-            result = check_transcript(log_file)
-            
-            if result == "success":
-                print(f"{test_name}: YAHOO!! All tests passed.")
-            elif result == "error":
-                if debug_mode == 0:
-                    print(f"{test_name}: Test failed. Saving waveforms for later debug...")
-                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\"",
-                        shell=True, check=True
-                    )   
-                elif debug_mode == 1:
-                    print(f"{test_name}: Test failed. Launching GUI for debugging...")
-                    subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                            shell=True, check=True
-                    )
+            # Base simulation command (common for all cases)
+            base_command = f"vsim -c -do \"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
 
+            if debug_mode == 0:
+                # Normal run: Do not save waveforms if the test passes
+                sim_command = f"{base_command} > {log_file}"
+                subprocess.run(sim_command, shell=True, check=True)
+
+                # Check the transcript for success or error
+                result = check_transcript(log_file)
+
+                if result == "success":
+                    print(f"{test_name}: YAHOO!! All tests passed.")
+                elif result == "error":
+                    print(f"{test_name}: Test failed. Saving waveforms for later debug...")
+                    # Save waveforms in case of failure
+                    debug_command = (
+                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
+                    )
+                    subprocess.run(debug_command, shell=True, check=True)
+
+            elif debug_mode == 1:
+                # Always save waveforms, even if test passes or fails
+                print(f"{test_name}: Saving waveforms for later debug...")
+                sim_command = (
+                    f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
+                )
+                subprocess.run(sim_command, shell=True, check=True)
+
+            elif debug_mode == 2:
+                # Always save waveforms, for debugging purposes, regardless of test result
+                print(f"{test_name}: Debugging in gui mode...")
+                sim_command = (
+                    f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\""
+                )
+                subprocess.run(sim_command, shell=True, check=True)
         else:
             # GUI mode: Ask for custom signals, or add defaults
-            subprocess.run(f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                    shell=True, check=True
-                )
+            print(f"{test_name}: Running GUI mode...")
+            subprocess.run(
+                f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                shell=True,
+                check=True,
+            )
+
 
 # Run the specified test or all tests
 if args.number:
@@ -173,7 +193,8 @@ if args.number:
         if args.number in test_range:
             subdir_path = os.path.join(test_dir, subdir)
             test_files = [
-                file for file in os.listdir(subdir_path)
+                file
+                for file in os.listdir(subdir_path)
                 if file.endswith(".sv") and f"_{args.number}" in file
             ]
             for test_file in test_files:
@@ -184,10 +205,11 @@ else:
         subdir_path = os.path.join(test_dir, subdir)
         if os.path.exists(subdir_path):
             test_files = [
-                file for file in os.listdir(subdir_path)
-                if file.endswith(".sv")
+                file for file in os.listdir(subdir_path) if file.endswith(".sv")
             ]
-            for file in sorted(test_files, key=lambda x: int(''.join(filter(str.isdigit, x)))): 
+            for file in sorted(
+                test_files, key=lambda x: int("".join(filter(str.isdigit, x)))
+            ):
                 run_testbench(subdir, file, args.mode, args.debug)
 
     print("All tests completed.")
