@@ -162,14 +162,14 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             elif debug_mode == 1:
                 # Always save waveforms, even if test passes or fails
                 print(f"{test_name}: Saving waveforms for later debug...")
-                sim_command = (
-                    f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
+                debug_command = (
+                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                 )
                 subprocess.run(sim_command, shell=True, check=True)
 
             elif debug_mode == 2:
-                # Always save waveforms, for debugging purposes, regardless of test result
+                # Always save waveforms, for debugging purposes, regardless of test result.
                 print(f"{test_name}: Debugging in gui mode...")
                 sim_command = (
                     f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
