@@ -36,11 +36,11 @@ module UART_tx(
   // Implement the shift register of the UART TX to transmit a byte of data.
   always_ff @(posedge clk, negedge rst_n) begin
       if(!rst_n)
-          tx_shft_reg <= 9'h1FF; // Reset the register to all ones, indicating line is IDLE.
-      else
-          tx_shft_reg <= (init)  ? {tx_data, 1'b0}           :  // If init is asserted, load the data in along with the start bit.
-                         (shift) ? {1'b1, tx_shft_reg[8:1]}  :  // Begin shifting out the data 1-bit each, starting with LSB.
-                         tx_shft_reg; // Otherwise, recirculate the current value in the register.
+        tx_shft_reg <= 9'h1FF; // Reset the register to all ones, indicating line is IDLE.
+      else if (init)
+        tx_shft_reg <= {tx_data, 1'b0}; // If init is asserted, load the data in along with the start bit.
+      else if (shift)          
+        tx_shft_reg <= {1'b1, tx_shft_reg[8:1]}; // Begin shifting out the data 1-bit each, starting with LSB.
   end
   
   // Implement counter to count number of clock cycles to hold the current bit on the TX line, before 
