@@ -8,9 +8,8 @@ parser.add_argument(
     "-n", "--number", type=int, nargs="?", default=None,
     help="Specify the testbench number to run (e.g., 1 for test_1). If not specified, runs all tests."
 )
-parser.add_argument(
-    "-r", "--range", type=int, nargs="?", default=None,
-    help="Specify the starting test number to run all tests from that number onwards."
+parser.add_argument('-r', '--range', type=int, nargs=2, metavar=('START', 'END'),
+                     help='Test range to run (inclusive, e.g., -r 2 10)'
 )
 parser.add_argument(
     "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
