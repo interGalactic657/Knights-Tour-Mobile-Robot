@@ -39,8 +39,8 @@ os.makedirs(library_dir, exist_ok=True)
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
     "simple": range(1, 2),  # test_1
-    "move": range(2, 15),   # test_2 to test_14
-    "logic": range(15, 17)  # test_15 and test_16
+    "move": range(2, 13),   # test_2 to test_12
+    "logic": range(13, 20)  # test_13 to test_19
 }
 
 # Compile all design files (ignoring `tests/` subdirectories)
@@ -162,14 +162,14 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             elif debug_mode == 1:
                 # Always save waveforms, even if test passes or fails
                 print(f"{test_name}: Saving waveforms for later debug...")
-                sim_command = (
-                    f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
+                debug_command = (
+                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                 )
                 subprocess.run(sim_command, shell=True, check=True)
 
             elif debug_mode == 2:
-                # Always save waveforms, for debugging purposes, regardless of test result
+                # Always save waveforms, for debugging purposes, regardless of test result.
                 print(f"{test_name}: Debugging in gui mode...")
                 sim_command = (
                     f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
