@@ -26,30 +26,20 @@ orig_moves = [
 
 rows, cols = 5, 5  # Dimensions of the chessboard
 visited_squares = [[0 for _ in range(cols)] for _ in range(rows)]
-solution_path = []  # List to keep track of the path (in hex values)
+solution_path = []  # List to keep track of the path (in coordinates)
 
 
 def get_valid_moves(square):
-    """
-    Given a new square (x, y), calculates the valid moves that stay within the board boundaries
-    and are not visited.
-    """
-    # Calculate the new possible moves by adding the move offsets to the new square
+    """Returns valid moves that stay within the board boundaries and are not visited."""
     new_moves = [(square[0] + dx, square[1] + dy) for dx, dy in orig_moves]
-
-    # Filter moves to remove those that go out of bounds or are already visited
     valid_moves = [
-        (x, y) for x, y in new_moves
-        if 0 <= x < rows and 0 <= y < cols and visited_squares[x][y] == 0
+        (x, y) for x, y in new_moves if 0 <= x < rows and 0 <= y < cols and visited_squares[x][y] == 0
     ]
-
     return valid_moves
 
 
 def compute_solution(square, move_count=1):
-    """
-    Recursive function to compute the solution for the Knight's Tour problem.
-    """
+    """Recursive function to compute the solution for the Knight's Tour problem."""
     current_x, current_y = square
 
     # Mark the current position as visited
@@ -58,7 +48,6 @@ def compute_solution(square, move_count=1):
     # Add the current position to the solution path (in coordinates)
     solution_path.append(square)
 
-    # If the knight has visited all squares (solution found)
     if move_count == rows * cols:
         return True
 
@@ -66,27 +55,21 @@ def compute_solution(square, move_count=1):
     pos_moves = get_valid_moves((current_x, current_y))
 
     if not pos_moves:
-        # If no valid moves, backtrack by marking the current square as unvisited
         visited_squares[current_x][current_y] = 0
         solution_path.pop()  # Remove the last move from the path
         return False  # No valid move, backtrack to previous state
 
-    # Otherwise, we have valid moves, try each one
     for move in pos_moves:
-        # Recursively call compute_solution for the next valid move
         if compute_solution(move, move_count + 1):
             return True  # If a valid solution is found, return True
 
-    # If none of the possible moves lead to a solution, backtrack
     visited_squares[current_x][current_y] = 0
     solution_path.pop()  # Remove the last move from the path
     return False  # Backtrack if no solution found in this path
 
 
 def convert_to_hex_path():
-    """
-    Converts the path of (x, y) positions to the corresponding hex values using the `moves` dictionary.
-    """
+    """Converts the path of (x, y) positions to the corresponding hex values using the `moves` dictionary."""
     hex_path = []
     for i in range(1, len(solution_path)):
         prev_x, prev_y = solution_path[i - 1]
@@ -99,35 +82,22 @@ def convert_to_hex_path():
     return hex_path
 
 
-def write_solution_to_file(hex_path, filename="hex_solution_output.txt"):
-    """
-    Writes the solution path (in hex) to a file in the format:
-    @00 01
-    @01 08
-    @02 10
-    ...
-    """
-    with open(filename, 'w') as file:
-        for i, hex_value in enumerate(hex_path):
-            if i != len(hex_path) - 1:
-                file.write(f"@{i:02X} {hex_value:02X}\n")
-            else:
-                file.write(f"@{i:02X} {hex_value:02X}")
-
 def write_solution_to_file(path, filename="solution_output.txt"):
-    """
-    Writes the solution path (in coordinates) to a file in the format:
-    (x, y)
-    
-    :param path: List of coordinates corresponding to the knight's moves.
-    :param filename: Name of the output file (default is "solution_output.txt").
-    """
+    """Writes the solution path (in coordinates) to a file in the format: (x, y)."""
     with open(filename, 'w') as file:
         for (x, y) in path:
             file.write(f"({x}, {y})\n")
 
+
+def write_hex_solution_to_file(hex_path, filename="hex_solution_output.txt"):
+    """Writes the hex solution path to a file in the format: @00 01."""
+    with open(filename, 'w') as file:
+        for i, hex_value in enumerate(hex_path):
+            file.write(f"@{i:02X} {hex_value:02X}\n")
+
+
 def main():
-    # Parse command line arguments
+    """Main function to start the knight's tour computation."""
     parser = argparse.ArgumentParser(description="Solve Knight's Tour problem.")
     parser.add_argument('x', type=int, help="Starting x position")
     parser.add_argument('y', type=int, help="Starting y position")
@@ -138,10 +108,13 @@ def main():
 
     if compute_solution((x_start, y_start)):
         print("Solution found!")
-        write_solution_to_file(solution_path[1:], filename="solution_output.txt")
+        write_solution_to_file(solution_path, filename="solution_output.txt")
         print("Path written to solution_output.txt.")
-        # Write the hex path to a file
-        write_solution_to_file(convert_to_hex_path())
+
+        # Convert the solution path to hex and write it to a file
+        hex_path = convert_to_hex_path()
+        write_hex_solution_to_file(hex_path)
+        print("Hex path written to hex_solution_output.txt.")
     else:
         print("No solution exists.")
 
