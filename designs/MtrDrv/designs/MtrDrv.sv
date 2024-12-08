@@ -1,3 +1,4 @@
+`default_nettype none
 /////////////////////////////////////////////////////
 // MtrDrv.sv                                      //
 // This design will drive both motors via PWM    //

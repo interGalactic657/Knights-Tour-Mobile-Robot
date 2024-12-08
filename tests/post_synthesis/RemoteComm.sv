@@ -1,3 +1,4 @@
+`default_nettype none
 ////////////////////////////////////////////////
 // RemoteComm.sv                             //
 // This design unwraps a 16-bit command     //

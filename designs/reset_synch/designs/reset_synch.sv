@@ -1,3 +1,4 @@
+`default_nettype none
 /////////////////////////////////////////////
 // reset_synch.sv                         //
 // Synchronizes the incoming RST_n,      //

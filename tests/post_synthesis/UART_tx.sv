@@ -1,3 +1,4 @@
+`default_nettype none
 //////////////////////////////////////////////////
 // UART_tx.sv                                  //
 // This design will infer a UART transmitter  //
@@ -46,23 +47,25 @@ module UART_tx(
   // Implement counter to count number of clock cycles to hold the current bit on the TX line, before 
   // shifting out next bit, i.e. the baud rate of the UART.
   always_ff @(posedge clk) begin
-      baud_cnt <=  (init | shift) ? 12'h000      : // Whenever init or shift is asserted, clear the register.
-                   (transmitting) ? baud_cnt + 1 : // Continue incrementing the count when we are transmitting data.
-                   baud_cnt; // Otherwise hold the current baud count.
+      if (init | shift)  
+        baud_cnt <= 12'h000; // Whenever init or shift is asserted, clear the register.
+      else if (transmitting) 
+        baud_cnt <= baud_cnt + 1'b1; // Continue incrementing the count when we are transmitting data.
   end
   
   // Implement counter to count number of bits shifted out on the TX line.
   always_ff @(posedge clk) begin
-      bit_cnt <=  (init)  ? 4'h0         : // Reset to 0 initially.
-                  (shift) ? bit_cnt + 1  : // Increment the bit count whenever we shift a bit.
-                  bit_cnt; // Otherwise hold current value.
+      if (init)
+        bit_cnt <= 4'h0; // Reset to 0 initially.
+      else if (shift) 
+         bit_cnt <= bit_cnt + 1'b1; // Increment the bit count whenever we shift a bit.
   end
 
   // Take the LSB of the shift register as the data shifted out, i.e., on the TX line.
   assign TX = tx_shft_reg[0];
     
   // We shift out data whenever we reach a baud count of 2604 clock cycles.
-  assign shift = baud_cnt >= 12'd2604;
+  assign shift = baud_cnt >= 12'hA2C;
   
   ////////////////////////////////////
 	// Implement State Machine Logic //
@@ -86,11 +89,11 @@ module UART_tx(
         tx_done <= 1'b1; // Synchronously preset the flop to 1, if transmission is done.
   end
 
-  // Implements the combinational state transition and output logic of the state machine.
+  /////////////////////////////////////////
+	// Default all SM outputs & nxt_state //
+	///////////////////////////////////////
 	always_comb begin
-		/////////////////////////////////////////
-		// Default all SM outputs & nxt_state //
-		///////////////////////////////////////
+    // Implements the combinational state transition and output logic of the state machine.
 		nxt_state = state; // By default, assume we are in the current state.
     init = 1'b0; // By defualt, init is low.
     transmitting = 1'b0; // By default, assume data is not being transmitted. 

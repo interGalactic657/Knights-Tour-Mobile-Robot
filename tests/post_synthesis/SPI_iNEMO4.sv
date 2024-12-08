@@ -1,3 +1,4 @@
+`default_nettype none
 `timescale 1ns/1ps
 module SPI_iNEMO4(SS_n,SCLK,MISO,MOSI,INT,YAW);
   /////////////////////////////////////////////////////////

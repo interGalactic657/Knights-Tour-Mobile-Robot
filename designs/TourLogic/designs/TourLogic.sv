@@ -1,3 +1,4 @@
+`default_nettype none
 /////////////////////////////////////////////////
 // TourLogic.sv                                //
 // This block computes the solution to         //

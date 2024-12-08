@@ -1,3 +1,4 @@
+`default_nettype none
 //////////////////////////////////////////////////
 // UART_rx.sv                                  //
 // This design will infer a UART reciever     //
@@ -57,17 +58,20 @@ module UART_rx(
   // Implement counter to count number of clock cycles to sample the current bit on the RX line, before 
   // shifting in the next bit, i.e. at the mid cycle of the baud rate of the UART.
   always_ff @(posedge clk) begin
-      baud_cnt <=  (start) ? 12'd1302         : // Whenever start or shift is asserted, start the baud count at 1302 (half clocks to count).
-                   (shift) ? 12'd2604         : // Whenever we are shifting in the next bit, count a full baud cycle each time to sample at the mid value.
-                   (receiving) ? baud_cnt - 1 : // Continue decrementing the count when we are receiving data.
-                   baud_cnt; // Otherwise hold the current baud count.
+      if (start)
+        baud_cnt <= 12'h516; // Whenever start or shift is asserted, start the baud count at 1302 (half clocks to count).
+      else if (shift)
+        baud_cnt <= 12'hA2C; // Whenever we are shifting in the next bit, count a full baud cycle each time to sample at the mid value.
+      else if (receiving)
+        baud_cnt <= baud_cnt - 1'b1; // Continue decrementing the count when we are receiving data.
   end
   
   // Implement counter to count number of bits shifted in on the RX line.
   always_ff @(posedge clk) begin
-      bit_cnt <=  (start)  ? 4'h0         : // Reset to 0 initially.
-                  (shift)  ? bit_cnt + 1  : // Increment the bit count whenever we shift in a bit.
-                  bit_cnt; // Otherwise hold current value.
+      if (start)
+        bit_cnt <= 4'h0; // Reset to 0 initially.
+      else if (shift) 
+         bit_cnt <= bit_cnt + 1'b1; // Increment the bit count whenever we shift a bit.
   end
 
   // Take the LSB 7-bits of the shift register as the data received, i.e., on the RX line.

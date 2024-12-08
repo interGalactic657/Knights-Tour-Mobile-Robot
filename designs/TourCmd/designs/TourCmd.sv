@@ -1,3 +1,4 @@
+`default_nettype none
 ///////////////////////////////////////////////////
 // TourCmd.sv                                    //
 // This block will make “The Knight”             //
@@ -78,7 +79,7 @@ module TourCmd(
   always_comb begin
     heading = heading_t'(8'hxx); // By default we don't care what the heading is otherwise.
     square_cnt = 4'hx; // By default we don't care what the square count is otherwise.
-    
+
     // Moves are one hot encoded, so only one case must be true, otherwise, we don't move by default.
     unique case (1'b1) 
       // Case when move[0] is high

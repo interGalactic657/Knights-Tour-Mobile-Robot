@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`default_nettype none
 module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,rghtPWM2,
                      IR_en,lftIR_n,cntrIR_n,rghtIR_n);
   //////////////////////////////////////////////////

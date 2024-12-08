@@ -1,3 +1,4 @@
+`default_nettype none
 //////////////////////////////////////////////////
 // SPI_mnrch.sv                                //
 // This design will infer a SPI transceiver   //
@@ -40,9 +41,10 @@ module SPI_mnrch(
 
   // Implement the 16-bit shift register of the SPI interface.
   always_ff @(posedge clk) begin
-          shft_reg <=  (init)  ? cmd                     :  // If init is asserted, parallel load in the command.
-                       (shift) ? {shft_reg[14:0], MISO}  :  // Begin shifting out the data 1-bit each, starting with MSB, and shift in the MISO.
-                       shft_reg; // Otherwise, recirculate the current value in the register.
+      if (init)
+        shft_reg <= cmd; // If init is asserted, parallel load in the command.
+      else if (shift)
+        shft_reg <= {shft_reg[14:0], MISO}; // Begin shifting out the data 1-bit each, starting with MSB, and shift in the MISO.
   end
   
   // Whenever ld_SCLK is asserted, we load in the specific value (5'b10111) to ensure the slight delay between SS_n fall till first fall of SCLK.
@@ -53,9 +55,10 @@ module SPI_mnrch(
   
   // Implement counter to count number of bits shifted out on the MOSI line.
   always_ff @(posedge clk) begin
-      bit_cntr <=  (init)  ? 5'h0          : // Reset to 0 initially.
-                   (shift) ? bit_cntr + 1'b1  : // Increment the bit count whenever we shift a bit.
-                   bit_cntr; // Otherwise hold current value.
+      if (init)
+        bit_cntr <= 5'h0; // Reset to 0 initially.
+      else if (shift)
+        bit_cntr <= bit_cntr + 1'b1; // Increment the bit count whenever we shift a bit.
   end
 
   // Implements the SR flop to keep serf select high (inactive) until snd is asserted, and back to high after transmission is complete,
@@ -76,10 +79,10 @@ module SPI_mnrch(
   assign SCLK = SCLK_div[4];
 
   // We shift in data from the MISO 2 system clocks after the rise of SCLK.
-  assign shift = SCLK_div == 5'b10001;
+  assign shift = (SCLK_div == 5'b10001);
 
   // We are done with the transaction when SCLK_div is all ones indicating that SCLK is about to fall and go back to idle state.
-  assign full = SCLK_div == 5'b11111;
+  assign full = (SCLK_div == 5'b11111);
 
   // Take the MSB of shft_reg as the MOSI signal.
   assign MOSI = shft_reg[15];

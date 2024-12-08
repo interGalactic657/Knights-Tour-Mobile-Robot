@@ -1,3 +1,4 @@
+`default_nettype none
 ///////////////////////////////////////////////////////
 // inert_intf.sv                                    //
 // Interfaces with ST 6-axis inertial sensor. In   //

@@ -1,3 +1,4 @@
+`default_nettype none
 /////////////////////////////////////////////
 // sponge.sv                               //
 // Plays the last measure of the           //

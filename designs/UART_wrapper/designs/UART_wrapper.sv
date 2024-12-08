@@ -1,3 +1,4 @@
+`default_nettype none
 //////////////////////////////////////////////////
 // UART_wrapper.sv                             //
 // This design packages 2 bytes recieved      //

@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+`default_nettype none
 module KnightsTour_tb();
 
   import tb_tasks::*;
