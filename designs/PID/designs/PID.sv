@@ -21,7 +21,8 @@ module PID(
 	// Declare any internal signals as type logic //
 	///////////////////////////////////////////////
 	////////////////////// P_term //////////////////////////////////////////
-	logic signed [9:0] err_sat;   // Saturated error term in 10 bits.
+  logic err_vld1;               // Delayed error valid signal.
+	logic signed [9:0] err_sat, err_sat0;   // Saturated error term in 10 bits.
 	localparam P_COEFF = 6'h10;   // Coefficient used to compute the P_term.
 	logic signed [13:0] P_term;   // Proportional term (P_term) required to correct heading.
 	////////////////////// I_term //////////////////////////////////////////
@@ -38,21 +39,42 @@ module PID(
 	logic signed [12:0] D_term;          // The D_term for use in PID control.  
   ///////////////////////// PID ///////////////////////////////////////////
 	logic signed [13:0] P_ext, I_ext, D_ext;       // Sign extended PID terms.
-  logic signed [13:0] PID_term;                  // Sum of all the PID terms.
+  logic signed [13:0] PID_term, PID_term_PL;                  // Sum of all the PID terms.
 	logic signed [10:0] frwrd_ext;                 // Zero extended frwrd term for computation.
 	logic signed [10:0] raw_lft_spd, raw_rght_spd; // Holds the summed values before saturation.
 	////////////////////////////////////////////////////////////////////////
+
+  //Delay error valid signal by 1 clock cycle.
+  always_ff @(posedge clk) begin
+      err_vld1 <= err_vld;
+  end
 
   ///////////////////////////////////////////
 	// Implement P_term as dataflow verilog //
 	/////////////////////////////////////////
 
   //////////////////////////////
-  // Saturate the error term //
+  // Saturate the error term and pipleline it //
   ////////////////////////////
-  assign err_sat = (!error[11] && |error[10:9]) ? 10'h1FF :
-                   (error[11] && !(&error[10:9])) ? 10'h200 :
-                   error[9:0];
+  // assign err_sat = (!error[11] && |error[10:9]) ? 10'h1FF :
+  //                  (error[11] && !(&error[10:9])) ? 10'h200 :
+  //                  error[9:0];
+  always_ff @(posedge clk or negedge rst_n) begin
+    // Reset the flop to 0.
+    if(!rst_n)
+      begin
+      err_sat0 <= 10'h000;
+      err_sat <= 10'h000;
+      end
+    else
+      // Saturate the error term.
+      begin
+      err_sat <= err_sat0;
+      err_sat0 <= (!error[11] && |error[10:9]) ? 10'h1FF :
+                 (error[11] && !(&error[10:9])) ? 10'h200 :
+                 error[9:0];
+      end
+  end
 
   /////////////////////////////////////
   // Get the P term from saturation //
@@ -74,7 +96,7 @@ module PID(
 
   // Decide whether to store new result or keep previous value
 	// based on overflow and having a valid error term.
-	assign accum = (err_vld & ~ov) ? sum : integrator;
+	assign accum = (err_vld1 & ~ov) ? sum : integrator;
 
   // Store a result, either previous or newly computed value if the robot is moving. Otherwise, 
   // clear the currently stored value to 0 as the robot is currently idle.
@@ -106,7 +128,7 @@ module PID(
       stage2 <= 0;
       prev_err <= 0;
     end
-    else if (err_vld) begin
+    else if (err_vld1) begin
       // Store the new error if err_vld is asserted, else store the previous error. 
       stage1 <= err_sat;
       stage2 <= stage1;
@@ -139,6 +161,10 @@ module PID(
 
   assign PID_term = P_ext + I_ext + D_ext;
 
+  always_ff @(posedge clk) begin
+      PID_term_PL <= PID_term;
+  end
+
   ///////////////////////////////////////////////////////////////////////////
   // Calculate left and right speed based on PID and its forward movement //
   /////////////////////////////////////////////////////////////////////////
@@ -146,19 +172,20 @@ module PID(
   assign frwrd_ext = {1'b0, frwrd};
 
   // Ensure Knight is moving when calulating speed.
-  assign raw_lft_spd = moving ? frwrd_ext + PID_term[13:3] :
+  assign raw_lft_spd = moving ? frwrd_ext + PID_term_PL[13:3] :
                                 11'h000;
 
-  assign raw_rght_spd = moving ? frwrd_ext - PID_term[13:3] :
+  assign raw_rght_spd = moving ? frwrd_ext - PID_term_PL[13:3] :
                                  11'h000;
 
   /////////////////////////////////////////////////////
   // Saturate left and right speed based on results //
   ///////////////////////////////////////////////////
   // Saturate lft if PID is positive and raw value is negative.
-  assign lft_spd = (~PID_term[13] & raw_lft_spd[10]) ? 11'h3FF : raw_lft_spd;
+  assign lft_spd = (~PID_term_PL[13] & raw_lft_spd[10]) ? 11'h3FF : raw_lft_spd;
 
   // Saturate rght if PID is negative and raw value is negative.
-  assign rght_spd = (PID_term[13] & raw_rght_spd[10]) ? 11'h3FF : raw_rght_spd;
+  assign rght_spd = (PID_term_PL[13] & raw_rght_spd[10]) ? 11'h3FF : raw_rght_spd;
+
   
 endmodule
