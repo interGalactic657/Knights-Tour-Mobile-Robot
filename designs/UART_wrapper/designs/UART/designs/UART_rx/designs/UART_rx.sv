@@ -36,9 +36,14 @@ module UART_rx(
   ///////////////////////////////////////////////
 
   // Implement the shift register of the UART RX to receive a byte of data.
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk or negedge rst_n) begin
+      if (!rst_n) begin
+      rx_shft_reg <= 9'h1FF;
+      end 
+      else begin
       rx_shft_reg <=  (shift) ? {rx_stable, rx_shft_reg[8:1]}  :  // Begin shifting in the data 1-bit each, starting with LSB.
                       rx_shft_reg; // Otherwise, recirculate the current value in the register.
+      end
   end
 
   // Double flop the received bit to avoid meta-stability.
