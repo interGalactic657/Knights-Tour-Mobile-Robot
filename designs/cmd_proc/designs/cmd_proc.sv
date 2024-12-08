@@ -175,10 +175,12 @@ module cmd_proc(
   endgenerate
 
   // Compute the desired heading based on the command.
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk, negedge rst_n) begin
     // If the Knight is required to move, take the heading from the command, and if it is non-zero append 0xF
     // to form the desired heading else, it is zero.
-    if (move_cmd) begin
+    if (!rst_n)
+      desired_heading <= 12'h000; // Reset the flop.
+    else if (move_cmd) begin
       if (cmd[11:4] == 8'h00)
         desired_heading <= 12'h000;
       else
