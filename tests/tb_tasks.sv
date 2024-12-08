@@ -79,7 +79,7 @@ package tb_tasks;
 
       // Check that the Knight found the correct y position that it was placed on the board.
       @(negedge clk) begin
-        if (actual_yy !== target_yy[14:12]) begin
+        if (actual_yy[14:12] !== target_yy) begin
           $display("ERROR: y_offset should have been 0x%h but was 0x%h", target_yy, actual_yy);
           $stop(); 
         end
