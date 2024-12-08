@@ -167,6 +167,13 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                         f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                 )
                 subprocess.run(debug_command, shell=True, check=True)
+                
+                # Check the transcript for success or error
+                result = check_transcript(log_file)
+
+                if result == "success":
+                    print(f"{test_name}: YAHOO!! All tests passed.")
+                
 
             elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
