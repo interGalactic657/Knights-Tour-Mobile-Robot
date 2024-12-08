@@ -40,7 +40,6 @@ module RemoteComm(
   UART iUART(.clk(clk), .rst_n(rst_n), .trmt(trmt), .tx_data(byte_sent), .RX(RX), .clr_rx_rdy(1'b0), 
             .TX(TX), .rx_rdy(resp_rdy), .tx_done(tx_done), .rx_data(resp));
   
-
   // Store the low byte of the 16-bit command when snd_cmd is asserted.
   always_ff @(posedge clk, negedge rst_n) begin
       if (!rst_n)
