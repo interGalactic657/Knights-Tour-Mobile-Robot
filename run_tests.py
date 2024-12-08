@@ -9,6 +9,10 @@ parser.add_argument(
     help="Specify the testbench number to run (e.g., 1 for test_1). If not specified, runs all tests."
 )
 parser.add_argument(
+    "-r", "--range", type=int, nargs="?", default=None,
+    help="Specify the starting test number to run all tests from that number onwards."
+)
+parser.add_argument(
     "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
     help="Specify the mode to run the simulation: 'gui' or 'cmd'. Default is 'cmd'."
 )
@@ -135,40 +139,53 @@ def run_testbench(subdir, test_file, mode, debug_mode):
         signal_paths = find_signals(signals_to_use)
         add_wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
 
-        # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
-        if mode == "cmd":
-            # Base simulation command (common for all cases)
-            base_command = f"vsim -c -do \"vsim -wlf {wave_file} work.KnightsTour_tb;{add_wave_command}; run -all; log -flush /*; quit -f;\" > {log_file}"
+    # Command-line mode: Run simulation, check for failure, then switch to GUI if necessary
+    if mode == "cmd":
+        # Base simulation command (common for all cases)
+        base_command = (
+            f"vsim -c -do \"vsim -wlf {wave_file} work.KnightsTour_tb; {add_wave_command} run -all; "
+            f"log -flush /*; quit -f;\" > {log_file}"
+        )
 
-            if debug_mode == 0:
-                # Normal run: Do not save waveforms if the test passes
-                sim_command = f"{base_command} > {log_file}"
-                subprocess.run(sim_command, shell=True, check=True)
+        if debug_mode == 0:
+            # Normal run: Do not save waveforms if the test passes
+            sim_command = base_command
+            subprocess.run(sim_command, shell=True, check=True)
 
-                # Check the transcript for success or error
-                result = check_transcript(log_file)
+            # Check the transcript for success or error
+            result = check_transcript(log_file)
 
-                if result == "success":
-                    print(f"{test_name}: YAHOO!! All tests passed.")
-                elif result == "error":
-                    print(f"{test_name}: Test failed. Saving waveforms for later debug...")
-                    # Save waveforms in case of failure
-                    debug_command = (
-                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
-                    )
-                    subprocess.run(debug_command, shell=True, check=True)
-
-            elif debug_mode == 1:
-                # Always save waveforms, even if test passes or fails
-                print(f"{test_name}: Saving waveforms for later debug...")
+            if result == "success":
+                print(f"{test_name}: YAHOO!! All tests passed.")
+            elif result == "error":
+                print(f"{test_name}: Test failed. Saving waveforms for later debug...")
+                # Save waveforms in case of failure
                 debug_command = (
-                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
+                    f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                 )
                 subprocess.run(debug_command, shell=True, check=True)
 
-            elif debug_mode == 2:
+        elif debug_mode == 1:
+            # Same behavior as debug_mode 0 but always log to the file
+            print(f"{test_name}: Saving waveforms and logging to file...")
+            debug_command = (
+                f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                f"quit -f;\" > {log_file}"
+            )
+            subprocess.run(debug_command, shell=True, check=True)
+
+            # Check the transcript for success or error
+            result = check_transcript(log_file)
+
+            if result == "success":
+                print(f"{test_name}: YAHOO!! All tests passed.")
+            else:
+                print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
+
+
+        elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
                 print(f"{test_name}: Debugging in gui mode...")
                 subprocess.run(
@@ -188,7 +205,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             )
 
 
-# Run the specified test or all tests
+# Run the specified test(s) based on input arguments
 if args.number:
     for subdir, test_range in test_mapping.items():
         if args.number in test_range:
@@ -201,6 +218,20 @@ if args.number:
             for test_file in test_files:
                 run_testbench(subdir, test_file, args.mode, args.debug)
             break
+
+elif args.range:
+    for subdir, test_range in test_mapping.items():
+        if args.range in test_range:
+            subdir_path = os.path.join(test_dir, subdir)
+            test_files = [
+                file
+                for file in sorted(os.listdir(subdir_path))
+                if file.endswith(".sv") and int("".join(filter(str.isdigit, file))) >= args.range
+            ]
+            for test_file in test_files:
+                run_testbench(subdir, test_file, args.mode, args.debug)
+            break
+
 else:
     for subdir in ["simple", "move", "logic"]:
         subdir_path = os.path.join(test_dir, subdir)
