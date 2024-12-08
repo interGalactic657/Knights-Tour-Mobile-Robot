@@ -166,7 +166,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                         f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
                         f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                 )
-                subprocess.run(sim_command, shell=True, check=True)
+                subprocess.run(debug_command, shell=True, check=True)
 
             elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
