@@ -34,7 +34,6 @@ set_max_area 12000
 create_clock -name "clk" -period 3 -waveform {0 1.5} {clk}
 set_dont_touch_network [find port clk]
 set_clock_uncertainty 0.15 [get_clocks]
-set_dont_touch_network [find port]
 set_dont_touch_network [get_net iRST/rst_n]
 
 ##############################################
