@@ -77,17 +77,8 @@ module KnightsTour_tb();
     ////////////////////////////////////////////////////////////////
     // Test a couple moves of the KnightsTour starting at (2,0)  //
     //////////////////////////////////////////////////////////////
-    // Send a command to start the KnightsTour from (2,0) without giving the y position.
-    SendCmd(.cmd_to_send(16'h7020), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
-
-    // Wait till the Knight found out its position on the board.
-    ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h2), .actual_yy(iDUT.y_offset));
-
-    // Check that the Knight achieved the desired heading (should be facing south).
-    ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot));
-
-    // Check if Knight moved back to the starting location on the board.
-    ChkPos(.clk(clk), .target_xx(3'h2), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    // Send a command to start the KnightsTour from (2,0).
+    SendCmd(.cmd_to_send(16'h6020), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the solution for the KnightsTour is complete or times out.
     WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
@@ -108,16 +99,22 @@ module KnightsTour_tb();
     ChkPos(.clk(clk), .target_xx(3'h0), .target_yy(3'h1), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the second L-shape move is made.
-    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk));
+    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Check that the Knight is at (1,3) at the end of the second move.
     ChkPos(.clk(clk), .target_xx(3'h1), .target_yy(3'h3), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the third L-shape move is made.
-    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk));
+    WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Check that the Knight is at (3,4) at the end of the third move.
     ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h4), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+
+    // Wait till the KnightsTour has finished.
+    WaitTourDone(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+
+    // Check that a positive acknowledge is received from the DUT.
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
     // If we reached here, that means all test cases were successful.
 		$display("YAHOO!! All tests passed.");
