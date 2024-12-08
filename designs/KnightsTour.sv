@@ -1,4 +1,3 @@
-//`default_nettype none
 module KnightsTour(
   input logic clk, 
   input logic RST_n,						// 50MHz clock and asynch active low reset						// SPI input from A2D

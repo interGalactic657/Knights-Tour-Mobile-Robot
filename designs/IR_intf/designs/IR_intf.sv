@@ -1,4 +1,3 @@
-`default_nettype none
 module IR_intf(clk,rst_n,lftIR_n,cntrIR_n,rghtIR_n,IR_en,lftIR,rghtIR,cntrIR);
  
   parameter FAST_SIM = 1;		// used for speeding up simulations.  8X faster

@@ -1,5 +1,4 @@
 `timescale 1ns/1ps
-`default_nettype none
 package tb_tasks;
 
   localparam CAL_GYRO = 16'h2000;

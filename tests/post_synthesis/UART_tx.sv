@@ -1,4 +1,4 @@
-`default_nettype none
+`timescale 1ns/1ps
 //////////////////////////////////////////////////
 // UART_tx.sv                                  //
 // This design will infer a UART transmitter  //

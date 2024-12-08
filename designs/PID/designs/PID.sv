@@ -1,4 +1,3 @@
-`default_nettype none
 //////////////////////////////////////////////////////////////////
 // PID.sv                                                      //
 // Computes the PID control loop to correct system            //

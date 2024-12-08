@@ -1,4 +1,3 @@
-`default_nettype none
 ///////////////////////////////////////////////////
 // TourCmd.sv                                    //
 // This block will make “The Knight”             //

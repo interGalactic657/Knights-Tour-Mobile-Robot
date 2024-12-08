@@ -1,4 +1,3 @@
-`default_nettype none
 /////////////////////////////////////////////////////
 // PWM11.sv                                       //
 // This design will create a 11-bit pulse width  // 

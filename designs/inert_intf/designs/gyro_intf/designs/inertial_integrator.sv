@@ -1,4 +1,3 @@
-`default_nettype none
 module inertial_integrator(clk,rst_n,strt_cal,cal_done,vld,rdy,yaw_rt,
                            lftIR,rghtIR,heading,moving);
 						   

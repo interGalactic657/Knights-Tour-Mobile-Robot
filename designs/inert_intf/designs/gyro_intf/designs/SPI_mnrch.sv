@@ -1,4 +1,3 @@
-`default_nettype none
 //////////////////////////////////////////////////
 // SPI_mnrch.sv                                //
 // This design will infer a SPI transceiver   //

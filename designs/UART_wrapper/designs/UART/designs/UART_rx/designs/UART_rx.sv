@@ -1,4 +1,3 @@
-`default_nettype none
 //////////////////////////////////////////////////
 // UART_rx.sv                                  //
 // This design will infer a UART reciever     //

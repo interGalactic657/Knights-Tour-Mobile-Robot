@@ -1,4 +1,3 @@
-`default_nettype none
 //////////////////////////////////////////////////
 // UART_tx.sv                                  //
 // This design will infer a UART transmitter  //

@@ -1,4 +1,3 @@
-`default_nettype none
 module UART(clk,rst_n,RX,TX,rx_rdy,clr_rx_rdy,rx_data,trmt,tx_data,tx_done);
 
 input clk,rst_n;		// clock and active low reset

@@ -1,4 +1,3 @@
-`default_nettype none
 ///////////////////////////////////////////////////
 // cmd_proc.sv                                   //
 // This is the command processing unit of        //
