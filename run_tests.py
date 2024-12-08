@@ -8,9 +8,8 @@ parser.add_argument(
     "-n", "--number", type=int, nargs="?", default=None,
     help="Specify the testbench number to run (e.g., 1 for test_1). If not specified, runs all tests."
 )
-parser.add_argument(
-    "-r", "--range", type=int, nargs="?", default=None,
-    help="Specify the starting test number to run all tests from that number onwards."
+parser.add_argument('-r', '--range', type=int, nargs=2, metavar=('START', 'END'), 
+                    help='Test range to run (inclusive, e.g., -r 2 10)'
 )
 parser.add_argument(
     "-m", "--mode", type=str, choices=["gui", "cmd"], default="cmd",
@@ -220,17 +219,23 @@ if args.number:
             break
 
 elif args.range:
-    for subdir, test_range in test_mapping.items():
-        if args.range in test_range:
+        # Extract the start and end of the range
+        start_range, end_range = args.range
+
+        # Loop through the subdirectories and test the files within the range
+        for subdir, test_range in test_mapping.items():
             subdir_path = os.path.join(test_dir, subdir)
+            # Get all the test files within the directory
             test_files = [
                 file
                 for file in sorted(os.listdir(subdir_path))
-                if file.endswith(".sv") and int("".join(filter(str.isdigit, file))) >= args.range
+                if file.endswith(".sv")
+                and int("".join(filter(str.isdigit, file))) >= start_range
+                and int("".join(filter(str.isdigit, file))) <= end_range
             ]
+            
             for test_file in test_files:
                 run_testbench(subdir, test_file, args.mode, args.debug)
-            break
 
 else:
     for subdir in ["simple", "move", "logic"]:
