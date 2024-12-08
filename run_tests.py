@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 import argparse
 
 # Parse command-line arguments
@@ -173,32 +174,33 @@ def run_testbench(subdir, test_file, mode, debug_mode):
 
             if result == "success":
                 print(f"{test_name}: YAHOO!! All tests passed.")
+            # Your existing conditions
             elif result == "error":
                 print(f"{test_name}: Test failed. Saving waveforms for later debug...")
                 # Save waveforms in case of failure
                 debug_command = (
                     f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /* > output/transcript/{test_name}.log; quit -f;\""
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /* quit -f;\""
                 )
                 subprocess.run(debug_command, shell=True, check=True)
 
         elif debug_mode == 1:
-            # Same behavior as debug_mode 0 but always log to the file
-            print(f"{test_name}: Saving waveforms and logging to file...")
-            debug_command = (
-                f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                f"log -flush /* > output/transcript/{test_name}.log; quit -f;\""
-            )
-            subprocess.run(debug_command, shell=True, check=True)
+                # Same behavior as debug_mode 0 but always log to the file
+                print(f"{test_name}: Saving waveforms and logging to file...")
+                debug_command = (
+                    f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                    f"log -flush /* quit -f;\""
+                )
+                subprocess.run(debug_command, shell=True, check=True)
 
-            # Check the transcript for success or error
-            result = check_transcript(log_file)
+                # Check the transcript for success or error
+                result = check_transcript(log_file)
 
-            if result == "success":
-                print(f"{test_name}: YAHOO!! All tests passed.")
-            else:
-                print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
+                if result == "success":
+                    print(f"{test_name}: YAHOO!! All tests passed.")
+                else:
+                    print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
 
         elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
@@ -206,18 +208,30 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 debug_command = (
                     f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
                     f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                    f"log -flush /* > output/transcript/{test_name}.log;\""
+                    f"log -flush /*;\""
                 )
                 subprocess.run(debug_command, shell=True, check=True)
-        else:
+
+    else:
             # GUI mode: Ask for custom signals, or add defaults
             print(f"{test_name}: Running tests in GUI mode...")
             debug_command = (
-                f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                f"log -flush /* > output/transcript/{test_name}.log;\""
+                    f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                    f"log -flush /*;\""
             )
             subprocess.run(debug_command, shell=True, check=True)
+
+    # After simulation finishes, move the transcript file to the output directory and rename it.
+    transcript_file = "transcript"  # ModelSim default transcript file name
+
+    if os.path.exists(transcript_file):
+            # Move the transcript file to the output directory and rename it
+            new_log_file = os.path.join(transcript_dir, f"{test_name}.log")
+            shutil.move(transcript_file, new_log_file)
+            print(f"{test_name}: Transcript saved to {new_log_file}")
+    else:
+            print(f"{test_name}: No transcript file found.")
 
 # Run the specified test(s) based on input arguments
 if args.number:
