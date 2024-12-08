@@ -171,11 +171,12 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
                 print(f"{test_name}: Debugging in gui mode...")
-                sim_command = (
-                    f"{base_command} -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\""
+                subprocess.run(
+                    f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
+                    shell=True,
+                    check=True,
                 )
-                subprocess.run(sim_command, shell=True, check=True)
         else:
             # GUI mode: Ask for custom signals, or add defaults
             print(f"{test_name}: Running GUI mode...")
