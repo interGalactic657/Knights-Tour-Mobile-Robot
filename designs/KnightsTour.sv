@@ -1,6 +1,7 @@
-`default_nettype none
+//`default_nettype none
 module KnightsTour(
-  input logic clk, RST_n,						// 50MHz clock and asynch active low reset						// SPI input from A2D
+  input logic clk, 
+  input logic RST_n,						// 50MHz clock and asynch active low reset						// SPI input from A2D
   output logic SS_n,SCLK,MOSI,	            // outputs of SPI to inertial interface
   input logic MISO,						    // SPI input from gyro
   input logic INT,						    // interrupt signals from gyro (new readings ready)
