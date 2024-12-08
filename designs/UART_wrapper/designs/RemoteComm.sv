@@ -4,6 +4,7 @@
 // recieved and sends it as two            //
 // 8-bit bytes over UART.                 //
 ///////////////////////////////////////////
+`timescale 1ns/1ps
 module RemoteComm(
   input logic clk,   // 50MHz system clock.
   input logic rst_n, // Asynchronous active low reset.
@@ -42,8 +43,10 @@ module RemoteComm(
   
 
   // Store the low byte of the 16-bit command when snd_cmd is asserted.
-  always_ff @(posedge clk) begin
-      if (snd_cmd)
+  always_ff @(posedge clk or negedge rst_n) begin
+      if(!rst_n)
+        low_byte <= 8'h00; // Reset the low byte to 0 when the system is reset.
+      else if (snd_cmd)
         low_byte <= cmd[7:0];
   end
 
