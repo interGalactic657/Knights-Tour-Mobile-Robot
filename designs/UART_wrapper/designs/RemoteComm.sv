@@ -1,4 +1,3 @@
-`timescale 1ns/1ps
 ////////////////////////////////////////////////
 // RemoteComm.sv                             //
 // This design unwraps a 16-bit command     //
