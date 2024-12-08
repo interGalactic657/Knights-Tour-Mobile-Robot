@@ -72,14 +72,14 @@ package tb_tasks;
   endtask
 
   // Task to wait till the y offset of the Knight is found and validates the position.
-  task automatic ChkOffset(ref tour_go, ref clk, input [2:0] target_yy, ref [14:0] actual_yy);
+  task automatic ChkOffset(ref tour_go, ref clk, input [2:0] target_yy, ref [2:0] actual_yy);
     begin
       // Wait till the calibration of the Y offset is complete (worst case takes 30000000 clocks).
       TimeoutTask(.sig(tour_go), .clk(clk), .clks2wait(30000000), .signal("tour_go"));
 
       // Check that the Knight found the correct y position that it was placed on the board.
       @(negedge clk) begin
-        if (actual_yy[14:12] !== target_yy) begin
+        if (actual_yy !== target_yy) begin
           $display("ERROR: y_offset should have been 0x%h but was 0x%h", target_yy, actual_yy);
           $stop(); 
         end

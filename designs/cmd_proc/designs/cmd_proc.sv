@@ -228,8 +228,10 @@ module cmd_proc(
   endgenerate
 
   // Compute the desired heading based on the command.
-  always_ff @(posedge clk) begin
-    if (opcode == CALY) begin // We only care about the below condition if the opcode is CALY.
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n)
+      desired_heading <= 12'h000; // Reset the flop.
+    else if (opcode == CALY) begin // We only care about the below condition if the opcode is CALY.
       if (calibrate_y)
           desired_heading <= 12'h000; // We always move north to calibrate the y-position.
       else if (reverse_heading)
