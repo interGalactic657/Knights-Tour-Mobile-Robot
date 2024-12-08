@@ -79,6 +79,7 @@ def convert_to_hex_path():
             hex_path.append(moves[move])  # Add the corresponding hex value (as integer)
         else:
             print(f"Invalid move from {(prev_x, prev_y)} to {(curr_x, curr_y)}")
+            hex_path.append(0)  # Append 0 for invalid moves (or handle as needed)
     return hex_path
 
 
