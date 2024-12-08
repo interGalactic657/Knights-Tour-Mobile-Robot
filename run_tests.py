@@ -24,12 +24,14 @@ parser.add_argument(
     "-s", "--signals", type=str, nargs="*", default=None,
     help="List of custom signals to add to the waveform (e.g., clk RST_n iPHYS/xx). If not provided, default signals are used."
 )
+parser.add_argument("-ps", "--post_synthesis", action="store_true", help="Run post-synthesis simulation tasks.")
 args = parser.parse_args()
 
 # Directories
 root_dir = os.path.abspath(os.path.dirname(__file__))  # Top-level directory (current directory)
 design_dir = os.path.join(root_dir, "designs")  # Design files directory
 test_dir = os.path.join(root_dir, "tests")  # Test files directory
+post_synthesis_dir = os.path.join(root_dir, "tests", "post_synthesis")  # Directory for post synthesis tests
 output_dir = os.path.join(root_dir, "output")  # Output directory for logs and results
 transcript_dir = os.path.join(output_dir, "transcript")  # Subdirectory for log files
 waves_dir = os.path.join(output_dir, "waves")  # Subdirectory for waveform files
@@ -120,7 +122,22 @@ def run_testbench(subdir, test_file, mode, debug_mode):
     wave_file = os.path.join(waves_dir, f"{test_name}.wlf")
     wave_format_file = os.path.join(waves_dir, f"{test_name}.do")
 
-    subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
+    if args.post_synthesis:
+        # Change working directory to post_synthesis directory.
+        os.chdir(post_synthesis_dir)
+
+        sim_command = f"vsim -c -do 'project open {os.path.expanduser('~/PostSynthesis.mpf')}; " \
+                      f"project compileall; vsim -gui work.KnightsTour_tb -t ns -L {os.path.expanduser('~/ece551/SAED32_lib')} " \
+                      f"-Lf {os.path.expanduser('~/ece551/SAED32_lib')} -voptargs=+acc'"
+
+        # Run post-synthesis specific steps
+        subprocess.run(
+            sim_command,
+            shell=True,
+            check=True
+        )
+    else:
+        subprocess.run(f"vlog +acc {test_path}", shell=True, check=True)
 
     if debug_mode == 3:
         # Change working directory to /output/waves for debugging
@@ -162,7 +179,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 # Save waveforms in case of failure
                 debug_command = (
                     f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush {log_file}; quit -f;\""
                 )
                 subprocess.run(debug_command, shell=True, check=True)
 
@@ -172,7 +189,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             debug_command = (
                 f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
                 f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                f"quit -f;\" > {log_file}"
+                f"log -flush {log_file}; quit -f;\""
             )
             subprocess.run(debug_command, shell=True, check=True)
 
@@ -184,26 +201,24 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             else:
                 print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
 
-
         elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
-                print(f"{test_name}: Debugging in gui mode...")
-                subprocess.run(
+                print(f"{test_name}: Debugging in GUI mode...")
+                debug_command = (
                     f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                    shell=True,
-                    check=True,
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                    f"log -flush {log_file};\""
                 )
+                subprocess.run(debug_command, shell=True, check=True)
         else:
             # GUI mode: Ask for custom signals, or add defaults
-            print(f"{test_name}: Running GUI mode...")
-            subprocess.run(
-                f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*;\"",
-                shell=True,
-                check=True,
+            print(f"{test_name}: Running tests in GUI mode...")
+            debug_command = (
+                    f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
+                    f"log -flush {log_file};\""
             )
-
+            subprocess.run(debug_command, shell=True, check=True)
 
 # Run the specified test(s) based on input arguments
 if args.number:
@@ -220,18 +235,25 @@ if args.number:
             break
 
 elif args.range:
-    for subdir, test_range in test_mapping.items():
-        if args.range in test_range:
+        # Extract the start and end of the range
+        start_range, end_range = args.range
+
+        # Loop through the subdirectories and test the files within the range
+        for subdir, test_range in test_mapping.items():
             subdir_path = os.path.join(test_dir, subdir)
+            # Get all the test files within the directory
             test_files = [
                 file
                 for file in sorted(os.listdir(subdir_path))
-                if file.endswith(".sv") and int("".join(filter(str.isdigit, file))) >= args.range
+                if file.endswith(".sv")
+                and int("".join(filter(str.isdigit, file))) >= start_range
+                and int("".join(filter(str.isdigit, file))) <= end_range
             ]
+            
             for test_file in test_files:
                 run_testbench(subdir, test_file, args.mode, args.debug)
-            break
-
+elif args.post_synthesis:
+    run_testbench("post_synthesis", "KnightsTour_tb_0.sv", args.mode, args.debug)
 else:
     for subdir in ["simple", "move", "logic"]:
         subdir_path = os.path.join(test_dir, subdir)
