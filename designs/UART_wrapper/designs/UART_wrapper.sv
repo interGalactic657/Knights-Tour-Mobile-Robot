@@ -43,10 +43,11 @@ module UART_wrapper(
             .TX(TX), .rx_rdy(byte_rdy), .tx_done(tx_done), .rx_data(rx_data));
 
   // Stores the high byte of the command.
-  always_ff @(posedge clk) begin
-      // Stores the high byte as received on the rx line otherwise, 
-      // recirculates current value.
-      high_byte <= (capture_high) ? rx_data : high_byte;  
+  always_ff @(posedge clk, negedge rst_n) begin
+      if (!rst_n)
+        high_byte <= 8'h00;
+      else if (capture_high)
+        high_byte <= rx_data; // Stores the high byte as received on the rx line.
   end
 
   // Package the command into high and low bytes as received into a 16-bit command.
