@@ -58,10 +58,12 @@ module cmd_proc(
   ///////////////////////// Square Count Logic ////////////////////////////////////////////
   logic [4:0] pulse_cnt;               // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
   logic [3:0] square_cnt;              // The number of squares the Knight moved on the board.
+  logic pulse_detected;                // Indicates a rising edge on cntrIR.
   logic move_done;                     // Indicates that a move is completed by the Knight.
   logic cntrIR_prev;                   // Previous cntrIR signal from the IR sensor.
   //////////////////////// Y-Calibration Logic ////////////////////////////////////////////
   logic [3:0] y_pos;                   // Indicates the current y-position of the Knight from the start of the board.
+  logic [2:0] difference;              // Computes the difference between the top and current y position on the board.
   logic square_done;                   // Indicates that one single square has been moved by the Knight
   logic off_board;
   logic came_back;                     // Indicates that the Knight returned to the original position after calibration.
@@ -203,8 +205,11 @@ module cmd_proc(
       came_back <= 1'b1; // We assert that we came back to the starting position.
   end
 
-  // Concatenate the incoming command with the correct offset after calibration.
-  assign y_offset = (opcode == CALY) ? (4'h5 - square_cnt) : cmd[2:0]; 
+  // Computes the difference between the top of the board and the offset position.
+  assign difference = 4'h5 - square_cnt;
+  
+  // Calibrated y_offset to use for computing the solution to KnightsTour.
+  assign y_offset = (opcode == CALY) ? difference[2:0] : cmd[2:0]; 
   /////////////////////////////////////////////////////////////////////////////////
 
   /////////////////////////////////////////////////////////////////////////
