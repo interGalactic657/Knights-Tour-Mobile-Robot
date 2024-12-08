@@ -38,7 +38,8 @@ module UART_rx(
   // Implement the shift register of the UART RX to receive a byte of data.
   always_ff @(posedge clk) begin
       if(!rst_n)
-        rx_shft_reg <= 9'h1FF; // Reset the register to all ones, indicating line is IDLE.
+        // Reset the register to all zeros, indicating line is IDLE.
+        rx_shft_reg <= 9'h0;
       else // Begin shifting in the data 1-bit each, starting with LSB.
         rx_shft_reg <= (shift) ? {rx_stable, rx_shft_reg[8:1]} : rx_shft_reg; // Otherwise, recirculate the current value in the register.
   end
