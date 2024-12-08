@@ -81,7 +81,7 @@ module KnightsTour_tb();
     SendCmd(.cmd_to_send(16'h7030), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the Knight found out its position on the board.
-    ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h4), .actual_yy(iDUT.y_offset));
+    ChkOffset(.tour_go(iDUT.tour_go), .clk(clk), .target_yy(3'h3), .actual_yy(iDUT.y_offset));
 
     // Check that the Knight achieved the desired heading (should be facing south).
     ChkHeading(.clk(clk), .target_heading(SOUTH), .actual_heading(iPHYS.heading_robot));

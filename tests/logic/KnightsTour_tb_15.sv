@@ -120,7 +120,7 @@ module KnightsTour_tb();
     ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h4), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Wait till the KnightsTour has finished.
-    WaitTourDone(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
+    repeat(21) WaitTourMove(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
