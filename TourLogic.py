@@ -99,7 +99,7 @@ def convert_to_hex_path():
     return hex_path
 
 
-def write_solution_to_file(hex_path, filename="solution_output"):
+def write_solution_to_file(hex_path, filename="hex_solution_output.txt"):
     """
     Writes the solution path (in hex) to a file in the format:
     @00 01
@@ -114,6 +114,17 @@ def write_solution_to_file(hex_path, filename="solution_output"):
             else:
                 file.write(f"@{i:02X} {hex_value:02X}")
 
+def write_solution_to_file(path, filename="solution_output.txt"):
+    """
+    Writes the solution path (in coordinates) to a file in the format:
+    (x, y)
+    
+    :param path: List of coordinates corresponding to the knight's moves.
+    :param filename: Name of the output file (default is "solution_output.txt").
+    """
+    with open(filename, 'w') as file:
+        for (x, y) in path:
+            file.write(f"({x}, {y})\n")
 
 def main():
     # Parse command line arguments
@@ -127,7 +138,8 @@ def main():
 
     if compute_solution((x_start, y_start)):
         print("Solution found!")
-        print("Path taken (in coordinates) from (" + str(x_start) + ", " + str(y_start) +  "):", solution_path[1:])  # Print the solution path in coordinates
+        write_solution_to_file(solution_path[1:], filename="solution_output.txt")
+        print("Path written to solution_output.txt.")
         # Write the hex path to a file
         write_solution_to_file(convert_to_hex_path())
     else:
