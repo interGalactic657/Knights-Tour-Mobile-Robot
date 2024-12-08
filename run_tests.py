@@ -153,36 +153,21 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 elif result == "error":
                     print(f"{test_name}: Test failed. Saving waveforms for later debug...")
                     # Save waveforms in case of failure
-                    # Run the vsim command in the background
                     debug_command = (
                         f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /* quit -f;\""
+                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                     )
-
-                    subprocess.Popen(
-                        debug_command,
-                        shell=True,
-                        stdout=subprocess.DEVNULL,  # Suppress standard output
-                        stderr=subprocess.DEVNULL,  # Suppress error output
-                    )
+                    subprocess.run(debug_command, shell=True, check=True)
 
             elif debug_mode == 1:
                 # Always save waveforms, even if test passes or fails
                 print(f"{test_name}: Saving waveforms for later debug...")
-                import subprocess
-
-                # Run the vsim command in the background
                 debug_command = (
-                    f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
-                    f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /* quit -f;\""
+                        f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
+                        f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; log -flush /*; quit -f;\""
                 )
+                subprocess.run(debug_command, shell=True, check=True)
 
-                subprocess.Popen(
-                    debug_command,
-                    shell=True,
-                    stdout=subprocess.DEVNULL,  # Suppress standard output
-                    stderr=subprocess.DEVNULL,  # Suppress error output
-                )
             elif debug_mode == 2:
                 # Always save waveforms, for debugging purposes, regardless of test result.
                 print(f"{test_name}: Debugging in gui mode...")
