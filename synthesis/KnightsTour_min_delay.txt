@@ -7,7 +7,7 @@ Report : timing
         -max_paths 1
 Design : KnightsTour
 Version: V-2023.12-SP5
-Date   : Sat Dec  7 20:33:06 2024
+Date   : Sun Dec  8 11:14:23 2024
 ****************************************
 
 Operating Conditions: tt0p85v25c   Library: saed32lvt_tt0p85v25c
@@ -30,8 +30,8 @@ Wire Load Model Mode: enclosed
   clock network delay (ideal)                             0.00       0.00
   iNEMO/iINT/state_reg[1]/CLK (DFFARX1_LVT)               0.00       0.00 r
   iNEMO/iINT/state_reg[1]/QN (DFFARX1_LVT)                0.06       0.06 f
-  U2901/Y (NAND3X0_LVT)                                   0.04       0.10 r
-  U2227/Y (NAND2X0_LVT)                                   0.02       0.12 f
+  U2904/Y (NAND3X0_LVT)                                   0.04       0.10 r
+  U2230/Y (NAND2X0_LVT)                                   0.02       0.12 f
   iNEMO/iINT/state_reg[0]/D (DFFARX1_LVT)                 0.01       0.13 f
   data arrival time                                                  0.13
 
