@@ -188,7 +188,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             debug_command = (
                 f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
                 f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                f"log -flush all output/transcript/{test_name}.log; quit -f;\""
+                f"log -flush output/transcript/{test_name}.log; quit -f;\""
             )
             subprocess.run(debug_command, shell=True, check=True)
 
@@ -206,7 +206,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
                 debug_command = (
                     f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
                     f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                    f"log -flush all output/transcript/{test_name}.log;\""
+                    f"log -flush output/transcript/{test_name}.log;\""
                 )
                 subprocess.run(debug_command, shell=True, check=True)
         else:
@@ -215,7 +215,7 @@ def run_testbench(subdir, test_file, mode, debug_mode):
             debug_command = (
                 f"vsim -wlf {wave_file} work.KnightsTour_tb -voptargs=\"+acc\" -do \"{add_wave_command} run -all; "
                 f"write format wave -window .main_pane.wave.interior.cs.body.pw.wf {wave_format_file}; "
-                f"log -flush all output/transcript/{test_name}.log;\""
+                f"log -flush output/transcript/{test_name}.log;\""
             )
             subprocess.run(debug_command, shell=True, check=True)
 
