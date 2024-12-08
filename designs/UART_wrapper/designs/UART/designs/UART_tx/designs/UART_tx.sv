@@ -47,14 +47,14 @@ module UART_tx(
   // shifting out next bit, i.e. the baud rate of the UART.
   always_ff @(posedge clk) begin
       baud_cnt <=  (init | shift) ? 12'h000      : // Whenever init or shift is asserted, clear the register.
-                   (transmitting) ? baud_cnt + 1 : // Continue incrementing the count when we are transmitting data.
+                   (transmitting) ? baud_cnt + 1'b1 : // Continue incrementing the count when we are transmitting data.
                    baud_cnt; // Otherwise hold the current baud count.
   end
   
   // Implement counter to count number of bits shifted out on the TX line.
   always_ff @(posedge clk) begin
       bit_cnt <=  (init)  ? 4'h0         : // Reset to 0 initially.
-                  (shift) ? bit_cnt + 1  : // Increment the bit count whenever we shift a bit.
+                  (shift) ? bit_cnt + 1'b1  : // Increment the bit count whenever we shift a bit.
                   bit_cnt; // Otherwise hold current value.
   end
 

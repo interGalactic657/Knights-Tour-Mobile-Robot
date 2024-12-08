@@ -57,6 +57,7 @@ module cmd_proc(
   ///////////////////////// Square Count Logic ///////////////////////////////////////////
   logic [4:0] pulse_cnt;               // Indicates number of times cntrIR went high when moving the Knight, max 16 times.
   logic [3:0] square_cnt;              // The number of squares the Knight moved on the board.
+  logic pulse_detected;                // Indicates a rising edge on cntrIR.
   logic move_done;                     // Indicates that a move is completed by the Knight.
   logic cntrIR_prev;                   // Previous cntrIR signal from the IR sensor.
   ////////////////////////////// PID Interface Logic ////////////////////////////////////

@@ -27,7 +27,7 @@ module IR_intf(clk,rst_n,lftIR_n,cntrIR_n,rghtIR_n,IR_en,lftIR,rghtIR,cntrIR);
     if (!rst_n)
 	  smpl_tmr <= 17'h00000;
 	else
-	  smpl_tmr <= smpl_tmr + 1;
+	  smpl_tmr <= smpl_tmr + 1'b1;
 	
   generate if (FAST_SIM) begin
     assign IR_on = (smpl_tmr[13:10]==4'h0) ? 1'b1 : 1'b0;
@@ -84,7 +84,7 @@ module IR_intf(clk,rst_n,lftIR_n,cntrIR_n,rghtIR_n,IR_en,lftIR,rghtIR,cntrIR);
 	  else if (cntr_rise)
 	    blanking_timer <= 23'h000000;
 	  else if (!blankover)
-	    blanking_timer <= blanking_timer + 1;
+	    blanking_timer <= blanking_timer + 1'b1;
 	 
   //////////////////////////////////////
   // Infer flops that sample cntr IR //
@@ -142,7 +142,7 @@ module IR_intf(clk,rst_n,lftIR_n,cntrIR_n,rghtIR_n,IR_en,lftIR,rghtIR,cntrIR);
     if (!rst_n)
 	  cnt <= 3'h0;
 	else
-	  cnt <= cnt + 1;
+	  cnt <= cnt + 1'b1;
 	  
   assign set = ~|cnt;		// set at zero, but reset has priority
   assign reset = (cnt>=duty) ? 1'b1 : 1'b0;

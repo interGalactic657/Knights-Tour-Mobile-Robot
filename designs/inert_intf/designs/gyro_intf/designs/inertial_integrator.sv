@@ -132,7 +132,7 @@ output signed [11:0] heading;
 	else if (clr_smpl_cntr)
 	  smpl_cntr <= 0;
 	else if (en_smpl_cntr)
-	  smpl_cntr <= smpl_cntr + 1;
+	  smpl_cntr <= smpl_cntr + 1'b1;
 	  
   generate if (FAST_SIM)
     assign enough_smpls = (smpl_cntr==12'h008) ? 1'b1 : 1'b0;
