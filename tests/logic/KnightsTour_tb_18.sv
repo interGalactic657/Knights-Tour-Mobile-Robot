@@ -41,11 +41,11 @@ module KnightsTour_tb();
   //////////////////////////////////////////////////////
   // Instantiate model of Knight Physics (and board) //
   ////////////////////////////////////////////////////
-  KnightPhysics iPHYS(.clk(clk),.RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
+  KnightPhysics #(15'h1800, 15'h1800) iPHYS(.clk(clk),.RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
                       .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
 					  .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
 					  .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n)); 
-
+	
   // Task to initialize the testbench.
   task automatic Setup();
     begin
@@ -71,34 +71,28 @@ module KnightsTour_tb();
     // Initialize the testbench //
     /////////////////////////////
     Setup();
+    
+    ////////////////////////////////////////////////////////////////
+    // Test a couple moves of the KnightsTour starting at (1,1)  //
+    //////////////////////////////////////////////////////////////
+    // Send a command to start the KnightsTour from (1,1).
+    SendCmd(.cmd_to_send(16'h6033), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
-    /////////////////////////////////////////////////
-    // Test moving east by one square from center //
-    ///////////////////////////////////////////////
-    // Send a command to move the Knight east by one square.
-    SendCmd(.cmd_to_send(16'h4BF1), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    // Wait till the solution for the KnightsTour is complete or times out.
+    WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
 
-    // Wait for the Knight to begin moving before checking heading
-    WaitMoving(.clk(clk), .velocity_sum(iPHYS.omega_sum));
+    // Wait till the KnightsTour has finished.
+    WaitTourDone(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
-    // Check that the Knight achieved the desired heading
-    ChkHeading(.clk(clk), .target_heading(EAST), .actual_heading(iPHYS.heading_robot));
-
-    // Wait till the move is complete and check that send_resp is asserted.
-    WaitForMove(.send_resp(iDUT.send_resp), .clk(clk));
-
-    // Check that a movement acknowledge is received from the DUT.
+    // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
-
-    // Check if Knight moved to desired position on board.
-    ChkPos(.clk(clk), .target_xx(3'h3), .target_yy(3'h2), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
 
     // If we reached here, that means all test cases were successful.
 		$display("YAHOO!! All tests passed.");
 		$stop();
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
   end
-  
+
   // Checks that we are never off the board.
   always @(negedge clk)
     ChkOffBoard(.clk(clk), .RST_n(RST_n), .frwrd(iDUT.iCMD.frwrd), .cntrIR(iDUT.cntrIR));
@@ -107,5 +101,3 @@ module KnightsTour_tb();
     #5 clk = ~clk;
   
 endmodule
-
-

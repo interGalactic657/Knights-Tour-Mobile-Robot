@@ -1,8 +1,6 @@
 module KnightsTour_tb();
 
   import tb_tasks::*;
-
-  localparam FAST_SIM = 1;
   
   ///////////////////////////
   // Stimulus of type reg //
@@ -27,7 +25,7 @@ module KnightsTour_tb();
   //////////////////////
   // Instantiate DUT //
   ////////////////////
-  KnightsTour #(FAST_SIM) iDUT(.clk(clk), .RST_n(RST_n), .SS_n(SS_n), .SCLK(SCLK),
+  KnightsTour iDUT(.clk(clk), .RST_n(RST_n), .SS_n(SS_n), .SCLK(SCLK),
                    .MOSI(MOSI), .MISO(MISO), .INT(INT), .lftPWM1(lftPWM1),
 				   .lftPWM2(lftPWM2), .rghtPWM1(rghtPWM1), .rghtPWM2(rghtPWM2),
 				   .RX(TX_RX), .TX(RX_TX), .piezo(piezo), .piezo_n(piezo_n),
@@ -77,7 +75,7 @@ module KnightsTour_tb();
     ////////////////////////////////////////////////////////////////
     // Test a couple moves of the KnightsTour starting at (3,3)  //
     //////////////////////////////////////////////////////////////
-    // Send a command to start the KnightsTour from (3,3) without giving the y position.
+    // Send a command to start the KnightsTour from (3,3).
     SendCmd(.cmd_to_send(16'h6033), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the solution for the KnightsTour is complete or times out.
@@ -94,6 +92,10 @@ module KnightsTour_tb();
 		$stop();
     /////////////////////////////////////////////////////////////////////////////////////////////////
   end
+
+  // Checks that we are never off the board.
+  always @(negedge clk)
+    ChkOffBoard(.clk(clk), .RST_n(RST_n), .frwrd(iDUT.iCMD.frwrd), .cntrIR(iDUT.cntrIR));
   
   always
     #5 clk = ~clk;

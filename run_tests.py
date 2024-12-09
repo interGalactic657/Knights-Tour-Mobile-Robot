@@ -45,8 +45,8 @@ os.makedirs(library_dir, exist_ok=True)
 # Mapping test numbers to subdirectories and file ranges
 test_mapping = {
     "simple": range(1, 2),  # test_1
-    "move": range(2, 13),   # test_2 to test_12
-    "logic": range(13, 20)  # test_13 to test_19
+    "move": range(2, 15),   # test_2 to test_14
+    "logic": range(15, 19)  # test_15 to test_18
 }
 
 # Compile all design files (ignoring `tests/` subdirectories)
@@ -109,9 +109,9 @@ def check_transcript(log_file):
 # Default signals if user doesn't specify custom ones
 default_signals = [
     "clk", "RST_n", "iPHYS/xx", "iPHYS/yy", "heading", "heading_robot", "desired_heading", "omega_sum", 
-    "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "y_pos", "y_offset", 
-    "came_back", "off_board", "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "send_resp", "resp", "/KnightsTour_tb/resp_rdy",
-    "mv_indx", "move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
+    "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", 
+    "error_abs", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "send_resp", "resp", "/KnightsTour_tb/resp_rdy",
+    "mv_indx", "move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state", "iDUT/iCMD/tour_go", "fanfare_go", "iDUT/ISPNG/state"
 ]
 
 # Function to run a specific testbench
