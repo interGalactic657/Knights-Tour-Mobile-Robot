@@ -15,7 +15,7 @@ module KnightsTour(
   input logic rghtIR_n						// goes low if right IR encounters a rail
 );
  
-  parameter FAST_SIM = 0;
+  parameter FAST_SIM = 1;
 
   ////////////////////////
   // Internals signals //
