@@ -26,7 +26,7 @@ read_file -format sverilog { \
 ###################################
 set current_design KnightsTour
 link
-set_max_area 12000
+set_max_area 5000
 
 #####################################
 # Constrain and assign assign clock #
