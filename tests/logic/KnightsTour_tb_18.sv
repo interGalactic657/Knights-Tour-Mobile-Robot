@@ -76,7 +76,7 @@ module KnightsTour_tb();
     // Test a couple moves of the KnightsTour starting at (1,1)  //
     //////////////////////////////////////////////////////////////
     // Send a command to start the KnightsTour from (1,1).
-    SendCmd(.cmd_to_send(16'h6033), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    SendCmd(.cmd_to_send(16'h6011), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the solution for the KnightsTour is complete or times out.
     WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
