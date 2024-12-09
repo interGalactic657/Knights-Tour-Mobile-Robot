@@ -30,7 +30,11 @@ Wire Load Model Mode: enclosed
   clock network delay (ideal)                             0.00       0.00
   iTL/last_move_reg[0][4]/CLK (DFFX1_LVT)                 0.00       0.00 r
   iTL/last_move_reg[0][4]/Q (DFFX1_LVT)                   0.08       0.08 f
+<<<<<<< HEAD
   U3722/Y (AO22X2_LVT)                                    0.05       0.13 f
+=======
+  U3679/Y (AO22X2_LVT)                                    0.05       0.13 f
+>>>>>>> d1a064d7d84ad81d49ce1787e6fa3a8140c7f3e9
   iTL/last_move_reg[0][4]/D (DFFX1_LVT)                   0.01       0.14 f
   data arrival time                                                  0.14
 
