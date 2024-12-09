@@ -73,20 +73,11 @@ module KnightsTour_tb();
     repeat(1000000) @(posedge clk);
 
     // Check that a positive acknowledge is received from the DUT.
-    // ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
+    ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
-    // Check that a positive acknowledge is received from the DUT.
-    @(negedge clk) begin
-      if (!resp_rdy)
-        $display("ERROR: Expected a positive acknowledge from the DUT.");
-      else if (resp !== POS_ACK)
-        $display("ERROR: Expected a positive acknowledge of 0xA5 but received 0x%h", resp);
-      else
-      // If we reached here, that means all test cases were successful.
-		  $display("YAHOO!! All tests passed.");
-		  $stop();
-    end
-
+    // If we reached here, that means all test cases were successful.
+		$display("YAHOO!! All tests passed.");
+		$stop();
     /////////////////////////////////////////////////////////////////////////////////////////////////
   end
   
