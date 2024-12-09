@@ -41,7 +41,7 @@ module KnightsTour_tb();
   //////////////////////////////////////////////////////
   // Instantiate model of Knight Physics (and board) //
   ////////////////////////////////////////////////////
-  KnightPhysics #(15'h3800, 15'h3800) iPHYS(.clk(clk),.RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
+  KnightPhysics #(15'h1800, 15'h1800) iPHYS(.clk(clk),.RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
                       .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
 					  .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
 					  .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n)); 
@@ -73,9 +73,9 @@ module KnightsTour_tb();
     Setup();
     
     ////////////////////////////////////////////////////////////////
-    // Test a couple moves of the KnightsTour starting at (3,3)  //
+    // Test a couple moves of the KnightsTour starting at (1,1)  //
     //////////////////////////////////////////////////////////////
-    // Send a command to start the KnightsTour from (3,3).
+    // Send a command to start the KnightsTour from (1,1).
     SendCmd(.cmd_to_send(16'h6033), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the solution for the KnightsTour is complete or times out.
