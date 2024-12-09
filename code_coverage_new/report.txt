@@ -9,14 +9,14 @@ Coverage Report Summary Data by file
     Conditions                       2         2         0   100.00%
     Expressions                      6         6         0   100.00%
     Statements                      41        41         0   100.00%
-    Toggles                        122       108        14    88.52%
+    Toggles                        124       110        14    88.70%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/KnightsTour.sv
 =================================================================================
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
-    Toggles                        288       246        42    85.41%
+    Toggles                        288       269        19    93.40%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/MtrDrv/designs/MtrDrv.sv
@@ -52,10 +52,10 @@ Coverage Report Summary Data by file
 =================================================================================
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
-    Branches                        66        46        20    69.69%
-    Expressions                      4         3         1    75.00%
-    Statements                      77        54        23    70.12%
-    Toggles                        142        96        46    67.60%
+    Branches                        66        66         0   100.00%
+    Expressions                      4         4         0   100.00%
+    Statements                      79        79         0   100.00%
+    Toggles                        142       118        24    83.09%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/TourLogic/designs/TourLogic.sv
@@ -65,16 +65,16 @@ Coverage Report Summary Data by file
     Branches                        71        69         2    97.18%
     Expressions                      4         4         0   100.00%
     Statements                      92        90         2    97.82%
-    Toggles                        110       101         9    91.81%
+    Toggles                        110       110         0   100.00%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/UART_wrapper/designs/RemoteComm.sv
 =================================================================================
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
-    Branches                        19        19         0   100.00%
-    Statements                      22        22         0   100.00%
-    Toggles                        108        98        10    90.74%
+    Branches                        20        20         0   100.00%
+    Statements                      23        23         0   100.00%
+    Toggles                        108       100         8    92.59%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/UART_wrapper/designs/UART/designs/UART.sv
@@ -88,10 +88,10 @@ Coverage Report Summary Data by file
 =================================================================================
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
-    Branches                        29        29         0   100.00%
+    Branches                        25        25         0   100.00%
     Conditions                       1         1         0   100.00%
     Expressions                      1         1         0   100.00%
-    Statements                      32        32         0   100.00%
+    Statements                      35        35         0   100.00%
     Toggles                         84        84         0   100.00%
 
 =================================================================================
@@ -99,10 +99,10 @@ Coverage Report Summary Data by file
 =================================================================================
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
-    Branches                        26        26         0   100.00%
+    Branches                        22        22         0   100.00%
     Conditions                       3         3         0   100.00%
     Expressions                      1         1         0   100.00%
-    Statements                      25        25         0   100.00%
+    Statements                      28        28         0   100.00%
     Toggles                         66        66         0   100.00%
 
 =================================================================================
@@ -124,16 +124,16 @@ Coverage Report Summary Data by file
     Conditions                       3         3         0   100.00%
     Expressions                      4         4         0   100.00%
     Statements                      59        59         0   100.00%
-    Toggles                        206       159        47    77.18%
+    Toggles                        206       162        44    78.64%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/inert_intf/designs/gyro_intf/designs/SPI_mnrch.sv
 =================================================================================
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
-    Branches                        29        29         0   100.00%
+    Branches                        27        27         0   100.00%
     Expressions                      3         3         0   100.00%
-    Statements                      33        33         0   100.00%
+    Statements                      35        35         0   100.00%
     Toggles                        110       110         0   100.00%
 
 =================================================================================
@@ -154,7 +154,7 @@ Coverage Report Summary Data by file
     ----------------              ----      ----    ------  --------
     Branches                        27        27         0   100.00%
     Statements                      43        43         0   100.00%
-    Toggles                        202       188        14    93.06%
+    Toggles                        208       194        14    93.26%
 
 =================================================================================
 === File: /filespace/k/kmkraft2/ece551/Knights-Tour-Mobile-Robot/designs/reset_synch/designs/reset_synch.sv
@@ -176,5 +176,5 @@ Coverage Report Summary Data by file
     Toggles                        194       132        62    68.04%
 
 
-Total Coverage By File (code coverage only, filtered view): 92.33%
+Total Coverage By File (code coverage only, filtered view): 95.04%
 
