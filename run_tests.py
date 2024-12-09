@@ -46,7 +46,7 @@ os.makedirs(library_dir, exist_ok=True)
 test_mapping = {
     "simple": range(1, 2),  # test_1
     "move": range(2, 15),   # test_2 to test_14
-    "logic": range(15, 18)  # test_15 to test_17
+    "logic": range(15, 19)  # test_15 to test_18
 }
 
 # Compile all design files (ignoring `tests/` subdirectories)
