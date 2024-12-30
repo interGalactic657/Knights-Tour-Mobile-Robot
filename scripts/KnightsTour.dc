@@ -80,4 +80,4 @@ report_area > ../output/logs/transcript/reports/KnightsTour_area.txt
 # Write out resulting synthesized netlist and SDC file #
 ########################################################
 write -format verilog KnightsTour -output ../designs/post_synthesis/KnightsTour.vg
-write_sdc ../designs/post_synthesis/KnightsTour.sdc
+write_sdc ../scripts/KnightsTour.sdc
