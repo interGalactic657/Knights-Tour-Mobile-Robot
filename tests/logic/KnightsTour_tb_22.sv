@@ -41,7 +41,7 @@ module KnightsTour_tb();
   //////////////////////////////////////////////////////
   // Instantiate model of Knight Physics (and board) //
   ////////////////////////////////////////////////////
-  KnightPhysics #(15'h1800, 15'h1800) iPHYS(.clk(clk), .RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
+  KnightPhysics #(15'h0800, 15'h2800) iPHYS(.clk(clk), .RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
                 .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
                 .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
                 .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n));
@@ -73,16 +73,16 @@ module KnightsTour_tb();
     Setup();
 
     /////////////////////////////////////////////////////////
-    // Test the KnightsTour starting at coordinate (1,1)  //
+    // Test the KnightsTour starting at coordinate (0,2)  //
     ///////////////////////////////////////////////////////
-    // Send a command to start the KnightsTour from (1,1).
-    SendCmd(.cmd_to_send(16'h6011), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    // Send a command to start the KnightsTour from (0,2).
+    SendCmd(.cmd_to_send(16'h6002), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the solution is complete or times out.
     WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
 
-    // Indicate that the Knight's Tour is starting from (1,1).
-    $display("KnightsTour starting at coordinate: (1,1)");
+    // Indicate that the Knight's Tour is starting from (0,2).
+    $display("KnightsTour starting at coordinate: (0,2)");
 
     // Wait till the KnightsTour has finished.
     WaitTourDone(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));

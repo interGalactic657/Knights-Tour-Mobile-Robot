@@ -175,7 +175,7 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 			  lftIR_n = 1;
 
 		  end
-		default : if (omega_sum>17'h3c00) $display("PHYS ERR: not traveling orthogonal direction");
+		default : if (omega_sum>17'h3c00) $display("PHYS ERROR: not traveling orthogonal direction");
 	  endcase
 	end else begin     // if wheels are not moving forward don't assert lft/rght IR's
 	  lftIR_n = 1'b1;
@@ -189,6 +189,18 @@ module KnightPhysics(clk,RST_n,SS_n,SCLK,MISO,MOSI,INT,lftPWM1,lftPWM2,rghtPWM1,
 	else if (((yy[11:0]>12'h3E0) && (yy[11:0]<12'h460)) ||  ((yy[11:0]>12'hBA0) && (yy[11:0]<12'hC20)))
 	  cntrIR_n = 1'b0;
 	else if (yy > 15'h5000) begin // Modified board to have border, and all 3 IR signals will light up.
+	  lftIR_n = 0;
+	  cntrIR_n = 0;
+	  rghtIR_n = 0;
+	end else if (yy < 15'h0000) begin // Modified board to have border, and all 3 IR signals will light up.
+	  lftIR_n = 0;
+	  cntrIR_n = 0;
+	  rghtIR_n = 0;
+	end else if (xx > 15'h5000) begin // Modified board to have border, and all 3 IR signals will light up.
+	  lftIR_n = 0;
+	  cntrIR_n = 0;
+	  rghtIR_n = 0;
+	end else if (xx < 15'h0000) begin // Modified board to have border, and all 3 IR signals will light up.
 	  lftIR_n = 0;
 	  cntrIR_n = 0;
 	  rghtIR_n = 0;

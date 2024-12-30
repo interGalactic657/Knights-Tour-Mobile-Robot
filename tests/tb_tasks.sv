@@ -187,7 +187,7 @@ package tb_tasks;
           // Never crossed threshold.
           $display("ERROR: velocity sum is not crossing 0xC000 threshold\nvelocity sum: 0x%h", velocity_sum);
           $stop();
-        end
+        end : wait_moving
         begin : check_moving
           repeat(6000000) @(negedge clk) begin
             if (velocity_sum >= $signed(17'h0C000)) begin

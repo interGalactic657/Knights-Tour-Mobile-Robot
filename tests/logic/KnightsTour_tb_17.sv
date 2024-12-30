@@ -1,7 +1,7 @@
 module KnightsTour_tb();
 
   import tb_tasks::*;
-  
+
   ///////////////////////////
   // Stimulus of type reg //
   /////////////////////////
@@ -21,31 +21,31 @@ module KnightsTour_tb();
   wire IR_en;
   wire lftIR_n,rghtIR_n,cntrIR_n;
   wire piezo, piezo_n;
-  
+
   //////////////////////
   // Instantiate DUT //
   ////////////////////
   KnightsTour iDUT(.clk(clk), .RST_n(RST_n), .SS_n(SS_n), .SCLK(SCLK),
-                   .MOSI(MOSI), .MISO(MISO), .INT(INT), .lftPWM1(lftPWM1),
-				   .lftPWM2(lftPWM2), .rghtPWM1(rghtPWM1), .rghtPWM2(rghtPWM2),
-				   .RX(TX_RX), .TX(RX_TX), .piezo(piezo), .piezo_n(piezo_n),
-				   .IR_en(IR_en), .lftIR_n(lftIR_n), .rghtIR_n(rghtIR_n),
-				   .cntrIR_n(cntrIR_n));
-				  
+    .MOSI(MOSI), .MISO(MISO), .INT(INT), .lftPWM1(lftPWM1),
+    .lftPWM2(lftPWM2), .rghtPWM1(rghtPWM1), .rghtPWM2(rghtPWM2),
+    .RX(TX_RX), .TX(RX_TX), .piezo(piezo), .piezo_n(piezo_n),
+    .IR_en(IR_en), .lftIR_n(lftIR_n), .rghtIR_n(rghtIR_n),
+    .cntrIR_n(cntrIR_n));
+
   /////////////////////////////////////////////////////
   // Instantiate RemoteComm to send commands to DUT //
   ///////////////////////////////////////////////////
   RemoteComm iRMT(.clk(clk), .rst_n(RST_n), .RX(RX_TX), .TX(TX_RX), .cmd(cmd),
-             .snd_cmd(send_cmd), .cmd_snt(cmd_sent), .resp_rdy(resp_rdy), .resp(resp));
-				   
+                  .snd_cmd(send_cmd), .cmd_snt(cmd_sent), .resp_rdy(resp_rdy), .resp(resp));
+
   //////////////////////////////////////////////////////
   // Instantiate model of Knight Physics (and board) //
   ////////////////////////////////////////////////////
-  KnightPhysics #(15'h3800, 15'h3800) iPHYS(.clk(clk),.RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
-                      .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
-					  .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
-					  .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n)); 
-	
+  KnightPhysics #(15'h3800, 15'h3800) iPHYS(.clk(clk), .RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
+                .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
+                .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
+                .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n));
+
   // Task to initialize the testbench.
   task automatic Setup();
     begin
@@ -61,8 +61,8 @@ module KnightsTour_tb();
       // Check that a positive acknowledge is received from the DUT.
       ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
     end
-  endtask 
-	
+  endtask
+
   ///////////////////////////////////////////////////////////
   // Test procedure to apply stimulus and check responses //
   /////////////////////////////////////////////////////////
@@ -71,15 +71,18 @@ module KnightsTour_tb();
     // Initialize the testbench //
     /////////////////////////////
     Setup();
-    
-    ////////////////////////////////////////////////////////////////
-    // Test a couple moves of the KnightsTour starting at (3,3)  //
-    //////////////////////////////////////////////////////////////
+
+    /////////////////////////////////////////////////////////
+    // Test the KnightsTour starting at coordinate (3,3)  //
+    ///////////////////////////////////////////////////////
     // Send a command to start the KnightsTour from (3,3).
     SendCmd(.cmd_to_send(16'h6033), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
-    // Wait till the solution for the KnightsTour is complete or times out.
+    // Wait till the solution is complete or times out.
     WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
+
+    // Indicate that the Knight's Tour is starting from (3,3).
+    $display("KnightsTour starting at coordinate: (3,3)");
 
     // Wait till the KnightsTour has finished.
     WaitTourDone(.send_resp(iDUT.send_resp), .clk(clk), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy));
@@ -87,17 +90,15 @@ module KnightsTour_tb();
     // Check that a positive acknowledge is received from the DUT.
     ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
-    // If we reached here, that means all test cases were successful.
-		$display("YAHOO!! All tests passed.");
-		$stop();
-    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // If we reached here, that means the Knight successfully moved around the board.
+    $stop();
   end
 
   // Checks that we are never off the board.
   always @(negedge clk)
     ChkOffBoard(.clk(clk), .RST_n(RST_n), .frwrd(iDUT.iCMD.frwrd), .cntrIR(iDUT.cntrIR));
-  
+
   always
     #5 clk = ~clk;
-  
+
 endmodule
