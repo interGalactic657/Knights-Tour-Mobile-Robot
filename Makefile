@@ -317,8 +317,8 @@ collect:
 
 clean:
 	@echo "Cleaning up generated files..."
-	@rm -rf TESTS/         													 # Remove the TESTS directory.
-	@rm -rf output/        													 # Remove the output directory.
-	@rm -rf synthesis/     													 # Remove the synthesis directory.
-	@rm -rf ../KnightsTour 													 # Remove collected files.
+	@rm -rf TESTS/  	   # Remove the TESTS directory.
+	@rm -rf output/ 	   # Remove the output directory.
+	@rm -rf synthesis/     # Remove the synthesis directory.
+	@rm -rf ../KnightsTour # Remove collected files.
 	@echo "Cleanup complete."
