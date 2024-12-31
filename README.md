@@ -87,7 +87,7 @@ make run            # Run all tests in command line mode
 ### **Log Target**
 
 The `log` target displays specific logs:
-- **Synthesis logs**: Displays area/min/max delay reports post-synthesis.
+- **Synthesis logs**: Displays area or min/max delay reports post-synthesis.
 - **Compilation logs**: Displays logs for compilation of tests.
 - **Transcript logs**: Displays simulation results for the specified test.
 
