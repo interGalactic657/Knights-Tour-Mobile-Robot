@@ -86,12 +86,16 @@ make run            # Run all tests in command line mode
 
 ### **Log Target**
 
-The `log` target displays specific logs for a test:
-- **Compilation logs**: Displays logs for compilation-related errors.
+The `log` target displays specific logs:
+- **Synthesis logs**: Displays area/min/max delay reports post-synthesis.
+- **Compilation logs**: Displays logs for compilation of tests.
 - **Transcript logs**: Displays simulation results for the specified test.
 
 #### Example:
 ```bash
+make log s a        # Display the area report post synthesis
+make log s n        # Display the min delay report post synthesis
+make log s x        # Display the max delay report post synthesis
 make log c s        # Display the compilation log for synthesis
 make log c 3        # Display the compilation log for test 3
 make log t 3        # Display the transcript log for test 3
