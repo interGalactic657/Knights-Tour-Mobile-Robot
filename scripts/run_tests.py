@@ -76,46 +76,6 @@ def setup_directories():
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
 
-def find_signals(signal_names, test_num):
-    """Find full hierarchy paths for the given signal names in the simulation.
-
-    Args:
-        signal_names (list of str): List of signal names to find.
-        test_num (int): The test number (used to identify the test for signal searching).
-
-    Returns:
-        list of str: List of full signal hierarchy paths found in the simulation.
-    """
-    signal_paths = []
-
-    # Iterate through the provided signal names
-    for signal in signal_names:
-        if "/" in signal:
-            # If the signal already contains a path, append it directly
-            signal_paths.append(signal)
-        else:
-            try:
-                # Run the 'vsim' command to find signals in the given test
-                result = subprocess.run(
-                    f"vsim -c TEST_{test_num}.KnightsTour_tb -do 'find signals KnightsTour_tb/{signal}* -recursive; quit -f;'",
-                    shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
-                )
-
-                # Parse the output to find signals that match the requested signal name
-                found_signal = False
-                for part in result.stdout.split():
-                    # Ignore irrelevant parts or lines
-                    if part.startswith("#") or not part.strip():
-                        continue
-                    if "/" in part and part.strip().split("/")[-1] == signal and not found_signal:
-                        signal_paths.append(part.strip())
-                        found_signal = True
-
-            except subprocess.CalledProcessError as e:
-                print(f"Error finding signal '{signal}' in test {test_num}: {e.stderr}")
-    
-    return signal_paths
-
 def get_wave_command(test_num):
     """Generate the command for waveform signals based on the test number.
 
@@ -135,7 +95,7 @@ def get_wave_command(test_num):
     elif 2 <= test_num <= 14:
         key = (2, 14)
         default_signals = [
-            "clk", "RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
+            "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
             "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs",
             "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "iDUT/iTC/send_resp", "iRMT/resp",
             "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
@@ -143,23 +103,22 @@ def get_wave_command(test_num):
     else: # test_num >= 15
         key = (15, float('inf'))
         default_signals = [
-            "clk", "RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
+            "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
             "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs",
             "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "iDUT/iTC/send_resp", "iRMT/resp",
             "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state",
             "iDUT/iCMD/tour_go", "iDUT/iTL/done", "iDUT/fanfare_go", "iDUT/ISPNG/state"
         ]
 
-    # Check if the result for this range is cached
+    # Check if the result for this range is cached.
     if key in _wave_command_cache:
         wave_command = _wave_command_cache[key]
     else:
-        # Call the computationally intensive function once for the range
-        signal_paths = find_signals(default_signals, test_num)
-        wave_command = " ".join([f"add wave {signal};" for signal in signal_paths])
+        # Cache the wave command if it doesn't exist.
+        wave_command = " ".join([f"add wave {signal};" for signal in default_signals])
         _wave_command_cache[key] = wave_command
 
-    # Return the cached or newly generated waveform command
+    # Return the cached or newly generated waveform command.
     return wave_command
 
 def validate_solution(log_file):
@@ -421,6 +380,9 @@ def compile_files(test_num, test_path):
     # Provide feedback on the compilation result.
     if result == "warning":
         print(f"Compilation has warnings for {test_path}. Check the log file for details: {log_file}")
+    elif result == "error":
+        print(f"Compilation failed for {test_path}. Check the log file for details: {log_file}")
+        sys.exit(1)  # Exit the program if compilation fails.
 
 def get_gui_command(test_num, log_file, args):
     """
@@ -550,7 +512,7 @@ def view_waveforms(test_number):
         None: This function executes the simulation command to view waveforms.
     """
     # Change to the wave directory and view the saved waveforms
-    with open("./transcript", 'w') as transcript:
+    with open(f"./transcript_{test_number}", 'w') as transcript:
         os.chdir(WAVES_DIR)
         print(f"KnightsTour_tb_{test_number}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
