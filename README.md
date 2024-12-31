@@ -3,7 +3,7 @@
 
 ## **Overview**
 
-The **KnightsTour** project is a Verilog-based design intended for the KnightsTour problem, where a knight robot moves around a chessboard visiting all squares exactly once. This project includes testbenches (`KnightsTour_tb`) to verify the design, as well as Python-based scripts for simulation control, waveform viewing, log collection, and file management. The design can be synthesized to an Alterra Cyclone-IV FPGA for real-life simulation.
+The **KnightsTour** project is a SystemVerilog based design intended for the KnightsTour problem, where a knight robot moves around a chessboard visiting all squares exactly once. This project includes testbenches (`KnightsTour_tb`) to verify the design, as well as Python-based scripts for simulation control, waveform viewing, log collection, and file management. The design can be synthesized to an Alterra Cyclone-IV FPGA for real-life simulation.
 
 The project uses a Makefile to automate the testing, logging, and file management processes. This README provides an overview of the project's structure, setup, and usage.
 
@@ -14,7 +14,7 @@ The project uses a Makefile to automate the testing, logging, and file managemen
 ```text
 /Knights-Tour-Mobile-Robot
 ├── code_coverage/             # Directory containing reports of old and new code coverage analysis
-│   ├── code_coverage_new      # Directory containing reports of improved code coverage analysis 
+│   ├── code_coverage_new/      # Directory containing reports of improved code coverage analysis 
 │   ├── code_coverage_old/     # Directory containing reports of old code coverage analysis
 ├── designs/                   # Directory containing pre/post synthesis and quartus design files 
 │   ├── pre_synthesis/         # Directory containing pre-synthesis design files 
@@ -74,6 +74,7 @@ The `run` target executes the testbench simulations with various modes:
 - **Command-line mode (default)**: Runs the tests in the terminal without GUI.
 - **Saving waveform mode**: Saves waveform data.
 - **GUI mode**: Runs tests and views waveforms in a graphical interface.
+- **Viewing waveform mode**: Views saved waveform data of previous simulations.
 
 #### Example:
 ```bash
@@ -106,7 +107,7 @@ make log t 3        # Display the transcript log for test 3
 The `collect` target gathers design or test files:
 - **`collect`**: Collects all design files.
 - **`collect <start> <end>`**: Collects files for tests in the specified range.
-- 
+  
 #### Example:
 ```bash
 make collect 1 10    # Collect files for tests 1 to 10
