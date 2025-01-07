@@ -2,8 +2,8 @@
 # Read in the verilog files first #
 ###################################
 read_file -format sverilog { \
-  ../designs/pre_synthesis/KnightsTour.sv \
-  ../designs/pre_synthesis/cmd_proc.sv \
+  ../designs/pre_synthesis/main/KnightsTour.sv \
+  ../designs/pre_synthesis/main/cmd_proc.sv \
   ../designs/pre_synthesis/inert_intf.sv \
   ../designs/pre_synthesis/inertial_integrator.sv \
   ../designs/pre_synthesis/SPI_mnrch.sv \
