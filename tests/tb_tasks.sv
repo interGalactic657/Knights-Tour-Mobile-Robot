@@ -58,47 +58,66 @@ package tb_tasks;
   endtask
 
   // Task to wait till a tour move is complete (2 individual moves).
-  task automatic WaitTourMove(ref send_resp, ref clk, ref [14:0] actual_xx, ref [14:0] actual_yy);
-      // Wait till two moves are complete.
-      repeat(2) WaitForMove(.send_resp(send_resp), .clk(clk));
+  task automatic WaitTourMove(ref clk, ref send_resp, ref resp_rdy, ref [7:0] resp, ref [14:0] actual_xx, ref [14:0] actual_yy, ref [4:0] mv_indx, ref fanfare_go);
+      // Wait for the first component of the tour move to be complete.
+      WaitForMove(.send_resp(send_resp), .clk(clk));
 
+      // Check that an ACK is received after the first component of each move.
+      ChkAck(.sig(resp_rdy), .clk(clk), .resp(resp));
+
+      // Check that fanfare go is asserted after the second component of each move.
+      TimeoutTask(.sig(fanfare_go), .clk(clk), .clks2wait(5000000), .signal("fanfare_go"));
+
+      // Wait for the second component of the tour move to be complete.
+      TimeoutTask(.sig(send_resp), .clk(clk), .clks2wait(1000000), .signal("send_resp"));
+
+      // If it is not the last move, check that an ACK is received after the second component of each move, otherwise check that a POS_ACK is received.
+      if (mv_indx !== 5'h17) begin
+        // Check that an ACK is received after the second component of each move.
+        ChkAck(.sig(resp_rdy), .clk(clk), .resp(resp));
+      end else begin
+        // Check that an POS_ACK is received after the second component of the last move.
+        ChkPosAck(.sig(resp_rdy), .clk(clk), .resp(resp));
+      end
+
+      // Verify that the Knight is near the middle of the square after completing a tour move.
+      ChkPos(.clk(clk), .target_xx(actual_xx[14:12]), .target_yy(actual_yy[14:12]), .actual_xx(actual_xx), .actual_yy(actual_yy));
+      
       $display("Coordinate on the board: (%d, %d)", actual_xx[14:12], actual_yy[14:12]);
-      $display("x_pos: 0x%h, y_pos: 0x%h", actual_xx, actual_yy); 
   endtask
 
   // Task to wait till all moves of the tour are complete.
-  task automatic WaitTourDone(ref send_resp, ref clk, ref [14:0] actual_xx, ref [14:0] actual_yy);
+  task automatic WaitTourDone(ref clk, ref send_resp, ref resp_rdy, ref [7:0] resp, ref [14:0] actual_xx, ref [14:0] actual_yy, ref [4:0] mv_indx, ref fanfare_go);
     // Wait till all 24 moves are done.
-    repeat(24) WaitTourMove(.send_resp(send_resp), .clk(clk), .actual_xx(actual_xx), .actual_yy(actual_yy));
+    repeat(24) WaitTourMove(.clk(clk), .send_resp(send_resp), .resp_rdy(resp_rdy), .resp(resp), .actual_xx(actual_xx), .actual_yy(actual_yy), .mv_indx(mv_indx), .fanfare_go(fanfare_go));
   endtask
 
   // Task to wait till the y offset of the Knight is found and validates the position.
-  task automatic ChkOffset(ref tour_go, ref clk, input [2:0] target_yy, ref [2:0] actual_yy);
+  task automatic ChkOffset(ref clk, ref tour_go, input [2:0] target_xx, input [2:0] target_yy, ref [14:0] actual_xx, ref [14:0] actual_yy);
     begin
       // Wait till the calibration of the Y offset is complete (worst case takes 30000000 clocks).
       TimeoutTask(.sig(tour_go), .clk(clk), .clks2wait(30000000), .signal("tour_go"));
 
-      // Check that the Knight found the correct y position that it was placed on the board.
-      @(negedge clk) begin
-        if (actual_yy !== target_yy) begin
-          $display("ERROR: y_offset should have been 0x%h but was 0x%h", target_yy, actual_yy);
-          $stop(); 
-        end
-      end
+      // Check that the Knight found the correct (x,y) position that it was placed on the board.
+      ChkPos(.clk(clk), .target_xx(target_xx), .target_yy(target_yy), .actual_xx(actual_xx), .actual_yy(actual_yy));
     end
   endtask
 
   // Task to check that we are not off the board.
-  task automatic ChkOffBoard(ref clk, ref RST_n, ref [9:0] frwrd, ref cntrIR);
+  task automatic ChkOffBoard(ref clk, ref RST_n, ref [14:0] actual_xx, ref [14:0] actual_yy);
     begin
       // Ignore when we are resetting the DUT.
       if (RST_n) begin 
-        // If we are not resetting the DUT, check when the speed is zero, cntrIR is low. 
-        if (frwrd === 10'h000) begin
-            if (cntrIR) begin
-              $display("ERROR: Knight is off the board.");
-              $stop(); 
-            end
+        // If we are not resetting the DUT, check that the actual_xx position is within the 5x5 board.
+        if ((actual_xx < 15'h0000) || (actual_xx > 15'h5000)) begin
+          $display("ERROR: Knight is off the board.");
+          $stop();
+        end
+
+        // If we are not resetting the DUT, check that the actual_yy position is within the 5x5 board.
+        if ((actual_yy < 15'h0000) || (actual_yy > 15'h5000)) begin
+          $display("ERROR: Knight is off the board.");
+          $stop();
         end
       end
     end

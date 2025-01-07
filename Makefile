@@ -50,9 +50,9 @@ logic_tests := 15 16 17 18 19 20 21 22 23 24 25 26 27 28
 synthesis: ./designs/post_synthesis/KnightsTour.vg
 
 # Dependency rule for generating the .vg file:
-# If the .dc script changes, the Design Compiler will be invoked
+# If the .dc script or any of the .sv files change, the Design Compiler will be invoked
 # to regenerate these files.
-./designs/post_synthesis/KnightsTour.vg: ./scripts/KnightsTour.dc
+./designs/post_synthesis/KnightsTour.vg: ./scripts/KnightsTour.dc ./designs/pre_synthesis/*.sv ./designs/pre_synthesis/main/*.sv 
 	@echo "Synthesizing KnightsTour to Synopsys 32-nm Cell Library..."
 	@mkdir -p ./synthesis
 	@mkdir -p ./designs/post_synthesis
