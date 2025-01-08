@@ -813,7 +813,7 @@ def main():
             print_mode_message(args, range_desc)
 
         # Set up necessary directories for test execution (logs, transcripts, etc.).
-        setup_directories()
+        setup_directories(args.type)
 
         # Execute the tests based on the parsed arguments.
         execute_tests(args)
