@@ -13,7 +13,7 @@ DESIGN_DIR = os.path.join(ROOT_DIR, "designs")
 TEST_DIR = os.path.join(ROOT_DIR, "tests")
 CELL_LIBRARY_PATH = os.path.join(TEST_DIR, "SAED32_lib")
 
-TYPE_DIR = None
+TYPE_DIR = os.path.join(ROOT_DIR, "main")
 OUTPUT_DIR = os.path.join(TYPE_DIR, "output")
 WAVES_DIR = os.path.join(OUTPUT_DIR, "waves")
 LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")
