@@ -57,13 +57,16 @@ def parse_arguments():
     parser.add_argument("-m", "--mode", type=int, choices=[0, 1, 2, 3], default=0,
                         help="Debugging mode: 0=Command-line, 1=Save waves, 2=GUI, 3=View saved waves.")
     
-    # Argument for specifying to run main/extra tests.
-    parser.add_argument("-t", "--type", type=str, choices=["m", "e"], default=None,
-                        help="Specify the type of tests to run the simulation: 'main', 'extra'. Default is 'main'.")
+    # Argument for specifying to run main/extra/all tests.
+    parser.add_argument("-t", "--type", type=str, choices=["m", "e", "a"], default="a",
+                        help="Specify the type of tests to run the simulation: 'main', 'extra', 'all. Default is 'all'.")
     
     # Argument for specifying to run both main and extra tests.
     parser.add_argument("-a", "--all", action="store_true",
                         help="Specify to run both main and extra tests of the simulation. Default is None.")
+    
+    # Argument to know if it is a child process or parent.
+    parser.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
         
     # Parse the arguments from the command line.
     args = parser.parse_args()
@@ -757,31 +760,37 @@ def print_mode_message(args, test_type=None, range_desc=None):
     Returns:
         None: This function prints messages to the console and does not return any value.
     """
-    # Check if all tests are being run and if the message has not been printed before.
-    if args.all and not args.number and not args.range:
-        # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
-        print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+    # Check if all tests are being run.
+    if args.type == "a": 
+        if test_type is None and range_desc is None:
+            # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
+            print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+        elif test_type is None and range_desc:
+            # If the "all" flag is not set and a test range is provided, print the message for that test type.
+            mode_messages = {
+                0: f"Running all tests {range_desc} in command-line mode...",
+                1: f"Running all tests {range_desc} in saving mode...",
+                2: f"Running all tests {range_desc} in GUI mode..."
+            }
+
+            # Print the corresponding message for the selected mode.
+            print(mode_messages.get(args.mode, "Running tests..."))
     # If the "all" flag is not set and a test range is provided, print the message for that test type.
-    elif args.all and not test_type and args.range and not args.number:
-        # Dictionary of messages based on the mode.
-        mode_messages = {
-            0: f"Running all tests {range_desc} in command-line mode...",
-            1: f"Running all tests {range_desc} in saving mode...",
-            2: f"Running all tests {range_desc} in GUI mode..."
-        }
+    elif args.type == "m" or args.type == "e": 
+        if test_type and range_desc is None:
+            # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
+            print(f"Running all {test_type} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+        elif test_type and range_desc:
+            # If the "all" flag is not set and a test range is provided, print the message for that test type.
+            mode_messages = {
+                0: f"Running {test_type} tests {range_desc} in command-line mode...",
+                1: f"Running {test_type} tests {range_desc} in saving mode...",
+                2: f"Running {test_type} tests {range_desc} in GUI mode..."
+            }
 
-        # Print the corresponding message for the selected mode.
-        print(mode_messages.get(args.mode, "Running tests..."))
-    elif not args.all and test_type and args.range and not args.number:
-        # Dictionary of messages based on the mode.
-        mode_messages = {
-            0: f"Running {test_type} tests {range_desc} in command-line mode...",
-            1: f"Running {test_type} tests {range_desc} in saving mode...",
-            2: f"Running {test_type} tests {range_desc} in GUI mode..."
-        }
+            # Print the corresponding message for the selected mode.
+            print(mode_messages.get(args.mode, "Running tests..."))
 
-        # Print the corresponding message for the selected mode.
-        print(mode_messages.get(args.mode, "Running tests..."))
 def execute_test_suite(args, test_type):
     """
     Wrapper to execute tests for a specific test type (main or extra).
@@ -805,16 +814,19 @@ def main():
     # Parse the command-line arguments.
     args = parse_arguments()
 
-    if args.all and not args.type:
-        # Print the "Running all tests..." message once.
-        print_mode_message(args=args, range_desc=f"from {args.range[0]} to {args.range[1]}" if args.range else "")
+    if args.type == "a":
+        # Print the "Running all tests..." message once when we have a range of tests.
+        if args.range is not None and args.number is None:
+            print_mode_message(args=args, range_desc=f"from {args.range[0]} to {args.range[1]}")
+        elif args.number is None:
+            print_mode_message(args)
 
         # Convert `args` into a list of command-line arguments.
         base_args = sys.argv[1:]  # Get all args except the script name.
 
         # Create argument lists for 'main' and 'extra' tests
-        args_m = base_args + ["-t", "m"]  # Add `-t m` for main tests
-        args_e = base_args + ["-t", "e"]  # Add `-t e` for extra tests
+        args_m = base_args + ["-t", "m"] + ["--child"]  # Add `-t m` for main tests and add --child arg to indicate it's a spawned process
+        args_e = base_args + ["-t", "e"] + ["--child"]  # Add `-t e` for extra tests and add --child arg to indicate it's a spawned process
 
         # Use ProcessPoolExecutor to run the tasks in parallel as separate processes.
         with ProcessPoolExecutor() as executor:
@@ -832,15 +844,18 @@ def main():
 
             print("All tests completed.")
     else:
-        if args.type and not args.all:
-            # Regular logic if -a is not passed (just run one test type).
-            print_mode_message(args, test_type="main" if args.type == "m" else "extra", 
-                            range_desc=f"from {args.range[0]} to {args.range[1]}" if args.range else "")
+        # Regular logic if -a is not passed (just run one test type).
+        if not args.child:
+            if args.range is not None and args.number is None:
+                print_mode_message(args, test_type="main" if args.type == "m" else "extra", 
+                                range_desc=f"from {args.range[0]} to {args.range[1]}")
+            elif args.number is None:
+                print_mode_message(args, test_type="main" if args.type == "m" else "extra")
 
         # Run tests for the specified type.
         execute_test_suite(args, args.type)
         
-        if args.type and not args.all:
+        if not args.child:
             # Print completion message after all tests are done.
             print("All tests completed.")
 
