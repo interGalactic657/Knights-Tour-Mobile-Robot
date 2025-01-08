@@ -807,7 +807,7 @@ def main():
 
     if args.all and not args.type:
         # Print the "Running all tests..." message once.
-        print_mode_message(args)
+        print_mode_message(args=args, range_desc=f"from {args.range[0]} to {args.range[1]}" if args.range else "")
 
         # Convert `args` into a list of command-line arguments.
         base_args = sys.argv[1:]  # Get all args except the script name.
