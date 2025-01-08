@@ -63,7 +63,7 @@ package tb_tasks;
       WaitForMove(.send_resp(send_resp), .clk(clk));
 
       // Check that an ACK is received after the first component of each move.
-      ChkAck(.sig(resp_rdy), .clk(clk), .resp(resp));
+      ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
 
       // Check that fanfare go is asserted after the second component of each move.
       TimeoutTask(.sig(fanfare_go), .clk(clk), .clks2wait(5000000), .signal("fanfare_go"));
@@ -74,10 +74,10 @@ package tb_tasks;
       // If it is not the last move, check that an ACK is received after the second component of each move, otherwise check that a POS_ACK is received.
       if (mv_indx !== 5'h17) begin
         // Check that an ACK is received after the second component of each move.
-        ChkAck(.sig(resp_rdy), .clk(clk), .resp(resp));
+        ChkAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
       end else begin
         // Check that an POS_ACK is received after the second component of the last move.
-        ChkPosAck(.sig(resp_rdy), .clk(clk), .resp(resp));
+        ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
       end
 
       // Verify that the Knight is near the middle of the square after completing a tour move.
