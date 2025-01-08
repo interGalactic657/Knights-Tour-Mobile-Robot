@@ -26,8 +26,8 @@ TEST_MAPPING = {
     "simple": range(0, 2),
     "move": range(2, 15),
     "logic": {
-        "main": range(15, 28),
-        "extra": range(15, 28),
+        "main": range(15, 29),
+        "extra": range(15, 29),
     }
 }
 
@@ -102,7 +102,10 @@ def setup_directories(type):
     # Ensure all required directories exist.
     directories = [TYPE_DIR, OUTPUT_DIR, WAVES_DIR, LOGS_DIR, TRANSCRIPT_DIR, COMPILATION_DIR, LIBRARY_DIR]
     for directory in directories:
-        Path(directory).mkdir(parents=True, exist_ok=True)
+        try:
+            Path(directory).mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            print(f"Creating the required directories failed with error: {e}")
 
 def get_wave_command(test_num, type):
     """Generate the command for waveform signals based on the test number.
@@ -526,17 +529,13 @@ def run_test(subdir, test_file, args):
     compile_files(test_num, test_path, args.type)
 
     # Append main/extra to the name based on the type.
-    if args.type == "m" or test_num == 0:
+    if args.type == "m":
         test_name += "_main"
     elif args.type == "e":
         test_name += "_extra"
 
-    # Only run test 0 under main, not extra.
-    if test_num != 0 or args.type == "m":
-        # Step 2: Run the simulation and handle different modes.
-        result = run_simulation(test_num, test_name, log_file, args)
-    else:
-        return
+    # Step 2: Run the simulation and handle different modes.
+    result = run_simulation(test_num, test_name, log_file, args)
     
     # Output the result of the test based on the simulation result.
     if result == "success":
@@ -664,7 +663,15 @@ def execute_tests(args):
         This function uses a ThreadPoolExecutor to run tests concurrently, improving the speed of I/O-bound operations.
         """
         with ThreadPoolExecutor(max_workers=18) as executor:  # Increased worker count
-            futures = [executor.submit(run_test, subdir, test_file, args) for subdir, test_file in tests]
+            # Filter tests based on the condition: skip if type is "e" and test number is 0.
+            filtered_tests = [
+                (subdir, test_file) 
+                for subdir, test_file in tests 
+                if not (args.type == "e" and test_file == "KnightsTour_tb_0.sv")
+            ]
+
+            # Submit only the filtered jobs to the executor.
+            futures = [executor.submit(run_test, subdir, test_file, args) for subdir, test_file in filtered_tests]
             for future in futures:
                 try:
                     future.result()  # Will raise an exception if any occurred
@@ -680,7 +687,7 @@ def execute_tests(args):
         This function uses a ThreadPoolExecutor to view waveforms concurrently, improving the speed of I/O-bound operations.
         """
         with ThreadPoolExecutor(max_workers=18) as executor:  # Increased worker count
-            futures = [executor.submit(view_waveforms, i) for i in test_numbers]
+            futures = [executor.submit(view_waveforms, i, args.type) for i in test_numbers]
             for future in futures:
                 try:
                     future.result()  # Will raise an exception if any occurred
