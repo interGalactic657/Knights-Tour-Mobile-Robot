@@ -525,7 +525,7 @@ def run_test(subdir, test_file, args):
     # Step 1: Compile the testbench.
     compile_files(test_num, test_path, args.type)
 
-    if args.type == "m":
+    if args.type == "m" or test_num == 0:
         test_name += "_main"
     elif args.type == "e":
         test_name += "_extra"
@@ -740,7 +740,7 @@ def execute_tests(args):
             tests = collect_all_tests()
             run_parallel_tests(tests)  # Parallel execution for faster results.
 
-def print_mode_message(args, test_type=None, range_desc=None):
+def print_mode_message(args, range_desc=None):
     """
     Prints an appropriate message based on the mode, test type, and range of tests.
 
@@ -749,36 +749,24 @@ def print_mode_message(args, test_type=None, range_desc=None):
 
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
-        test_type (str, optional): Specifies the type of tests ('main' or 'extra'). Defaults to None.
         range_desc (str, optional): Describes the range of tests (e.g., "from 1 to 5"). Defaults to None.
 
     Returns:
         None
     """
-    # Messages for all tests (-a flag)
+    # Messages for all tests (-a flag).
     if args.type == "a":
         if not range_desc:
             print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
         else:
             print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-    # Messages for specific test types ('main' or 'extra')
+    # Messages for specific test types ('main' or 'extra').
     elif args.type in {"m", "e"}:
         test_label = "main" if args.type == "m" else "extra"
         if not range_desc:
             print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
         else:
             print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-
-def execute_test_suite(args, test_type):
-    """
-    Wrapper to execute tests for a specific test type (main or extra).
-
-    Args:
-        args: Parsed command-line arguments.
-        test_type (str): Either 'm' or 'e' for main or extra tests.
-    """
-    setup_directories(test_type)
-    execute_tests(args)
 
 def main():
     """Main function to parse arguments, set up directories, and execute tests.
@@ -793,18 +781,14 @@ def main():
     args = parse_arguments()
 
     if args.type == "a":
-        # Print the "Running all tests..." message once when we have a range of tests.
-        if args.range is not None and args.number is None:
-            print_mode_message(args=args, range_desc=f"from {args.range[0]} to {args.range[1]}")
-        elif args.number is None:
-            print_mode_message(args)
+        # Print the "Running all tests..." message once.
+        range_desc = f"from {args.range[0]} to {args.range[1]}" if args.range else None
+        print_mode_message(args=args, range_desc=range_desc)
 
-        # Convert `args` into a list of command-line arguments.
-        base_args = sys.argv[1:]  # Get all args except the script name.
-
-        # Create argument lists for 'main' and 'extra' tests
-        args_m = base_args + ["-t", "m"] + ["--child"]  # Add `-t m` for main tests and add --child arg to indicate it's a spawned process.
-        args_e = base_args + ["-t", "e"] + ["--child"]  # Add `-t e` for extra tests and add --child arg to indicate it's a spawned process.
+        # Prepare arguments for child processes.
+        base_args = sys.argv[1:]
+        args_m = base_args + ["-t", "m", "--child"]  # Main tests.
+        args_e = base_args + ["-t", "e", "--child"]  # Extra tests.
 
         # Use ProcessPoolExecutor to run the tasks in parallel as separate processes.
         with ProcessPoolExecutor(max_workers=24) as executor:
@@ -819,23 +803,24 @@ def main():
                     future.result()  # Will raise an exception if any occurred.
                 except Exception as e:
                     print(f"Running all tests failed with error: {e}")
+                    sys.exit(1)
 
             print("All tests completed.")
     else:
-        # Regular logic if -a is not passed (just run one test type).
-        if not args.child:
-            if args.range is not None and args.number is None:
-                print_mode_message(args, test_type="main" if args.type == "m" else "extra", 
-                                range_desc=f"from {args.range[0]} to {args.range[1]}")
-            elif args.number is None:
-                print_mode_message(args, test_type="main" if args.type == "m" else "extra")
+        # Only the parent prints initial messages.
+        if not args.child:  
+            range_desc = f"from {args.range[0]} to {args.range[1]}" if args.range else None
+            print_mode_message(args, range_desc)
 
-        # Run tests for the specified type.
-        execute_test_suite(args, args.type)
-        
-        if not args.child:
-            # Print completion message after all tests are done.
+        # Set up necessary directories for test execution (logs, transcripts, etc.).
+        setup_directories()
+
+        # Execute the tests based on the parsed arguments.
+        execute_tests(args)
+
+        # Only the parent prints the completion message.
+        if not args.child:  
             print("All tests completed.")
-
+            
 if __name__ == "__main__":
     main()
