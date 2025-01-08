@@ -551,20 +551,25 @@ def run_test(subdir, test_file, args):
     elif result == "unknown":
         print(f"{test_name}: Unknown status. Check the log file saved to {log_file}.")
 
-def view_waveforms(test_number):
+def view_waveforms(test_number, type):
     """View previously saved waveforms for a specific test.
 
     Args:
         test_number (int): The test number to view waveforms for.
+        type (str): The type of test file to be run (main/extra).
 
     Returns:
         None: This function executes the simulation command to view waveforms.
     """
     # Change to the wave directory and view the saved waveforms.    
     os.chdir(WAVES_DIR)
+    
+    # View the specifc type of waves based on the test type.
+    type_name = "main" if type == "m" else "extra"
 
+    # View the waves.
     with open(f"./transcript_{test_number}", 'w') as transcript:
-        print(f"KnightsTour_tb_{test_number}: Viewing saved waveforms...")
+        print(f"KnightsTour_tb_{test_number}_{type_name}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
         subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
 
