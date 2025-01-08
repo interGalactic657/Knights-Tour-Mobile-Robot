@@ -821,6 +821,8 @@ def main():
                     future.result()  # Will raise an exception if any occurred.
                 except Exception as e:
                     print(f"Running all tests failed with error: {e}")
+
+            print("All tests completed.")
     else:
         if args.type and not args.all:
             # Regular logic if -a is not passed (just run one test type).
@@ -829,9 +831,10 @@ def main():
 
         # Run tests for the specified type.
         execute_test_suite(args, args.type)
-
-        # Print completion message after all tests are done.
-        print("All tests completed.")
+        
+        if args.type and not args.all:
+            # Print completion message after all tests are done.
+            print("All tests completed.")
 
 if __name__ == "__main__":
     main()
