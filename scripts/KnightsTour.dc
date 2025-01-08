@@ -72,9 +72,9 @@ compile -map_effort medium -incremental_mapping -only_hold_time -area_effort hig
 ####################################################
 # Take a look at max & min timings as well as area #
 ####################################################
-report_timing -delay min > ../main/output/logs/transcript/reports/KnightsTour_min_delay.txt
-report_timing -delay max > ../main/output/logs/transcript/reports/KnightsTour_max_delay.txt
-report_area > ../main/output/logs/transcript/reports/KnightsTour_area.txt
+report_timing -delay min > ../output/logs/transcript/reports/KnightsTour_min_delay.txt
+report_timing -delay max > ../output/logs/transcript/reports/KnightsTour_max_delay.txt
+report_area > ../output/logs/transcript/reports/KnightsTour_area.txt
 
 ########################################################
 # Write out resulting synthesized netlist and SDC file #

@@ -52,7 +52,7 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 # Dependency rule for generating the .vg file:
 # If the .dc script or any of the .sv files change, the Design Compiler will be invoked
 # to regenerate these files.
-./designs/post_synthesis/KnightsTour.vg: ./scripts/KnightsTour.dc ./designs/pre_synthesis/*.sv ./designs/pre_synthesis/main/*.sv 
+./designs/post_synthesis/KnightsTour.vg: ./scripts/KnightsTour.dc 
 	@echo "Synthesizing KnightsTour to Synopsys 32-nm Cell Library..."
 	@mkdir -p ./main/synthesis
 	@mkdir -p ./designs/post_synthesis
@@ -60,6 +60,10 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 	@mkdir -p ./main/output/logs/transcript/reports/
 	@cd ./main/synthesis && echo "source ../../scripts/KnightsTour.dc; report_register -level_sensitive; check_design; exit;" | dc_shell -no_gui > ../output/logs/compilation/synth_compilation.log 2>&1
 	@echo "Synthesis complete. Run 'make log c s' for details."
+
+# If the .dc script or any of the .sv files change, the Design Compiler will be invoked
+# to regenerate these files.
+./scripts/KnightsTour.dc: ./designs/pre_synthesis/*.sv ./designs/pre_synthesis/main/*.sv
 
 #--------------------------------------------------------
 # Run Target
