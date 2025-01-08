@@ -40,7 +40,7 @@ module KnightsTour_tb();
   //////////////////////////////////////////////////////
   // Instantiate model of Knight Physics (and board) //
   ////////////////////////////////////////////////////
-  KnightPhysics #(15'h3800, 15'h3800) iPHYS(.clk(clk), .RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
+  KnightPhysics #(15'h1800, 15'h1800) iPHYS(.clk(clk), .RST_n(RST_n),.SS_n(SS_n),.SCLK(SCLK),.MISO(MISO),
                 .MOSI(MOSI),.INT(INT),.lftPWM1(lftPWM1),.lftPWM2(lftPWM2),
                 .rghtPWM1(rghtPWM1),.rghtPWM2(rghtPWM2),.IR_en(IR_en),
                 .lftIR_n(lftIR_n),.rghtIR_n(rghtIR_n),.cntrIR_n(cntrIR_n));
@@ -55,7 +55,7 @@ module KnightsTour_tb();
       SendCmd(.cmd_to_send(CAL_GYRO), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
       // Check that cal_done is being asserted after calibration.
-      TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clk_s2wait(1000000), .signal("cal_done"));
+      TimeoutTask(.sig(iDUT.cal_done), .clk(clk), .clks2wait(1000000), .signal("cal_done"));
 
       // Check that a positive acknowledge is received from the DUT.
       ChkPosAck(.resp_rdy(resp_rdy), .clk(clk), .resp(resp));
@@ -72,16 +72,16 @@ module KnightsTour_tb();
     Setup();
 
     /////////////////////////////////////////////////////////
-    // Test the KnightsTour starting at coordinate (3,3)  //
+    // Test the KnightsTour starting at coordinate (1,1)  //
     ///////////////////////////////////////////////////////
-    // Send a command to start the KnightsTour from (3,3).
-    SendCmd(.cmd_to_send(16'h6033), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    // Send a command to start the KnightsTour from (1,1).
+    SendCmd(.cmd_to_send(16'h6011), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the solution is complete or times out.
     WaitComputeSol(.start_tour(iDUT.start_tour), .clk(clk));
 
-    // Indicate that the Knight's Tour is starting from (3,3)
-    $display("KnightsTour starting at coordinate: (3,3)");
+    // Indicate that the Knight's Tour is starting from (1,1)
+    $display("KnightsTour starting at coordinate: (1,1)");
 
     // Wait till the KnightsTour has finished.
     WaitTourDone(.clk(clk), .send_resp(iDUT.send_resp), .resp_rdy(iRMT.resp_rdy), .resp(iRMT.resp), .actual_xx(iPHYS.xx), .actual_yy(iPHYS.yy), .mv_indx(iDUT.mv_indx), .fanfare_go(iDUT.fanfare_go));
