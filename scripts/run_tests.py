@@ -530,8 +530,12 @@ def run_test(subdir, test_file, args):
     elif args.type == "e":
         test_name += "_extra"
 
-    # Step 2: Run the simulation and handle different modes.
-    result = run_simulation(test_num, test_name, log_file, args)
+    # Only run test 0 under main, not extra.
+    if test_num != 0 or args.type == "m":
+        # Step 2: Run the simulation and handle different modes.
+        result = run_simulation(test_num, test_name, log_file, args)
+    else:
+        return
     
     # Output the result of the test based on the simulation result.
     if result == "success":
