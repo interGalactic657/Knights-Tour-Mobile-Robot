@@ -790,13 +790,14 @@ def main():
 
     This function is the entry point for the test execution process. It performs the following tasks:
     - Parses the command-line arguments using `parse_arguments`.
-    - Spawns parallel execution for `main` and `extra` tests if `args.all` is set.
-    - Executes a specific test type based on `args.type` if `args.all` is not set.
+    - Spawns parallel execution for `main` and `extra` tests if `a` is set.
+    - Executes a specific test type based on `args.type` if `a` is not set.
     - Prints a completion message once all tests are finished.
     """
     # Parse the command-line arguments.
     args = parse_arguments()
 
+    # Check if all tests need to be run.
     if args.type == "a":
         # Print the "Running all tests..." message once.
         range_desc = f"from {args.range[0]} to {args.range[1]}" if args.range else None
