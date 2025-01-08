@@ -2,23 +2,23 @@
 # Read in the verilog files first #
 ###################################
 read_file -format sverilog { \
-  ../designs/pre_synthesis/main/KnightsTour.sv \
-  ../designs/pre_synthesis/main/cmd_proc.sv \
-  ../designs/pre_synthesis/inert_intf.sv \
-  ../designs/pre_synthesis/inertial_integrator.sv \
-  ../designs/pre_synthesis/SPI_mnrch.sv \
-  ../designs/pre_synthesis/IR_intf.sv \
-  ../designs/pre_synthesis/MtrDrv.sv \
-  ../designs/pre_synthesis/PWM11.sv \
-  ../designs/pre_synthesis/PID.sv \
-  ../designs/pre_synthesis/reset_synch.sv \
-  ../designs/pre_synthesis/sponge.sv \
-  ../designs/pre_synthesis/TourCmd.sv \
-  ../designs/pre_synthesis/TourLogic.sv \
-  ../designs/pre_synthesis/UART_wrapper.sv \
-  ../designs/pre_synthesis/UART.sv \
-  ../designs/pre_synthesis/UART_rx.sv \
-  ../designs/pre_synthesis/UART_tx.sv \
+  ../../designs/pre_synthesis/main/KnightsTour.sv \
+  ../../designs/pre_synthesis/main/cmd_proc.sv \
+  ../../designs/pre_synthesis/inert_intf.sv \
+  ../../designs/pre_synthesis/inertial_integrator.sv \
+  ../../designs/pre_synthesis/SPI_mnrch.sv \
+  ../../designs/pre_synthesis/IR_intf.sv \
+  ../../designs/pre_synthesis/MtrDrv.sv \
+  ../../designs/pre_synthesis/PWM11.sv \
+  ../../designs/pre_synthesis/PID.sv \
+  ../../designs/pre_synthesis/reset_synch.sv \
+  ../../designs/pre_synthesis/sponge.sv \
+  ../../designs/pre_synthesis/TourCmd.sv \
+  ../../designs/pre_synthesis/TourLogic.sv \
+  ../../designs/pre_synthesis/UART_wrapper.sv \
+  ../../designs/pre_synthesis/UART.sv \
+  ../../designs/pre_synthesis/UART_rx.sv \
+  ../../designs/pre_synthesis/UART_tx.sv \
 }
 
 ###################################
@@ -72,12 +72,12 @@ compile -map_effort medium -incremental_mapping -only_hold_time -area_effort hig
 ####################################################
 # Take a look at max & min timings as well as area #
 ####################################################
-report_timing -delay min > ../output/logs/transcript/reports/KnightsTour_min_delay.txt
-report_timing -delay max > ../output/logs/transcript/reports/KnightsTour_max_delay.txt
-report_area > ../output/logs/transcript/reports/KnightsTour_area.txt
+report_timing -delay min > ../main/output/logs/transcript/reports/KnightsTour_min_delay.txt
+report_timing -delay max > ../main/output/logs/transcript/reports/KnightsTour_max_delay.txt
+report_area > ../main/output/logs/transcript/reports/KnightsTour_area.txt
 
 ########################################################
 # Write out resulting synthesized netlist and SDC file #
 ########################################################
-write -format verilog KnightsTour -output ../designs/post_synthesis/KnightsTour.vg
-write_sdc ../scripts/KnightsTour.sdc
+write -format verilog KnightsTour -output ../../designs/post_synthesis/KnightsTour.vg
+write_sdc ../../scripts/KnightsTour.sdc
