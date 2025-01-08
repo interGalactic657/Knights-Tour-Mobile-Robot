@@ -58,7 +58,7 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 	@mkdir -p ./designs/post_synthesis
 	@mkdir -p ./main/output/logs/compilation
 	@mkdir -p ./main/output/logs/transcript/reports/
-	@cd ./synthesis && echo "source ../scripts/KnightsTour.dc; report_register -level_sensitive; check_design; exit;" | dc_shell -no_gui > ../output/logs/compilation/synth_compilation.log 2>&1
+	@cd ./main/synthesis && echo "source ../scripts/KnightsTour.dc; report_register -level_sensitive; check_design; exit;" | dc_shell -no_gui > ../output/logs/compilation/synth_compilation.log 2>&1
 	@echo "Synthesis complete. Run 'make log c s' for details."
 
 #--------------------------------------------------------
