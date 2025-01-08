@@ -758,22 +758,30 @@ def print_mode_message(args, test_type=None, range_desc=None):
         None: This function prints messages to the console and does not return any value.
     """
     # Check if all tests are being run and if the message has not been printed before.
-    if args.all and not hasattr(args, "_all_msg_printed"):
-        # Set the flag to avoid printing the message again.
-        args._all_msg_printed = True
+    if args.all and not args.number and not args.range:
         # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
         print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
     # If the "all" flag is not set and a test range is provided, print the message for that test type.
-    elif not args.all and test_type and not args.number:
+    elif args.all and not test_type and args.range and not args.number:
+        # Dictionary of messages based on the mode.
+        mode_messages = {
+            0: f"Running all tests {range_desc} in command-line mode...",
+            1: f"Running all tests {range_desc} in saving mode...",
+            2: f"Running all tests {range_desc} in GUI mode..."
+        }
+
+        # Print the corresponding message for the selected mode.
+        print(mode_messages.get(args.mode, "Running tests..."))
+    elif not args.all and test_type and args.range and not args.number:
         # Dictionary of messages based on the mode.
         mode_messages = {
             0: f"Running {test_type} tests {range_desc} in command-line mode...",
             1: f"Running {test_type} tests {range_desc} in saving mode...",
             2: f"Running {test_type} tests {range_desc} in GUI mode..."
         }
+
         # Print the corresponding message for the selected mode.
         print(mode_messages.get(args.mode, "Running tests..."))
-
 def execute_test_suite(args, test_type):
     """
     Wrapper to execute tests for a specific test type (main or extra).
