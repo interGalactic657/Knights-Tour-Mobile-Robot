@@ -470,7 +470,10 @@ def run_simulation(test_num, test_name, log_file, args):
     # Precompute the simulation command based on the mode.
     if args.mode == 0:
         if args.number is not None and args.range is None:
-            print(f"{test_name}: Running in command-line mode...")
+            if args.type == "m":
+                print(f"{test_name}_main: Running in command-line mode...")
+            else:
+                print(f"{test_name}_extra: Running in command-line mode...")
 
         # Base simulation command.
         sim_command = f"vsim -c TEST_{test_num}.KnightsTour_tb -logfile {log_file} -do 'run -all; log -flush /*; quit -f;'"
@@ -482,10 +485,16 @@ def run_simulation(test_num, test_name, log_file, args):
     else:
         if args.mode == 1: # Save waveforms and log in file.
             if args.number is not None and args.range is None:
-                print(f"{test_name}: Saving waveforms and logging to file...")
+                if args.type == "m":
+                    print(f"{test_name}_main: Saving waveforms and logging to file...")
+                else:
+                    print(f"{test_name}_extra: Saving waveforms and logging to file...")
         elif args.mode == 2: # GUI mode.
             if args.number is not None and args.range is None:
-                print(f"{test_name}: Running in GUI mode...")
+                if args.type == "m":
+                    print(f"{test_name}_main: Running in GUI mode...")
+                else:
+                    print(f"{test_name}_extra: Running in GUI mode...")
 
         sim_command = get_gui_command(test_num, log_file, args)
 
@@ -524,17 +533,29 @@ def run_test(subdir, test_file, args):
     
     # Output the result of the test based on the simulation result.
     if result == "success":
-        print(f"{test_name}: YAHOO!! All tests passed.")
+        if args.type == "m":
+            print(f"{test_name}_main: YAHOO!! All tests passed.")
+        else:
+            print(f"{test_name}_extra: YAHOO!! All tests passed.")
     elif result == "error":
         if args.mode == 0:
-            print(f"{test_name}: Test failed. Saving waveforms for later debug...")
+            if args.type == "m":
+                print(f"{test_name}_main: Test failed. Saving waveforms for later debug...")
+            else:
+                print(f"{test_name}_extra: Test failed. Saving waveforms for later debug...")
             debug_command = get_gui_command(test_num, log_file, args)
             with open(log_file, 'w') as log_fh:
                 subprocess.run(debug_command, shell=True, stdout=log_fh, stderr=subprocess.STDOUT, check=True)
         elif args.mode == 1:
-            print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
+            if args.type == "m":
+                print(f"{test_name}_main: Test failed. Debug logs saved to {log_file}.")
+            else:
+                print(f"{test_name}_extra: Test failed. Debug logs saved to {log_file}.")
     elif result == "unknown":
-        print(f"{test_name}: Unknown status. Check the log file saved to {log_file}.")
+        if args.type == "m":
+            print(f"{test_name}_main: Unknown status. Check the log file saved to {log_file}.")
+        else:
+            print(f"{test_name}_extra: Unknown status. Check the log file saved to {log_file}.")
 
 def view_waveforms(test_number):
     """View previously saved waveforms for a specific test.
@@ -715,16 +736,18 @@ def execute_tests(args):
             handle_mode_3(list(range(start, end + 1)))
         else:
             # Print a message based on the selected mode and range.
-
-            mode_messages = {
-                0: f"Running all main tests from {start} to {end} in command-line mode...",
-                1: f"Running all main tests from {start} to {end} in saving mode...",
-                2: f"Running all main tests from {start} to {end} in GUI mode..."
-            } if args.type == "m" else mode_messages = {
-                0: f"Running all extra tests from {start} to {end} in command-line mode...",
-                1: f"Running all extra tests from {start} to {end} in saving mode...",
-                2: f"Running all extra tests from {start} to {end} in GUI mode..."
-            }
+            if args.type == "m":
+                mode_messages = {
+                    0: f"Running all main tests from {start} to {end} in command-line mode...",
+                    1: f"Running all main tests from {start} to {end} in saving mode...",
+                    2: f"Running all main tests from {start} to {end} in GUI mode..."
+                }
+            else:
+                mode_messages = {
+                    0: f"Running all extra tests from {start} to {end} in command-line mode...",
+                    1: f"Running all extra tests from {start} to {end} in saving mode...",
+                    2: f"Running all extra tests from {start} to {end} in GUI mode..."
+                }
          
             print(mode_messages.get(args.mode, "Running tests..."))
 
@@ -736,15 +759,19 @@ def execute_tests(args):
         if args.mode == 3:
             handle_mode_3()
         else:
-            mode_messages = {
-                0: "Running all main tests in command-line mode...",
-                1: "Running all main tests in saving mode...",
-                2: "Running all main tests in GUI mode..."
-            } if args.type == "m" else mode_messages = {
-                0: "Running all extra tests in command-line mode...",
-                1: "Running all extra tests in saving mode...",
-                2: "Running all extra tests in GUI mode..."
-            }
+            # Print a message based on the selected type, mode, and range.
+            if args.type == "m":
+                mode_messages = {
+                    0: "Running all main tests in command-line mode...",
+                    1: "Running all main tests in saving mode...",
+                    2: "Running all main tests in GUI mode..."
+                }  
+            else: 
+                mode_messages = {
+                    0: "Running all extra tests in command-line mode...",
+                    1: "Running all extra tests in saving mode...",
+                    2: "Running all extra tests in GUI mode..."
+                }
 
             print(mode_messages.get(args.mode, "Running tests..."))
 
