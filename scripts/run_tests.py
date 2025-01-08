@@ -756,16 +756,16 @@ def print_mode_message(args, range_desc=None):
     """
     # Messages for all tests (-a flag).
     if args.type == "a":
-        if not range_desc:
+        if not range_desc and not args.number:
             print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-        else:
+        elif not args.number:
             print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
     # Messages for specific test types ('main' or 'extra').
     elif args.type in {"m", "e"}:
         test_label = "main" if args.type == "m" else "extra"
-        if not range_desc:
+        if not range_desc and not args.number:
             print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-        else:
+        elif not args.number:
             print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
 
 def main():
