@@ -441,7 +441,7 @@ def get_gui_command(test_num, log_file, args):
     wave_format_file = os.path.join(WAVES_DIR, f"KnightsTour_tb_{test_num}.do")
 
     # Generate waveform command based on the test arguments.
-    add_wave_command = get_wave_command(test_num)
+    add_wave_command = get_wave_command(test_num, args.type)
 
     # Construct the simulation command with necessary flags for waveform generation.
     if test_num == 0:
