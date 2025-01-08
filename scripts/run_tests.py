@@ -764,8 +764,8 @@ def print_mode_message(args, test_type=None, range_desc=None):
         # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
         print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
     
-    # If the "all" flag is not set and a test type is provided, print the message for that test type.
-    elif not args.all and test_type and not hasattr(args, "_all_msg_printed"):
+    # If the "all" flag is not set and a test range is provided, print the message for that test type.
+    elif not args.all and test_type and not args.number and not hasattr(args, "_all_msg_printed"):
         # Dictionary of messages based on the mode.
         mode_messages = {
             0: f"Running {test_type} tests {range_desc} in command-line mode...",
