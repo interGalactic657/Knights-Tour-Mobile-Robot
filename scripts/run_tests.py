@@ -58,7 +58,7 @@ def parse_arguments():
                         help="Debugging mode: 0=Command-line, 1=Save waves, 2=GUI, 3=View saved waves.")
     
     # Argument for specifying to run main/extra tests.
-    parser.add_argument("-t", "--type", type=str, choices=["m", "e"], default="m",
+    parser.add_argument("-t", "--type", type=str, choices=["m", "e"], default=None,
                         help="Specify the type of tests to run the simulation: 'main', 'extra'. Default is 'main'.")
     
     # Argument for specifying to run both main and extra tests.
@@ -763,9 +763,8 @@ def print_mode_message(args, test_type=None, range_desc=None):
         args._all_msg_printed = True
         # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
         print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-    
     # If the "all" flag is not set and a test range is provided, print the message for that test type.
-    elif not args.all and test_type and not args.number and not hasattr(args, "_all_msg_printed"):
+    elif not args.all and test_type and not args.number:
         # Dictionary of messages based on the mode.
         mode_messages = {
             0: f"Running {test_type} tests {range_desc} in command-line mode...",
@@ -798,13 +797,12 @@ def main():
     # Parse the command-line arguments.
     args = parse_arguments()
 
-    if args.all:
+    if args.all and not args.type:
         # Print the "Running all tests..." message once.
         print_mode_message(args)
 
         # Convert `args` into a list of command-line arguments.
         base_args = sys.argv[1:]  # Get all args except the script name.
-        base_args = [arg for arg in base_args if arg != "-a"]  # Remove the `-a` flag.
 
         # Create argument lists for 'main' and 'extra' tests
         args_m = base_args + ["-t", "m"]  # Add `-t m` for main tests
@@ -823,13 +821,11 @@ def main():
                     future.result()  # Will raise an exception if any occurred.
                 except Exception as e:
                     print(f"Running all tests failed with error: {e}")
-        
-            # After both processes complete, print "All tests completed." once.
-            print("All tests completed.")
     else:
-        # Regular logic if -a is not passed (just run one test type).
-        print_mode_message(args, test_type="main" if args.type == "m" else "extra", 
-                           range_desc=f"from {args.range[0]} to {args.range[1]}" if args.range else "")
+        if args.type and not args.all:
+            # Regular logic if -a is not passed (just run one test type).
+            print_mode_message(args, test_type="main" if args.type == "m" else "extra", 
+                            range_desc=f"from {args.range[0]} to {args.range[1]}" if args.range else "")
 
         # Run tests for the specified type.
         execute_test_suite(args, args.type)
