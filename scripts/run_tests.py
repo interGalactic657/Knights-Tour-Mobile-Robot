@@ -525,6 +525,7 @@ def run_test(subdir, test_file, args):
     # Step 1: Compile the testbench.
     compile_files(test_num, test_path, args.type)
 
+    # Append main/extra to the name based on the type.
     if args.type == "m" or test_num == 0:
         test_name += "_main"
     elif args.type == "e":
