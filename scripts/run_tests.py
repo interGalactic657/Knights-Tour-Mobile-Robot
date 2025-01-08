@@ -61,8 +61,8 @@ def parse_arguments():
     parser.add_argument("-t", "--type", type=str, choices=["m", "e"], default="m",
                         help="Specify the type of tests to run the simulation: 'main', 'extra'. Default is 'main'.")
     
-    # Argument for specifying to run main/extra tests.
-    parser.add_argument("-a", "--all", type=str, default=None,
+    # Argument for specifying to run both main and extra tests.
+    parser.add_argument("-a", "--all", action="store_true",
                         help="Specify to run both main and extra tests of the simulation. Default is None.")
         
     # Parse the arguments from the command line.
