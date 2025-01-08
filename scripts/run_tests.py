@@ -61,11 +61,7 @@ def parse_arguments():
     parser.add_argument("-t", "--type", type=str, choices=["m", "e", "a"], default="a",
                         help="Specify the type of tests to run the simulation: 'main', 'extra', 'all. Default is 'all'.")
     
-    # Argument for specifying to run both main and extra tests.
-    parser.add_argument("-a", "--all", action="store_true",
-                        help="Specify to run both main and extra tests of the simulation. Default is None.")
-    
-    # Argument to know if it is a child process or parent.
+    # Argument to know if the current process is a child process or a parent process.
     parser.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
         
     # Parse the arguments from the command line.
@@ -829,7 +825,7 @@ def main():
         args_e = base_args + ["-t", "e"] + ["--child"]  # Add `-t e` for extra tests and add --child arg to indicate it's a spawned process
 
         # Use ProcessPoolExecutor to run the tasks in parallel as separate processes.
-        with ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor(max_workers=24) as executor:
             futures = [
                 executor.submit(subprocess.run, [sys.executable, __file__, *args_m]),
                 executor.submit(subprocess.run, [sys.executable, __file__, *args_e])
