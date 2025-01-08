@@ -4,7 +4,7 @@ import sys
 import argparse
 import subprocess
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 # Constants for directory paths.
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -59,14 +59,18 @@ def parse_arguments():
     
     # Argument for specifying to run main/extra tests.
     parser.add_argument("-t", "--type", type=str, choices=["m", "e"], default="m",
-                        help="Specify the type of tests to run the simulation: 'main' or 'extra'. Default is 'main'.")
+                        help="Specify the type of tests to run the simulation: 'main', 'extra'. Default is 'main'.")
+    
+    # Argument for specifying to run main/extra tests.
+    parser.add_argument("-a", "--all", type=str, default=None,
+                        help="Specify to run both main and extra tests of the simulation. Default is None.")
         
     # Parse the arguments from the command line.
     args = parser.parse_args()
 
     return args
 
-def setup_directories(args):
+def setup_directories(type):
     """Ensure necessary directories exist for logs, compilation, waves, etc.
 
     This function creates all required directories (logs, transcripts, compilation,
@@ -74,7 +78,7 @@ def setup_directories(args):
     not recreated.
 
     Args: 
-        args (argparse.Namespace): Parsed command-line arguments, including mode and test-specific settings.
+        type (str): The type of test file to be run (main/extra).
 
     Raises:
         OSError: If a directory cannot be created.
@@ -83,9 +87,9 @@ def setup_directories(args):
     global OUTPUT_DIR, WAVES_DIR, LOGS_DIR, TRANSCRIPT_DIR, COMPILATION_DIR, LIBRARY_DIR
 
     # Update TYPE_DIR based on the test type.
-    if args.type == "e":
+    if type == "e":
         TYPE_DIR = os.path.join(ROOT_DIR, "extra")
-    elif args.type == "m":
+    elif type == "m":
         TYPE_DIR = os.path.join(ROOT_DIR, "main")
 
     # Paths for directories that depend on TYPE_DIR.
@@ -106,7 +110,7 @@ def get_wave_command(test_num, type):
 
     Args:
         test_num (int): The test number to determine the required signals.
-        type (str): The type of test file to be compiled (main/extra).
+        type (str): The type of test file to be run (main/extra).
 
     Returns:
         str: A string containing the waveform command for the selected signals.
@@ -473,10 +477,7 @@ def run_simulation(test_num, test_name, log_file, args):
     # Precompute the simulation command based on the mode.
     if args.mode == 0:
         if args.number is not None and args.range is None:
-            if args.type == "m":
-                print(f"{test_name}_main: Running in command-line mode...")
-            else:
-                print(f"{test_name}_extra: Running in command-line mode...")
+            print(f"{test_name}: Running in command-line mode...")
 
         # Base simulation command.
         sim_command = f"vsim -c TEST_{test_num}.KnightsTour_tb -logfile {log_file} -do 'run -all; log -flush /*; quit -f;'"
@@ -488,16 +489,10 @@ def run_simulation(test_num, test_name, log_file, args):
     else:
         if args.mode == 1: # Save waveforms and log in file.
             if args.number is not None and args.range is None:
-                if args.type == "m":
-                    print(f"{test_name}_main: Saving waveforms and logging to file...")
-                else:
-                    print(f"{test_name}_extra: Saving waveforms and logging to file...")
+                print(f"{test_name}: Saving waveforms and logging to file...")
         elif args.mode == 2: # GUI mode.
             if args.number is not None and args.range is None:
-                if args.type == "m":
-                    print(f"{test_name}_main: Running in GUI mode...")
-                else:
-                    print(f"{test_name}_extra: Running in GUI mode...")
+                print(f"{test_name}: Running in GUI mode...")
 
         sim_command = get_gui_command(test_num, log_file, args)
 
@@ -531,34 +526,27 @@ def run_test(subdir, test_file, args):
     # Step 1: Compile the testbench.
     compile_files(test_num, test_path, args.type)
 
+    if args.type == "m":
+        test_name += "_main"
+    elif args.type == "e":
+        test_name += "_extra"
+
     # Step 2: Run the simulation and handle different modes.
     result = run_simulation(test_num, test_name, log_file, args)
     
     # Output the result of the test based on the simulation result.
     if result == "success":
-        if args.type == "m":
-            print(f"{test_name}_main: YAHOO!! All tests passed.")
-        else:
-            print(f"{test_name}_extra: YAHOO!! All tests passed.")
+        print(f"{test_name}: YAHOO!! All tests passed.")
     elif result == "error":
         if args.mode == 0:
-            if args.type == "m":
-                print(f"{test_name}_main: Test failed. Saving waveforms for later debug...")
-            else:
-                print(f"{test_name}_extra: Test failed. Saving waveforms for later debug...")
+            print(f"{test_name}: Test failed. Saving waveforms for later debug...")
             debug_command = get_gui_command(test_num, log_file, args)
             with open(log_file, 'w') as log_fh:
                 subprocess.run(debug_command, shell=True, stdout=log_fh, stderr=subprocess.STDOUT, check=True)
         elif args.mode == 1:
-            if args.type == "m":
-                print(f"{test_name}_main: Test failed. Debug logs saved to {log_file}.")
-            else:
-                print(f"{test_name}_extra: Test failed. Debug logs saved to {log_file}.")
+            print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
     elif result == "unknown":
-        if args.type == "m":
-            print(f"{test_name}_main: Unknown status. Check the log file saved to {log_file}.")
-        else:
-            print(f"{test_name}_extra: Unknown status. Check the log file saved to {log_file}.")
+        print(f"{test_name}: Unknown status. Check the log file saved to {log_file}.")
 
 def view_waveforms(test_number):
     """View previously saved waveforms for a specific test.
@@ -587,6 +575,9 @@ def execute_tests(args):
 
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
+
+    Returns:
+        None
     """
     def get_all_test_numbers():
         """
@@ -685,7 +676,7 @@ def execute_tests(args):
         This function uses a ThreadPoolExecutor to view waveforms concurrently, improving the speed of I/O-bound operations.
         """
         with ThreadPoolExecutor(max_workers=18) as executor:  # Increased worker count
-            futures = [executor.submit(view_waveforms, i, args.type) for i in test_numbers]
+            futures = [executor.submit(view_waveforms, i) for i in test_numbers]
             for future in futures:
                 try:
                     future.result()  # Will raise an exception if any occurred
@@ -738,22 +729,6 @@ def execute_tests(args):
             # Mode 3: View waveforms for the test range.
             handle_mode_3(list(range(start, end + 1)))
         else:
-            # Print a message based on the selected mode and range.
-            if args.type == "m":
-                mode_messages = {
-                    0: f"Running all main tests from {start} to {end} in command-line mode...",
-                    1: f"Running all main tests from {start} to {end} in saving mode...",
-                    2: f"Running all main tests from {start} to {end} in GUI mode..."
-                }
-            else:
-                mode_messages = {
-                    0: f"Running all extra tests from {start} to {end} in command-line mode...",
-                    1: f"Running all extra tests from {start} to {end} in saving mode...",
-                    2: f"Running all extra tests from {start} to {end} in GUI mode..."
-                }
-         
-            print(mode_messages.get(args.mode, "Running tests..."))
-
             # Collect and run the tests in the specified range.
             tests = get_tests_in_range(start, end)
             run_parallel_tests(tests)  # Parallel execution for faster results.
@@ -761,47 +736,100 @@ def execute_tests(args):
         # If no specific test or range is provided, run all tests.
         if args.mode == 3:
             handle_mode_3()
-        else:
-            # Print a message based on the selected type, mode, and range.
-            if args.type == "m":
-                mode_messages = {
-                    0: "Running all main tests in command-line mode...",
-                    1: "Running all main tests in saving mode...",
-                    2: "Running all main tests in GUI mode..."
-                }  
-            else: 
-                mode_messages = {
-                    0: "Running all extra tests in command-line mode...",
-                    1: "Running all extra tests in saving mode...",
-                    2: "Running all extra tests in GUI mode..."
-                }
-
-            print(mode_messages.get(args.mode, "Running tests..."))
-
+        else:                
             # Collect and run all tests.
             tests = collect_all_tests()
             run_parallel_tests(tests)  # Parallel execution for faster results.
+
+def print_mode_message(args, test_type=None, range_desc=None):
+    """
+    Prints an appropriate message based on the provided mode, test type, and range of tests.
+
+    This function ensures that messages are printed only once in case of the `-a` (all tests) flag,
+    preventing duplication when both main and extra tests are run in parallel. It checks the 
+    presence of `args.all` to decide whether to print a message for all tests or individual tests.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments, which include the mode and flag for all tests.
+        test_type (str, optional): Specifies the type of tests being run ('main' or 'extra'). Defaults to None.
+        range_desc (str, optional): Describes the range of tests (e.g., "from 1 to 5"). Defaults to None.
+
+    Returns:
+        None: This function prints messages to the console and does not return any value.
+    """
+    # Check if all tests are being run and if the message has not been printed before.
+    if args.all and not hasattr(args, "_all_msg_printed"):
+        # Set the flag to avoid printing the message again.
+        args._all_msg_printed = True
+        # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
+        print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+    
+    # If the "all" flag is not set and a test type is provided, print the message for that test type.
+    elif not args.all and test_type and not hasattr(args, "_all_msg_printed"):
+        # Dictionary of messages based on the mode.
+        mode_messages = {
+            0: f"Running {test_type} tests {range_desc} in command-line mode...",
+            1: f"Running {test_type} tests {range_desc} in saving mode...",
+            2: f"Running {test_type} tests {range_desc} in GUI mode..."
+        }
+        # Print the corresponding message for the selected mode.
+        print(mode_messages.get(args.mode, "Running tests..."))
+
+def execute_test_suite(args, test_type):
+    """
+    Wrapper to execute tests for a specific test type (main or extra).
+
+    Args:
+        args: Parsed command-line arguments.
+        test_type (str): Either 'm' or 'e' for main or extra tests.
+    """
+    setup_directories(test_type)
+    execute_tests(args)
 
 def main():
     """Main function to parse arguments, set up directories, and execute tests.
 
     This function is the entry point for the test execution process. It performs the following tasks:
     - Parses the command-line arguments using `parse_arguments`.
-    - Ensures necessary directories exist using `setup_directories`.
-    - Executes the tests based on the parsed arguments using `execute_tests`.
+    - Spawns parallel execution for `main` and `extra` tests if `args.all` is set.
+    - Executes a specific test type based on `args.type` if `args.all` is not set.
     - Prints a completion message once all tests are finished.
-
-    Args:
-        None
     """
     # Parse the command-line arguments.
     args = parse_arguments()
 
-    # Set up necessary directories for test execution (logs, transcripts, etc.).
-    setup_directories(args)
+    if args.all:
+        # Print the "Running all tests..." message once.
+        print_mode_message(args)
 
-    # Execute the tests based on the parsed arguments.
-    execute_tests(args)
+        # Convert `args` into a list of command-line arguments.
+        base_args = sys.argv[1:]  # Get all args except the script name.
+        base_args = [arg for arg in base_args if arg != "-a"]  # Remove the `-a` flag.
+
+        # Create argument lists for 'main' and 'extra' tests
+        args_m = base_args + ["-t", "m"]  # Add `-t m` for main tests
+        args_e = base_args + ["-t", "e"]  # Add `-t e` for extra tests
+
+        # Use ProcessPoolExecutor to run the tasks in parallel as separate processes.
+        with ProcessPoolExecutor() as executor:
+            futures = [
+                executor.submit(subprocess.run, [sys.executable, __file__, *args_m]),
+                executor.submit(subprocess.run, [sys.executable, __file__, *args_e])
+            ]
+            
+            # Wait for all processes to complete.
+            for future in futures:
+                try:
+                    future.result()  # Will raise an exception if any occurred.
+                except Exception as e:
+                    print(f"Running all tests failed with error: {e}")
+    else:
+        # Regular logic if -a is not passed (just run one test type).
+        print_mode_message(args, test_type="main" if args.type == "m" else "extra", 
+                           range_desc=f"from {args.range[0]} to {args.range[1]}" if args.range else "")
+
+        # Run tests for the specified type.
+        execute_test_suite(args, args.type)
 
     # Print completion message after all tests are done.
     print("All tests completed.")
