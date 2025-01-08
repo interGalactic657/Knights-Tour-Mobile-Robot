@@ -742,50 +742,32 @@ def execute_tests(args):
 
 def print_mode_message(args, test_type=None, range_desc=None):
     """
-    Prints an appropriate message based on the provided mode, test type, and range of tests.
+    Prints an appropriate message based on the mode, test type, and range of tests.
 
-    This function ensures that messages are printed only once in case of the `-a` (all tests) flag,
-    preventing duplication when both main and extra tests are run in parallel. It checks the 
-    presence of `args.all` to decide whether to print a message for all tests or individual tests.
+    Ensures messages are printed only once, especially when the `-a` (all tests) flag is used
+    and tests are run in parallel. Distinguishes between parent and child processes.
 
     Args:
-        args (argparse.Namespace): Parsed command-line arguments, which include the mode and flag for all tests.
-        test_type (str, optional): Specifies the type of tests being run ('main' or 'extra'). Defaults to None.
+        args (argparse.Namespace): Parsed command-line arguments.
+        test_type (str, optional): Specifies the type of tests ('main' or 'extra'). Defaults to None.
         range_desc (str, optional): Describes the range of tests (e.g., "from 1 to 5"). Defaults to None.
 
     Returns:
-        None: This function prints messages to the console and does not return any value.
+        None
     """
-    # Check if all tests are being run.
-    if args.type == "a": 
-        if test_type is None and range_desc is None:
-            # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
+    # Messages for all tests (-a flag)
+    if args.type == "a":
+        if not range_desc:
             print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-        elif test_type is None and range_desc:
-            # If the "all" flag is not set and a test range is provided, print the message for that test type.
-            mode_messages = {
-                0: f"Running all tests {range_desc} in command-line mode...",
-                1: f"Running all tests {range_desc} in saving mode...",
-                2: f"Running all tests {range_desc} in GUI mode..."
-            }
-
-            # Print the corresponding message for the selected mode.
-            print(mode_messages.get(args.mode, "Running tests..."))
-    # If the "all" flag is not set and a test range is provided, print the message for that test type.
-    elif args.type == "m" or args.type == "e": 
-        if test_type and range_desc is None:
-            # Print the message for running all tests, with the appropriate mode (command-line, saving, or GUI).
-            print(f"Running all {test_type} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-        elif test_type and range_desc:
-            # If the "all" flag is not set and a test range is provided, print the message for that test type.
-            mode_messages = {
-                0: f"Running {test_type} tests {range_desc} in command-line mode...",
-                1: f"Running {test_type} tests {range_desc} in saving mode...",
-                2: f"Running {test_type} tests {range_desc} in GUI mode..."
-            }
-
-            # Print the corresponding message for the selected mode.
-            print(mode_messages.get(args.mode, "Running tests..."))
+        else:
+            print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+    # Messages for specific test types ('main' or 'extra')
+    elif args.type in {"m", "e"}:
+        test_label = "main" if args.type == "m" else "extra"
+        if not range_desc:
+            print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+        else:
+            print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
 
 def execute_test_suite(args, test_type):
     """
@@ -821,8 +803,8 @@ def main():
         base_args = sys.argv[1:]  # Get all args except the script name.
 
         # Create argument lists for 'main' and 'extra' tests
-        args_m = base_args + ["-t", "m"] + ["--child"]  # Add `-t m` for main tests and add --child arg to indicate it's a spawned process
-        args_e = base_args + ["-t", "e"] + ["--child"]  # Add `-t e` for extra tests and add --child arg to indicate it's a spawned process
+        args_m = base_args + ["-t", "m"] + ["--child"]  # Add `-t m` for main tests and add --child arg to indicate it's a spawned process.
+        args_e = base_args + ["-t", "e"] + ["--child"]  # Add `-t e` for extra tests and add --child arg to indicate it's a spawned process.
 
         # Use ProcessPoolExecutor to run the tasks in parallel as separate processes.
         with ProcessPoolExecutor(max_workers=24) as executor:
