@@ -13,19 +13,23 @@ DESIGN_DIR = os.path.join(ROOT_DIR, "designs")
 TEST_DIR = os.path.join(ROOT_DIR, "tests")
 CELL_LIBRARY_PATH = os.path.join(TEST_DIR, "SAED32_lib")
 
-OUTPUT_DIR = os.path.join(ROOT_DIR, "output")
+TYPE_DIR = None
+OUTPUT_DIR = os.path.join(TYPE_DIR, "output")
+WAVES_DIR = os.path.join(OUTPUT_DIR, "waves")
 LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")
 TRANSCRIPT_DIR = os.path.join(LOGS_DIR, "transcript")
 COMPILATION_DIR = os.path.join(LOGS_DIR, "compilation")
-WAVES_DIR = os.path.join(OUTPUT_DIR, "waves")
 
-LIBRARY_DIR = os.path.join(ROOT_DIR, "TESTS")
+LIBRARY_DIR = os.path.join(TYPE_DIR, "TESTS")
 
 # Test mapping for subdirectories and file ranges.
 TEST_MAPPING = {
     "simple": range(0, 2),
     "move": range(2, 15),
-    "logic": range(15, 29)
+    "logic": {
+        "main": range(15, 28),
+        "extra": range(15, 28),
+    }
 }
 
 # Stores the add wave command for a range of tests for better performance.
@@ -53,34 +57,53 @@ def parse_arguments():
     # Argument for specifying the debugging mode.
     parser.add_argument("-m", "--mode", type=int, choices=[0, 1, 2, 3], default=0,
                         help="Debugging mode: 0=Command-line, 1=Save waves, 2=GUI, 3=View saved waves.")
+    
+    # Argument for specifying to run main/extra tests.
+    parser.add_argument("-t", "--type", type=str, choices=["m", "e"], default="m",
+                        help="Specify the type of tests to run the simulation: 'main' or 'extra'. Default is 'main'.")
         
     # Parse the arguments from the command line.
     args = parser.parse_args()
 
     return args
 
-def setup_directories():
+def setup_directories(args):
     """Ensure necessary directories exist for logs, compilation, waves, etc.
 
     This function creates all required directories (logs, transcripts, compilation,
     waveform output, and the library). If the directories already exist, they are
     not recreated.
 
+    Args: 
+        args (argparse.Namespace): Parsed command-line arguments, including mode and test-specific settings.
+
     Raises:
         OSError: If a directory cannot be created.
     """
-    # Paths for all required directories (using pathlib for better cross-platform compatibility)
+    # Modifying the TYPE_DIR variable declared above.
+    global TYPE_DIR
+
+    # Paths for all required directories (using pathlib for better cross-platform compatibility).
     directories = [Path(OUTPUT_DIR), Path(LOGS_DIR), Path(TRANSCRIPT_DIR), Path(COMPILATION_DIR), Path(WAVES_DIR), Path(LIBRARY_DIR)]
 
-    # Ensure all required directories exist
+    # Create the type directory based on the type of test(s) to run.
+    if args.type == "e":
+        TYPE_DIR = os.path.join(ROOT_DIR, "extra")
+        directories.insert(0, Path(TYPE_DIR))
+    elif args.type == "m":
+        TYPE_DIR = os.path.join(ROOT_DIR, "main")
+        directories.insert(0, Path(TYPE_DIR))
+
+    # Ensure all required directories exist.
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
 
-def get_wave_command(test_num):
+def get_wave_command(test_num, type):
     """Generate the command for waveform signals based on the test number.
 
     Args:
         test_num (int): The test number to determine the required signals.
+        type (str): The type of test file to be compiled (main/extra).
 
     Returns:
         str: A string containing the waveform command for the selected signals.
@@ -102,13 +125,22 @@ def get_wave_command(test_num):
         ]
     else: # test_num >= 15
         key = (15, float('inf'))
-        default_signals = [
-            "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
-            "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs",
-            "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "iDUT/iTC/send_resp", "iRMT/resp",
-            "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state",
-            "iDUT/iCMD/tour_go", "iDUT/iTL/done", "iDUT/fanfare_go", "iDUT/ISPNG/state"
-        ]
+        if type == "m":
+            default_signals = [
+                "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
+                "iDUT/iCMD/lftIR", "iPHYS/cntrIR_n", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs",
+                "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "iDUT/iTC/send_resp", "iRMT/resp",
+                "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state",
+                "iDUT/iCMD/tour_go", "iDUT/iTL/done", "iDUT/fanfare_go", "iDUT/ISPNG/state"
+            ]
+        else:
+            default_signals = [
+                "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
+                "iDUT/iCMD/lftIR", "iPHYS/cntrIR_n", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs", "iDUT/iCMD/y_pos", "iDUT/y_offset", 
+                "iDUT/iCMD/came_back", "iDUT/iCMD/off_board", "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "iDUT/iTC/send_resp", "iRMT/resp",
+                "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state",
+                "iDUT/iCMD/tour_go", "iDUT/iTL/done", "iDUT/fanfare_go", "iDUT/ISPNG/state"
+            ]
 
     # Check if the result for this range is cached.
     if key in _wave_command_cache:
@@ -342,12 +374,13 @@ def check_logs(test_num, logfile, mode):
     elif mode == "c":
         return check_compilation(logfile)
 
-def compile_files(test_num, test_path):
+def compile_files(test_num, test_path, type):
     """Compile the required files for the test simulation.
 
     Args:
         test_num (int): The test number to identify the test for compilation.
         test_path (str): The path to the test file to be compiled.
+        type (str): The type of test file to be compiled (main/extra).
 
     Raises:
         SystemExit: If compilation fails, the program exits with an error.
@@ -357,7 +390,8 @@ def compile_files(test_num, test_path):
 
     # Determine the files to compile based on the test number.
     if test_num != 0:
-        all_files = f"../designs/pre_synthesis/*.sv ../tests/*.sv {test_path}"
+        test_type = "main" if type == "m" else "extra"
+        all_files = f"../designs/pre_synthesis/*.sv ../designs/pre_synthesis/{test_type}/*.sv  ../tests/*.sv {test_path}"
     else:
         all_files = f"-timescale=1ns/1ps ../tests/*.sv ../designs/pre_synthesis/UART.sv ../designs/pre_synthesis/*_r* ../designs/pre_synthesis/*_tx* ../designs/post_synthesis/*.vg {test_path}"
     
@@ -483,7 +517,7 @@ def run_test(subdir, test_file, args):
     test_num = int(re.search(r'\d+', test_name).group()) if re.search(r'\d+', test_name) else None
 
     # Step 1: Compile the testbench.
-    compile_files(test_num, test_path)
+    compile_files(test_num, test_path, args.type)
 
     # Step 2: Run the simulation and handle different modes.
     result = run_simulation(test_num, test_name, log_file, args)
@@ -511,9 +545,10 @@ def view_waveforms(test_number):
     Returns:
         None: This function executes the simulation command to view waveforms.
     """
-    # Change to the wave directory and view the saved waveforms
+    # Change to the wave directory and view the saved waveforms.    
+    os.chdir(WAVES_DIR)
+
     with open(f"./transcript_{test_number}", 'w') as transcript:
-        os.chdir(WAVES_DIR)
         print(f"KnightsTour_tb_{test_number}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
         subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
@@ -529,8 +564,26 @@ def execute_tests(args):
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
     """
+    def get_all_test_numbers():
+        """
+        Get all test numbers based on the subdirectory.
+
+        Returns:
+            list: A list of test numbers for the specified subdirectory.
+        """
+        all_tests = []
+        for directory, test_range in TEST_MAPPING.items():
+            if isinstance(test_range, dict):  # Handle subdirectories for "logic"
+                subdir = "main" if args.type == "m" else "extra"
+                if subdir in test_range:
+                    all_tests.extend(test_range[subdir])
+            else:  # Simple directories like "simple" or "move"
+                all_tests.extend(test_range)
+        return all_tests
+
     def get_tests_in_range(start, end):
-        """Collect test files for a given range of tests.
+        """
+        Collect test files for a given range of tests.
 
         Args:
             start (int): The starting test number.
@@ -539,14 +592,25 @@ def execute_tests(args):
         Returns:
             list: A list of tuples containing the subdirectory and test file for each test in the range.
         """
-        return [
-            (subdir, f"KnightsTour_tb_{i}.sv")
-            for subdir, test_range in TEST_MAPPING.items()
-            for i in test_range if start <= i <= end
-        ]
+        result = []
+        for directory, test_range in TEST_MAPPING.items():
+            if isinstance(test_range, dict):  # Handle subdirectories for "logic"
+                subdir = "main" if args.type == "m" else "extra"
+                if subdir in test_range:
+                    result.extend(
+                        (f"{directory}/{subdir}", f"KnightsTour_tb_{i}.sv")
+                        for i in test_range[subdir] if start <= i <= end
+                    )
+            else:  # Simple directories like "simple" or "move"
+                result.extend(
+                    (directory, f"KnightsTour_tb_{i}.sv")
+                    for i in test_range if start <= i <= end
+                )
+        return result
 
     def collect_all_tests():
-        """Collect all available test files.
+        """
+        Collect all available test files.
 
         This function collects all test files that match the naming convention 
         'KnightsTour_tb_*.sv' from all subdirectories in the test directory.
@@ -554,12 +618,23 @@ def execute_tests(args):
         Returns:
             list: A list of tuples containing the subdirectory and test file for all available tests.
         """
-        return [
-            (subdir, test_file)
-            for subdir in TEST_MAPPING.keys()
-            for test_file in os.listdir(os.path.join(TEST_DIR, subdir))
-            if test_file.startswith("KnightsTour_tb")
-        ]
+        result = []
+        for directory, test_range in TEST_MAPPING.items():
+            if isinstance(test_range, dict):  # Handle subdirectories for "logic"
+                subdir = "main" if args.type == "m" else "extra"
+                if subdir in test_range:
+                    result.extend(
+                        (f"{directory}/{subdir}", test_file)
+                        for test_file in os.listdir(os.path.join(TEST_DIR, f"{directory}/{subdir}"))
+                        if test_file.startswith("KnightsTour_tb")
+                    )
+            else:  # Simple directories like "simple" or "move"
+                result.extend(
+                    (directory, test_file)
+                    for test_file in os.listdir(os.path.join(TEST_DIR, directory))
+                    if test_file.startswith("KnightsTour_tb")
+                )
+        return result
 
     def run_parallel_tests(tests):
         """Run multiple tests in parallel using threads.
@@ -586,7 +661,7 @@ def execute_tests(args):
         This function uses a ThreadPoolExecutor to view waveforms concurrently, improving the speed of I/O-bound operations.
         """
         with ThreadPoolExecutor(max_workers=18) as executor:  # Increased worker count
-            futures = [executor.submit(view_waveforms, i) for i in test_numbers]
+            futures = [executor.submit(view_waveforms, i, args.type) for i in test_numbers]
             for future in futures:
                 try:
                     future.result()  # Will raise an exception if any occurred
@@ -620,51 +695,62 @@ def execute_tests(args):
         if test_range:
             view_parallel_waves(test_range)
         else:
-            all_tests = [i for subdir, test_range in TEST_MAPPING.items() for i in test_range]
+            all_tests = get_all_test_numbers()
             view_parallel_waves(all_tests)
 
-    # Handle different cases based on parsed arguments
+    # Handle different cases based on parsed arguments.
     if args.number is not None:
-        # If a specific test number is provided, run that test
+        # If a specific test number is provided, run that test.
         if args.mode == 3:
-            # Mode 3: View waveforms for the specific test
+            # Mode 3: View waveforms for the specific test.
             handle_mode_3([args.number])
         else:
-            # Run the specific test
+            # Run the specific test.
             run_specific_test(args.number)
     elif args.range is not None:
-        # If a range of tests is provided, run all tests in that range
+        # If a range of tests is provided, run all tests in that range.
         start, end = args.range
         if args.mode == 3:
-            # Mode 3: View waveforms for the test range
+            # Mode 3: View waveforms for the test range.
             handle_mode_3(list(range(start, end + 1)))
         else:
-            # Print a message based on the selected mode and range
+            # Print a message based on the selected mode and range.
+
             mode_messages = {
-                0: f"Running all tests from {start} to {end} in command-line mode...",
-                1: f"Running all tests from {start} to {end} in saving mode...",
-                2: f"Running all tests from {start} to {end} in GUI mode..."
+                0: f"Running all main tests from {start} to {end} in command-line mode...",
+                1: f"Running all main tests from {start} to {end} in saving mode...",
+                2: f"Running all main tests from {start} to {end} in GUI mode..."
+            } if args.type == "m" else mode_messages = {
+                0: f"Running all extra tests from {start} to {end} in command-line mode...",
+                1: f"Running all extra tests from {start} to {end} in saving mode...",
+                2: f"Running all extra tests from {start} to {end} in GUI mode..."
             }
+         
             print(mode_messages.get(args.mode, "Running tests..."))
 
-            # Collect and run the tests in the specified range
+            # Collect and run the tests in the specified range.
             tests = get_tests_in_range(start, end)
-            run_parallel_tests(tests)  # Parallel execution for faster results
+            run_parallel_tests(tests)  # Parallel execution for faster results.
     else:
-        # If no specific test or range is provided, run all tests
+        # If no specific test or range is provided, run all tests.
         if args.mode == 3:
             handle_mode_3()
         else:
             mode_messages = {
-                0: "Running all tests in command-line mode...",
-                1: "Running all tests in saving mode...",
-                2: "Running all tests in GUI mode..."
+                0: "Running all main tests in command-line mode...",
+                1: "Running all main tests in saving mode...",
+                2: "Running all main tests in GUI mode..."
+            } if args.type == "m" else mode_messages = {
+                0: "Running all extra tests in command-line mode...",
+                1: "Running all extra tests in saving mode...",
+                2: "Running all extra tests in GUI mode..."
             }
+
             print(mode_messages.get(args.mode, "Running tests..."))
 
-            # Collect and run all tests
+            # Collect and run all tests.
             tests = collect_all_tests()
-            run_parallel_tests(tests)  # Parallel execution for faster results
+            run_parallel_tests(tests)  # Parallel execution for faster results.
 
 def main():
     """Main function to parse arguments, set up directories, and execute tests.
@@ -682,7 +768,7 @@ def main():
     args = parse_arguments()
 
     # Set up necessary directories for test execution (logs, transcripts, etc.).
-    setup_directories()
+    setup_directories(args)
 
     # Execute the tests based on the parsed arguments.
     execute_tests(args)

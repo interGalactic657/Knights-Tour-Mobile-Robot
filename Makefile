@@ -54,10 +54,10 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 # to regenerate these files.
 ./designs/post_synthesis/KnightsTour.vg: ./scripts/KnightsTour.dc ./designs/pre_synthesis/*.sv ./designs/pre_synthesis/main/*.sv 
 	@echo "Synthesizing KnightsTour to Synopsys 32-nm Cell Library..."
-	@mkdir -p ./synthesis
+	@mkdir -p ./main/synthesis
 	@mkdir -p ./designs/post_synthesis
-	@mkdir -p ./output/logs/compilation
-	@mkdir -p ./output/logs/transcript/reports/
+	@mkdir -p ./main/output/logs/compilation
+	@mkdir -p ./main/output/logs/transcript/reports/
 	@cd ./synthesis && echo "source ../scripts/KnightsTour.dc; report_register -level_sensitive; check_design; exit;" | dc_shell -no_gui > ../output/logs/compilation/synth_compilation.log 2>&1
 	@echo "Synthesis complete. Run 'make log c s' for details."
 
@@ -66,17 +66,19 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 # Executes test cases based on the provided mode and arguments.
 #
 # Usage:
-#   make run                        - Runs all tests in default mode.
-#   make run <test_number>          - Runs a specific test by number.
-#   make run <test_range>           - Runs a range of tests.
-#   make run v <args>               - View waveforms in GUI mode.
-#   make run g <args>               - Run tests in GUI mode.
-#   make run s <args>               - Run tests and save waveforms.
+#   make run 	              - Runs all main and extra tests in CMD mode (in parallel) by default.
+#   make run <test_number>    - Runs a specific test by number.
+#   make run <test_range>     - Runs a range of tests.
+#   make run m/e g <args>     - Run main/extra tests in GUI mode.
+#   make run m/e s <args>     - Run main/extra tests in GUI mode and save waveforms.
+#   make run m/e v <args>     - View main/extra waveforms in GUI mode.
 #
 # Arguments:
-#   v - View waveforms in GUI mode.
+#   m - Run main tests
+#   e - Run extra tests.
 #   g - Run tests in GUI mode.
 #   s - Run tests and save waveforms.
+#   v - View waveforms in GUI mode.
 #   <test_number> - The number of the test to execute.
 #   <test_range>  - A range of tests to execute, e.g., 1-10.
 #
@@ -84,7 +86,7 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 # This target determines the behavior based on the number and type of
 # arguments passed (`runargs`). It invokes a Python script with the
 # appropriate mode flags:
-#   - Mode 0: Default mode.
+#   - Mode 0: CMD mode.
 #   - Mode 1: Save waveforms.
 #   - Mode 2: GUI mode.
 #   - Mode 3: View waveforms in GUI mode.
@@ -94,49 +96,120 @@ synthesis: ./designs/post_synthesis/KnightsTour.vg
 run:
 	@if [ "$(words $(runargs))" -eq 0 ]; then \
 		# No arguments: Default behavior. \
-		cd scripts && python3 run_tests.py -m 0; \
+		cd scripts && python3 run_tests.py -m 0 -t m & python3 run_tests.py -m 0 -t e & wait; \
 	elif [ "$(words $(runargs))" -ge 1 ]; then \
 		case "$(word 1,$(runargs))" in \
-		v) \
-			# If 'v' is specified, view waveforms in GUI mode. \
-			if [ "$(words $(runargs))" -eq 3 ]; then \
-				cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 3; \
-			elif [ "$(words $(runargs))" -eq 2 ]; then \
-				cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 3; \
-			else \
-				cd scripts && python3 run_tests.py -m 3; \
+        e) \
+			# If 'e' is specified, run all extra tests in CMD mode. \
+			if [ "$(words $(runargs))" -eq 1 ]; then \
+				cd scripts && python3 run_tests.py -m 0 -t e; \
+			else
+				case "$(word 2,$(runargs))" in \
+				v) \
+					# If 'v' is specified, view waveforms in GUI mode. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 3 -t e; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 3 -t e; \
+					else \
+						cd scripts && python3 run_tests.py -m 3 -t e; \
+					fi ;; \
+				g) \
+					# If 'g' is specified, run tests in GUI mode. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 2 -t e; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 2 -t e; \
+					else \
+						cd scripts && python3 run_tests.py -m 2 -t e; \
+					fi ;; \
+				s) \
+					# If 's' is specified, run tests and save waveforms. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 1 -t e; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 1 -t e; \
+					else \
+						cd scripts && python3 run_tests.py -m 1 -t e; \
+					fi ;; \
+				[0-9]*) \
+					# Default mode (command-line mode) with test number or range. \
+					if [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0 -t e; \
+					elif [ "$(words $(runargs))" -eq 2 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0 -t e; \
+					else \
+						echo "Error: Invalid argument combination."; \
+						exit 1; \
+					fi ;; \
+				*) \
+					# Invalid argument error. \
+					echo "Error: Invalid mode or arguments. Supported modes are:"; \
+					echo "  v - View waveforms in GUI mode"; \
+					echo "  g - Run tests in GUI mode"; \
+					echo "  s - Run tests and save waveforms"; \
+					echo "  <test_number>/<test_range> - Run specific tests"; \
+					exit 1 ;; \
+				esac; \
 			fi ;; \
-		g) \
-			# If 'g' is specified, run tests in GUI mode. \
-			if [ "$(words $(runargs))" -eq 3 ]; then \
-				cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 2; \
-			elif [ "$(words $(runargs))" -eq 2 ]; then \
-				cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 2; \
+		m) \
+			# If 'm is specified, run all main tests in CMD mode. \
+			if [ "$(words $(runargs))" -eq 1 ]; then \
+				cd scripts && python3 run_tests.py -m 0; \
 			else \
-				cd scripts && python3 run_tests.py -m 2; \
-			fi ;; \
-		s) \
-			# If 's' is specified, run tests and save waveforms. \
-			if [ "$(words $(runargs))" -eq 3 ]; then \
-				cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 1; \
-			elif [ "$(words $(runargs))" -eq 2 ]; then \
-				cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 1; \
-			else \
-				cd scripts && python3 run_tests.py -m 1; \
-			fi ;; \
-		[0-9]*) \
-			# Default mode (command-line mode) with test number or range. \
-			if [ "$(words $(runargs))" -eq 2 ]; then \
-				cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
-			elif [ "$(words $(runargs))" -eq 1 ]; then \
-				cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0; \
-			else \
-				echo "Error: Invalid argument combination."; \
-				exit 1; \
+				case "$(word 2,$(runargs))" in \
+				v) \
+					# If 'v' is specified, view waveforms in GUI mode. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 3; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 3; \
+					else \
+						cd scripts && python3 run_tests.py -m 3; \
+					fi ;; \
+				g) \
+					# If 'g' is specified, run tests in GUI mode. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 2; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 2; \
+					else \
+						cd scripts && python3 run_tests.py -m 2; \
+					fi ;; \
+				s) \
+					# If 's' is specified, run tests and save waveforms. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 1; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 1; \
+					else \
+						cd scripts && python3 run_tests.py -m 1; \
+					fi ;; \
+				[0-9]*) \
+					# Default mode (command-line mode) with test number or range. \
+					if [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
+					elif [ "$(words $(runargs))" -eq 2 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0; \
+					else \
+						echo "Error: Invalid argument combination."; \
+						exit 1; \
+					fi ;; \
+				*) \
+					# Invalid argument error. \
+					echo "Error: Invalid mode or arguments. Supported modes are:"; \
+					echo "  v - View waveforms in GUI mode"; \
+					echo "  g - Run tests in GUI mode"; \
+					echo "  s - Run tests and save waveforms"; \
+					echo "  <test_number>/<test_range> - Run specific tests"; \
+					exit 1 ;; \
+				esac; \
 			fi ;; \
 		*) \
 			# Invalid argument error. \
 			echo "Error: Invalid mode or arguments. Supported modes are:"; \
+			echo "  m - Run main tests"; \
+			echo "  e - Run extra tests"; \
 			echo "  v - View waveforms in GUI mode"; \
 			echo "  g - Run tests in GUI mode"; \
 			echo "  s - Run tests and save waveforms"; \
@@ -146,8 +219,8 @@ run:
 	else \
 		# Invalid usage: Display error and usage information. \
 		echo "Error: Invalid arguments. Usage:"; \
-		echo "  make run v|g|s <test_number>/<test_range>"; \
-		echo "  make run <test_number>/<test_range>"; \
+		echo "  make run m|e v|g|s <test_number>/<test_range>"; \
+		echo "  make run m|e <test_number>/<test_range>"; \
 		exit 1; \
 	fi;
 
@@ -156,9 +229,9 @@ run:
 # Displays various log files depending on the specified mode and arguments.
 #
 # Usage:
-#   make log s <report_type>       - Displays synthesis reports based on the specified type.
-#   make log c <type/number>       - Displays compilation logs based on type or test number.
-#   make log t <test_number>       - Displays transcript logs for a specific test.
+#   make log s <report_type>  - Displays synthesis reports based on the specified type.
+#   make log c <type/number>  - Displays compilation logs based on type or test number.
+#   make log t <test_number>  - Displays transcript logs for a specific test.
 #
 # Arguments:
 #   s - For displaying synthesis-related reports:
@@ -167,8 +240,8 @@ run:
 #       x - Max delay report.
 #   c - For displaying compilation logs:
 #       s - Synthesis compilation log.
-#       <test_number> - Compilation log for a specific test.
-#   t - For displaying transcript logs for a specific test.
+#       m|e <test_number> - Compilation log for a specific test (main/extra).
+#   t - For displaying transcript logs for a specific test (main/extra).
 #
 # Description:
 # This target checks for different modes (`s`, `c`, `t`) and performs corresponding actions
@@ -184,44 +257,57 @@ log:
 			case "$(word 2,$(logargs))" in \
 			a) \
 				echo "Displaying area report:"; \
-				cat ./output/logs/transcript/reports/KnightsTour_area.txt ;; \
+				cat ./main/output/logs/transcript/reports/KnightsTour_area.txt ;; \
 			n) \
 				echo "Displaying min delay report:"; \
-				cat ./output/logs/transcript/reports/KnightsTour_min_delay.txt ;; \
+				cat ./main/output/logs/transcript/reports/KnightsTour_min_delay.txt ;; \
 			x) \
 				echo "Displaying max delay report:"; \
-				cat ./output/logs/transcript/reports/KnightsTour_max_delay.txt ;; \
+				cat ./main/output/logs/transcript/reports/KnightsTour_max_delay.txt ;; \
 			*) \
 				echo "Error: Invalid sub-argument for 's' log type."; \
 				exit 1 ;; \
 			esac ;; \
 		c) \
-			if [ "$(words $(logargs))" -eq 2 ]; then \
+			if [ "$(words $(logargs))" -ge 2 ]; then \
 				case "$(word 2,$(logargs))" in \
 				s) \
 					echo "Displaying synthesis compilation log:"; \
-					cat ./output/logs/compilation/synth_compilation.log ;; \
+					cat ./main/output/logs/compilation/synth_compilation.log ;; \
+				m) \
+					echo "Displaying compilation log for main test $(word 3,$(logargs)):"; \
+					cat ./main/output/logs/compilation/compilation_$(word 3,$(logargs)).log ;; \
+				e) \
+					echo "Displaying compilation log for extra test $(word 3,$(logargs)):"; \
+					cat ./extra/output/logs/compilation/compilation_$(word 3,$(logargs)).log ;; \
 				*) \
-					echo "Displaying compilation log for test $(word 2,$(logargs)):"; \
-					cat ./output/logs/compilation/compilation_$(word 2,$(logargs)).log ;; \
+					echo "Error: 'c' requires a test type and test number (e.g., make log c m 3)."; \
 				esac; \
 			else \
 				echo "Error: Invalid argument for log target."; \
 				exit 1; \
 			fi ;; \
 		t) \
-			if [ "$(words $(logargs))" -eq 2 ]; then \
-				echo "Displaying transcript log for test $(word 2,$(logargs)):"; \
-				cat ./output/logs/transcript/KnightsTour_tb_$(word 2,$(logargs)).log; \
+			if [ "$(words $(logargs))" -ge 3 ]; then \
+				case "$(word 2,$(logargs))" in \
+				m) \
+					echo "Displaying transcript log for main test $(word 3,$(logargs)):"; \
+					cat ./main/output/logs/transcript/KnightsTour_tb_$(word 3,$(logargs)).log; \
+				e) \
+					echo "Displaying transcript log for extra test $(word 3,$(logargs)):"; \
+					cat ./extra/output/logs/transcript/KnightsTour_tb_$(word 3,$(logargs)).log; \
+				*) \
+					echo "Error: 't' requires a test type and test number (e.g., make log t m 3)."; \
+				esac; \
 			else \
-				echo "Error: 't' requires a test number (e.g., make log t 3)."; \
+				echo "Error: 't' requires a test type and test number (e.g., make log t m 3)."; \
 				exit 1; \
 			fi ;; \
 		*) \
 			echo "Error: Missing or invalid arguments. Usage:"; \
 			echo "  make log s <report_type>"; \
 			echo "  make log c <type/number>"; \
-			echo "  make log t <number>"; \
+			echo "  make log t <type/number>"; \
 			exit 1 ;; \
 		esac; \
 	else \
@@ -317,8 +403,7 @@ collect:
 
 clean:
 	@echo "Cleaning up generated files..."
-	@rm -rf TESTS/  	   # Remove the TESTS directory.
-	@rm -rf output/ 	   # Remove the output directory.
-	@rm -rf synthesis/     # Remove the synthesis directory.
+	@rm -rf main/ 	       # Remove the main directory.
+	@rm -rf extra/ 	       # Remove the extra directory.
 	@rm -rf ../KnightsTour # Remove collected files.
 	@echo "Cleanup complete."
