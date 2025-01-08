@@ -391,9 +391,9 @@ def compile_files(test_num, test_path, type):
     # Determine the files to compile based on the test number.
     if test_num != 0:
         test_type = "main" if type == "m" else "extra"
-        all_files = f"../designs/pre_synthesis/*.sv ../designs/pre_synthesis/{test_type}/*.sv  ../tests/*.sv {test_path}"
+        all_files = f"../../designs/pre_synthesis/*.sv ../../designs/pre_synthesis/{test_type}/*.sv  ../../tests/*.sv {test_path}"
     else:
-        all_files = f"-timescale=1ns/1ps ../tests/*.sv ../designs/pre_synthesis/UART.sv ../designs/pre_synthesis/*_r* ../designs/pre_synthesis/*_tx* ../designs/post_synthesis/*.vg {test_path}"
+        all_files = f"-timescale=1ns/1ps ../../tests/*.sv ../../designs/pre_synthesis/UART.sv ../../designs/pre_synthesis/*_r* ../../designs/pre_synthesis/*_tx* ../../designs/post_synthesis/*.vg {test_path}"
     
     # Attempt to compile the files.
     with open(log_file, 'w') as log_fh:
