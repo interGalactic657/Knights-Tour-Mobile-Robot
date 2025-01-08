@@ -13,14 +13,13 @@ DESIGN_DIR = os.path.join(ROOT_DIR, "designs")
 TEST_DIR = os.path.join(ROOT_DIR, "tests")
 CELL_LIBRARY_PATH = os.path.join(TEST_DIR, "SAED32_lib")
 
-TYPE_DIR = os.path.join(ROOT_DIR, "main")
-OUTPUT_DIR = os.path.join(TYPE_DIR, "output")
-WAVES_DIR = os.path.join(OUTPUT_DIR, "waves")
-LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")
-TRANSCRIPT_DIR = os.path.join(LOGS_DIR, "transcript")
-COMPILATION_DIR = os.path.join(LOGS_DIR, "compilation")
+OUTPUT_DIR = None
+WAVES_DIR = None
+LOGS_DIR = None
+TRANSCRIPT_DIR = None
+COMPILATION_DIR = None
 
-LIBRARY_DIR = os.path.join(TYPE_DIR, "TESTS")
+LIBRARY_DIR = None
 
 # Test mapping for subdirectories and file ranges.
 TEST_MAPPING = {
@@ -81,22 +80,26 @@ def setup_directories(args):
         OSError: If a directory cannot be created.
     """
     # Modifying the TYPE_DIR variable declared above.
-    global TYPE_DIR
+    global OUTPUT_DIR, WAVES_DIR, LOGS_DIR, TRANSCRIPT_DIR, COMPILATION_DIR, LIBRARY_DIR
 
-    # Paths for all required directories (using pathlib for better cross-platform compatibility).
-    directories = [Path(OUTPUT_DIR), Path(LOGS_DIR), Path(TRANSCRIPT_DIR), Path(COMPILATION_DIR), Path(WAVES_DIR), Path(LIBRARY_DIR)]
-
-    # Create the type directory based on the type of test(s) to run.
+    # Update TYPE_DIR based on the test type.
     if args.type == "e":
         TYPE_DIR = os.path.join(ROOT_DIR, "extra")
-        directories.insert(0, Path(TYPE_DIR))
     elif args.type == "m":
         TYPE_DIR = os.path.join(ROOT_DIR, "main")
-        directories.insert(0, Path(TYPE_DIR))
+
+    # Paths for directories that depend on TYPE_DIR.
+    OUTPUT_DIR = os.path.join(TYPE_DIR, "output")
+    WAVES_DIR = os.path.join(OUTPUT_DIR, "waves")
+    LOGS_DIR = os.path.join(OUTPUT_DIR, "logs")
+    TRANSCRIPT_DIR = os.path.join(LOGS_DIR, "transcript")
+    COMPILATION_DIR = os.path.join(LOGS_DIR, "compilation")
+    LIBRARY_DIR = os.path.join(TYPE_DIR, "TESTS")
 
     # Ensure all required directories exist.
+    directories = [TYPE_DIR, OUTPUT_DIR, WAVES_DIR, LOGS_DIR, TRANSCRIPT_DIR, COMPILATION_DIR, LIBRARY_DIR]
     for directory in directories:
-        directory.mkdir(parents=True, exist_ok=True)
+        Path(directory).mkdir(parents=True, exist_ok=True)
 
 def get_wave_command(test_num, type):
     """Generate the command for waveform signals based on the test number.
