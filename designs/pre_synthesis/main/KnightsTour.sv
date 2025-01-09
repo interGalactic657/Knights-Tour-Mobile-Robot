@@ -60,7 +60,7 @@ module KnightsTour(
   // Instantiate command processor //
   //////////////////////////////////  
   cmd_proc #(FAST_SIM) iCMD(.clk(clk),.rst_n(rst_n),.cmd(cmd),.cmd_rdy(cmd_rdy),
-           .clr_cmd_rdy(clr_cmd_rdy),.send_resp(send_resp),.strt_cal(strt_cal),
+        .clr_cmd_rdy(clr_cmd_rdy),.send_resp(send_resp),.strt_cal(strt_cal),
 		   .cal_done(cal_done),.heading(heading),.heading_rdy(heading_rdy),.lftIR(lftIR),
 		   .cntrIR(cntrIR),.rghtIR(rghtIR),.error(error),.frwrd(frwrd),.moving(moving),
 		   .tour_go(tour_go),.fanfare_go(fanfare_go));
