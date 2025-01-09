@@ -147,27 +147,12 @@ run:
 					fi; \
 				fi; \
 				;; \
-			[0-9]*) \
-				# Handle specific test numbers or ranges without specifying test type. \
-				if [ "$(words $(runargs))" -eq 2 ]; then \
-					# Single test number. \
-					cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0; \
-				elif [ "$(words $(runargs))" -eq 3 ]; then \
-					# Test range. \
-					cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
-				else \
-					# Invalid number of arguments for test numbers/ranges. \
-					echo "Error: Invalid argument format for test number or range."; \
-					exit 1; \
-				fi; \
-				;; \
 			*) \
 				# Invalid first argument, show usage guidance. \
 				echo "Error: Invalid argument combination."; \
 				echo "Usage:"; \
 				echo "  make run                        # Run all tests in default mode."; \
-				echo "  make run <test_number>          # Run a specific test."; \
-				echo "  make run <test_range>           # Run a range of tests."; \
+				echo "  make run a|m|e <test_range>           # Run a range of tests."; \
 				echo "  make run a|m|e v|g|s <args>     # Run tests with specified mode."; \
 				exit 1; \
 				;; \
