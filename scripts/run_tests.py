@@ -701,7 +701,7 @@ def execute_tests(args):
         This function uses a ThreadPoolExecutor to view waveforms concurrently, improving the speed of I/O-bound operations.
         """
         with ThreadPoolExecutor(max_workers=28) as executor:  # Increased worker count
-            futures = [executor.submit(view_waveforms, i, args.type) for i in test_numbers]
+            futures = [executor.submit(view_waveforms, i, args) for i in test_numbers]
             for future in futures:
                 try:
                     future.result()  # Will raise an exception if any occurred
