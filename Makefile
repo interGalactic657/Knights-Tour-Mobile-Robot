@@ -286,47 +286,53 @@ log:
 # Collects test files or all design files based on the specified arguments.
 #
 # Usage:
-#   make collect <start_number> <end_number> - Collects test files for a range of test numbers.
-#   make collect - Collects all design files.
+#   make collect <m|e> <start_number> <end_number> - Collects test files for a range of test numbers and design files.
+#   make collect <m|e>                              - Collects all design files from the specified directory.
 #
 # Arguments:
+#   <m|e> - Mandatory flag specifying which subdirectory to use for design files:
+#           'm' for 'main', 'e' for 'extra'.
 #   <start_number> <end_number> - Range of test numbers (inclusive) to collect test files.
 #
 # Description:
 # This target handles two scenarios:
-# 1. Collecting test files for a specified range of test numbers (if two arguments are provided).
-# 2. Collecting all design files (if no arguments are provided).
+# 1. Collecting test files for a specified range of test numbers (if three arguments are provided).
+#    - Test files are collected from their respective subdirectories (`simple`, `move`, `logic`).
+#    - For `logic` tests, the `m|e` flag determines whether `logic/main` or `logic/extra` is used.
+# 2. Collecting all design files (if only the flag is provided).
+#    - Design files are copied from the base directory and either `main` or `extra` based on the flag.
 #
-# For each test number in the specified range, it checks which subdirectory the test belongs to (simple, move, logic),
-# and copies the corresponding test files to the target directory.
-#
-# If no files are found in the specified range, it will display a warning message.
-#
-# For the second case (no range), all design files are copied from the `pre_synthesis` folder to the target directory.
+# If no files are found for the specified range, a warning message is displayed.
 #--------------------------------------------------------
 collect:
-	@if [ "$(words $(collectargs))" -eq 2 ]; then \
-		start=$(word 1,$(collectargs)); \
-		end=$(word 2,$(collectargs)); \
+	@if [ "$(words $(collectargs))" -eq 3 ]; then \
+		# Three arguments: m/e + range. \
+		flag=$(word 1,$(collectargs)); \
+		start=$(word 2,$(collectargs)); \
+		end=$(word 3,$(collectargs)); \
+		if [ "$$flag" != "m" ] && [ "$$flag" != "e" ]; then \
+			echo "Error: Invalid argument '$$flag'. Use 'm' for main or 'e' for extra."; \
+			exit 1; \
+		fi; \
 		target_dir="../KnightsTour"; \
 		mkdir -p $$target_dir; \
-		echo "Collecting test files from $$start to test $$end..."; \
+		echo "Collecting test files from $$start to test $$end for '$$flag'..."; \
 		found=0; \
 		for num in $$(seq $$start $$end); do \
-			# Determine the subdirectory based on test number \
+			# Determine the subdirectory based on test number. \
 			if echo "$(simple_tests)" | grep -qw $$num; then \
 				subdir="simple"; \
 			elif echo "$(move_tests)" | grep -qw $$num; then \
 				subdir="move"; \
 			elif echo "$(logic_tests)" | grep -qw $$num; then \
-				subdir="logic"; \
+				subdir="logic/$$flag"; \
 			else \
 				echo "Warning: Test number $$num is not mapped to any subdirectory. Skipping."; \
 				continue; \
 			fi; \
 			# Path to the test file. \
 			src_file="./tests/$$subdir/KnightsTour_tb_$$num.sv"; \
-			# Copy the file if it exists \
+			# Copy the file if it exists. \
 			if [ -f $$src_file ]; then \
 				cp $$src_file $$target_dir/; \
 				found=1; \
@@ -334,18 +340,34 @@ collect:
 				echo "Error: Test file $$src_file not found."; \
 			fi; \
 		done; \
+		# Collect corresponding design files. \
+		echo "Collecting design files for '$$flag'..."; \
+		cp ./designs/pre_synthesis/*.sv ../KnightsTour/; \
+		cp ./designs/pre_synthesis/$$flag/*.sv ../KnightsTour/; \
 		# If no files were found in the range, print a message. \
 		if [ $$found -eq 1 ]; then \
-			echo "All test files collected."; \
+			echo "All test files collected for '$$flag'."; \
 		else \
 			echo "No test files were found for the range $$start-$$end."; \
 		fi; \
-	else \
-		# Collect all design files if no range is provided. \
-		echo "Collecting all design files..."; \
+	elif [ "$(words $(collectargs))" -eq 1 ]; then \
+		# One argument: m/e only. \
+		flag=$(word 1,$(collectargs)); \
+		if [ "$$flag" != "m" ] && [ "$$flag" != "e" ]; then \
+			echo "Error: Invalid argument '$$flag'. Use 'm' for main or 'e' for extra."; \
+			exit 1; \
+		fi; \
+		echo "Collecting all design files for '$$flag'..."; \
 		mkdir -p ../KnightsTour; \
 		cp ./designs/pre_synthesis/*.sv ../KnightsTour/; \
-		echo "All design files collected."; \
+		cp ./designs/pre_synthesis/$$flag/*.sv ../KnightsTour/; \
+		echo "All design files collected for '$$flag'."; \
+	else \
+		# Invalid usage: Display error and usage information. \
+		echo "Error: Invalid arguments. Usage:"; \
+		echo "  make collect <m|e> <start_number> <end_number>"; \
+		echo "  make collect <m|e>"; \
+		exit 1; \
 	fi;
 
 #--------------------------------------------------------
