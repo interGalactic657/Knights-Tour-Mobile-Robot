@@ -345,10 +345,6 @@ collect:
 				echo "Error: Test file $$src_file not found."; \
 			fi; \
 		done; \
-		# Collect corresponding design files. \
-		echo "Collecting design files for '$$dir'..."; \
-		cp ./designs/pre_synthesis/*.sv ../KnightsTour/; \
-		cp ./designs/pre_synthesis/$$dir/*.sv ../KnightsTour/; \
 		# If no files were found in the range, print a message. \
 		if [ $$found -eq 1 ]; then \
 			echo "All test files collected for '$$dir'."; \
