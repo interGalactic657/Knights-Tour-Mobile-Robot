@@ -67,7 +67,7 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 	@mkdir -p ./main/output/logs/transcript/reports/
 	@cd ./main/synthesis && \
 	echo "source ../../scripts/KnightsTour.dc; report_register -level_sensitive; check_design; exit;" | \
-	dc_shell -no_gui > $(OUTPUT_LOG_DIR)/synth_compilation.log 2>&1
+	dc_shell -no_gui > ../../$(OUTPUT_LOG_DIR)/synth_compilation.log 2>&1
 	@echo "Synthesis complete. Run 'make log c s' for details."
 
 #--------------------------------------------------------
