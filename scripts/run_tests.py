@@ -575,7 +575,12 @@ def view_waveforms(test_number, type):
     with open(f"./transcript_{test_number}", 'w') as transcript:
         print(f"KnightsTour_tb_{test_number}_{type_name}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
-        subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
+        
+        try:
+            subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
+        except subprocess.CalledProcessError as e:
+            print(e)
+            sys.exit(1)
 
 def execute_tests(args):
     """Execute tests based on parsed arguments.
