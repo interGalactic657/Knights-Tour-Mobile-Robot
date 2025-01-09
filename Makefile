@@ -105,11 +105,9 @@ run:
 		# No arguments: Default behavior. \
 		cd scripts && python3 run_tests.py -m 0; \
 	elif [ "$(words $(runargs))" -ge 1 ]; then \
-		mode="$(word 1,$(runargs))"; \
-		case "$$mode" in \
+		case "$(word 1,$(runargs))"; in \
 		a|m|e) \
 			# If 'a', 'm', or 'e' is specified, set the type flag (-t a, -t m, -t e). \
-			type_flag=$$mode; \
 			if [ "$(words $(runargs))" -eq 1 ]; then \
 				# Run all tests of the specified type in default mode (mode 0). \
 				cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
