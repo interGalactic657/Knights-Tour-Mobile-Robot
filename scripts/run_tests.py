@@ -318,7 +318,7 @@ def validate_solution(log_file):
         else:
             return "error"
     except ValueError as e:
-        print(e)
+        print(f"Test validation failed with error: {e}")
         sys.exit(1)
 
 def check_logs(test_num, logfile, mode):
@@ -575,12 +575,7 @@ def view_waveforms(test_number, type):
     with open(f"./transcript_{test_number}", 'w') as transcript:
         print(f"KnightsTour_tb_{test_number}_{type_name}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
-        
-        try:
-            subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
-        except subprocess.CalledProcessError as e:
-            print(e)
-            sys.exit(1)
+        subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
 
 def execute_tests(args):
     """Execute tests based on parsed arguments.
@@ -719,7 +714,11 @@ def execute_tests(args):
         """
         test = get_tests_in_range(test_num, test_num)
         if test:
-            run_test(test[0][0], test[0][1], args)
+            try:
+                run_test(test[0][0], test[0][1], args)
+            except Exception as e:
+                print(f"Test failed with error: {e}")
+                sys.exit(1)
         else:
             print(f"Test {test_num} not found.")
 
@@ -795,7 +794,7 @@ def print_mode_message(args, range_desc=None):
             elif args.number is None and args.mode != 3:
                 print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
     except Exception as e:
-        print(e)
+        print(f"Printing message failed with error: {e}")
         sys.exit(1)
 
 def main():
@@ -830,11 +829,7 @@ def main():
             
             # Wait for all processes to complete.
             for future in futures:
-                try:
-                    future.result()  # Will raise an exception if any occurred.
-                except Exception as e:
-                    print(f"Running all tests failed with error: {e}")
-                    sys.exit(1)
+                future.result()
 
             print("All tests completed.")
     else:
