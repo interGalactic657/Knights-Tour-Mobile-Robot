@@ -109,34 +109,39 @@ def setup_directories(type):
             print(f"Creating the required directories failed with error: {e}")
 
 
-def get_wave_command(test_num, type):
-    """Generate the command for waveform signals based on the test number.
+def get_wave_command(test_num, test_type):
+    """
+    Generate the command for waveform signals based on the test number and type.
 
     Args:
         test_num (int): The test number to determine the required signals.
-        type (str): The type of test file to be run (main/extra).
+        test_type (str): The type of test file to be run ("m" for main, "e" for extra).
 
     Returns:
         str: A string containing the waveform command for the selected signals.
     """
-    # Define ranges for test numbers with their associated default signals.
+    # Define a unique cache key based on test range and type.
     if test_num == 0:
-        key = 0
-        default_signals = ["iDUT/clk", "iDUT/RST_n", "iDUT/TX", "iDUT/RX", "iRMT/resp", "iRMT/resp_rdy"]
+        key = (0, test_type)
+        default_signals = [
+            "iDUT/clk", "iDUT/RST_n", "iDUT/TX", "iDUT/RX", "iRMT/resp", "iRMT/resp_rdy"
+        ]
     elif test_num == 1:
-        key = 1
-        default_signals = ["iDUT/clk", "iDUT/RST_n", "iDUT/cal_done", "iPHYS/iNEMO/NEMO_setup", "iDUT/iTC/send_resp", "iRMT/resp", "iRMT/resp_rdy"]
+        key = (1, test_type)
+        default_signals = [
+            "iDUT/clk", "iDUT/RST_n", "iDUT/cal_done", "iPHYS/iNEMO/NEMO_setup", "iDUT/iTC/send_resp", "iRMT/resp", "iRMT/resp_rdy"
+        ]
     elif 2 <= test_num <= 14:
-        key = (2, 14)
+        key = ((2, 14), test_type)
         default_signals = [
             "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
             "iPHYS/cntrIR_n", "iDUT/iCMD/lftIR", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs",
             "iDUT/iCMD/square_cnt", "iDUT/iCMD/move_done", "iDUT/iTC/state", "iDUT/iTC/send_resp", "iRMT/resp",
             "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state"
         ]
-    else: # test_num >= 15
-        key = (15, float('inf'))
-        if type == "m":
+    else:  # test_num >= 15
+        key = ((15, float('inf')), test_type)
+        if test_type == "m":
             default_signals = [
                 "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
                 "iDUT/iCMD/lftIR", "iPHYS/cntrIR_n", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs",
@@ -144,7 +149,7 @@ def get_wave_command(test_num, type):
                 "iRMT/resp_rdy", "iDUT/iTC/mv_indx", "iDUT/iTC/move", "iDUT/iCMD/pulse_cnt", "iDUT/iCMD/state",
                 "iDUT/iCMD/tour_go", "iDUT/iTL/done", "iDUT/fanfare_go", "iDUT/ISPNG/state"
             ]
-        else:
+        elif test_type == "e":
             default_signals = [
                 "iDUT/clk", "iDUT/RST_n", "iPHYS/xx", "iPHYS/yy", "iDUT/iNEMO/heading", "iPHYS/heading_robot", "iDUT/iCMD/desired_heading", "iPHYS/omega_sum",
                 "iDUT/iCMD/lftIR", "iPHYS/cntrIR_n", "iDUT/iCMD/cntrIR", "iDUT/iCMD/rghtIR", "iDUT/iCMD/error_abs", "iDUT/iCMD/y_pos", "iDUT/y_offset", 
@@ -153,7 +158,7 @@ def get_wave_command(test_num, type):
                 "iDUT/iCMD/tour_go", "iDUT/iTL/done", "iDUT/fanfare_go", "iDUT/ISPNG/state"
             ]
 
-    # Check if the result for this range is cached.
+    # Check if the result for this range and type is cached.
     if key in _wave_command_cache:
         wave_command = _wave_command_cache[key]
     else:
