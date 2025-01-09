@@ -75,35 +75,30 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 #
 # Usage:
 #   make run                        - Runs all tests in default mode.
-#   make run <test_number>          - Runs a specific test by number.
-#   make run <test_range>           - Runs a range of tests.
-#   make run a/m/e g <args>         - Run all/main/extra tests in GUI mode.
-#   make run a/m/e s <args>         - Run all/main/extra tests in GUI mode and save waveforms.
-#   make run a/m/e v <args>         - View all/main/extra waveforms in GUI mode.
+#   make run a/m/e <test_range>     - Runs a range of tests (all, main, or extra).
+#   make run a/m/e v <args>         - View waveforms in GUI mode for specified tests.
+#   make run a/m/e g <args>         - Run tests in GUI mode.
+#   make run a/m/e s <args>         - Run tests and save waveforms.
 #
 # Arguments:
-#   v - View waveforms in GUI mode.
-#   g - Run tests in GUI mode.
-#   s - Run tests and save waveforms.
+#   a|m|e        - Specifies the test type: all (a), main (m), or extra (e).
+#   v            - View waveforms in GUI mode.
+#   g            - Run tests in GUI mode.
+#   s            - Save waveforms while running tests.
 #   <test_number> - The number of the test to execute.
 #   <test_range>  - A range of tests to execute, e.g., 1-10.
 #
-# Description:
-# This target determines the behavior based on the number and type of
-# arguments passed (`runargs`). It invokes a Python script with the
-# appropriate mode flags:
+# Modes:
 #   - Mode 0: Default mode.
 #   - Mode 1: Save waveforms.
 #   - Mode 2: GUI mode.
 #   - Mode 3: View waveforms in GUI mode.
-# It provides usage guidance and error handling for invalid inputs.
 #--------------------------------------------------------
 run:
 	@if [ "$(words $(runargs))" -eq 0 ]; then \
 		# No arguments provided: Default behavior, run all tests. \
 		cd scripts && python3 run_tests.py -m 0; \
 	else \
-		# Parse arguments based on the first word. \
 		case "$(word 1,$(runargs))" in \
 			a|m|e) \
 				# Handle test types: all (a), main (m), or extra (e). \
@@ -115,23 +110,10 @@ run:
 						v) mode=3 ;;  # View waveforms. \
 						g) mode=2 ;;  # GUI mode. \
 						s) mode=1 ;;  # Save waveforms. \
-						[0-9]*) \
-							# Handle specific test numbers or ranges without specifying test type. \
-							if [ "$(words $(runargs))" -eq 2 ]; then \
-								# Single test number. \
-								cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
-							elif [ "$(words $(runargs))" -eq 3 ]; then \
-								# Test range. \
-								cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
-							else \
-								# Invalid number of arguments for test numbers/ranges. \
-								echo "Error: Invalid argument format for test number or range."; \
-								exit 1; \
-							fi; \
-							;; \
+						[0-9]*) mode=0 ;;  # Specific test number or range. \
 						*) \
 							# Invalid sub-mode, show error. \
-							echo "Error: Invalid sub-mode for tests. Supported modes are v, g, or s."; \
+							echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s, or a test number/range."; \
 							exit 1; \
 							;; \
 					esac; \
@@ -152,7 +134,7 @@ run:
 				echo "Error: Invalid argument combination."; \
 				echo "Usage:"; \
 				echo "  make run                        # Run all tests in default mode."; \
-				echo "  make run a|m|e <test_range>           # Run a range of tests."; \
+				echo "  make run a|m|e <test_range>     # Run a range of tests."; \
 				echo "  make run a|m|e v|g|s <args>     # Run tests with specified mode."; \
 				exit 1; \
 				;; \
