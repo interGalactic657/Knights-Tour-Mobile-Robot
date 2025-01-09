@@ -578,7 +578,8 @@ def view_waveforms(test_number, args):
 
     # View the waves.
     with open(f"./transcript_{test_number}", 'w') as transcript:
-        print(f"{test_name}: Viewing saved waveforms...")
+        if args.number is not None and args.range is None:
+            print(f"{test_name}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
         subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
 
@@ -787,17 +788,29 @@ def print_mode_message(args, range_desc=None):
     try:
         # Messages for all tests (-a flag).
         if args.type == "a":
-            if not range_desc and args.mode != 3 and args.number is None:
-                print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-            elif args.number is None and args.mode != 3:
-                print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+            if not range_desc and args.number is None:
+                if args.mode != 3:
+                    print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                else:
+                    print(f"Viewing waveforms for all tests...")
+            elif args.number is None:
+                if args.mode != 3:
+                    print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                else:
+                    print(f"Viewing waveforms for all tests {range_desc}...")
         # Messages for specific test types ('main' or 'extra').
         elif args.type in {"m", "e"}:
             test_label = "main" if args.type == "m" else "extra"
-            if not range_desc and args.mode != 3 and args.number is None:
-                print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+            if not range_desc and args.number is None:
+                if args.mode != 3:
+                    print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                else:
+                    print(f"Viewing waveforms for {test_label} tests...")
             elif args.number is None and args.mode != 3:
-                print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                if args.mode != 3:
+                    print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                else:
+                    print(f"Viewing waveforms for {test_label} tests {range_desc}...")
     except Exception as e:
         print(f"Printing message failed with error: {e}")
         sys.exit(1)
