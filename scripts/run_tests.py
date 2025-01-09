@@ -775,19 +775,23 @@ def print_mode_message(args, range_desc=None):
     Returns:
         None
     """
-    # Messages for all tests (-a flag).
-    if args.type == "a":
-        if not range_desc and args.number is None:
-            print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-        elif args.number is None:
-            print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-    # Messages for specific test types ('main' or 'extra').
-    elif args.type in {"m", "e"}:
-        test_label = "main" if args.type == "m" else "extra"
-        if not range_desc and args.number is None:
-            print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
-        elif args.number is None:
-            print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+    try:
+        # Messages for all tests (-a flag).
+        if args.type == "a":
+            if not range_desc and args.mode != 3 and args.number is None:
+                print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+            elif args.number is None and args.mode != 3:
+                print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+        # Messages for specific test types ('main' or 'extra').
+        elif args.type in {"m", "e"}:
+            test_label = "main" if args.type == "m" else "extra"
+            if not range_desc and args.mode != 3 and args.number is None:
+                print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+            elif args.number is None and args.mode != 3:
+                print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
 def main():
     """Main function to parse arguments, set up directories, and execute tests.
