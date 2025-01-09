@@ -112,43 +112,43 @@ run:
 			type_flag=$$mode; \
 			if [ "$(words $(runargs))" -eq 1 ]; then \
 				# Run all tests of the specified type in default mode (mode 0). \
-				cd scripts && python3 run_tests.py -m 0 -t $$type_flag; \
+				cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
 			else \
 				sub_mode="$(word 2,$(runargs))"; \
 				case "$$sub_mode" in \
 				v) \
 					# If 'v' is specified, view waveforms in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 3 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 3 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
 					else \
-						cd scripts && python3 run_tests.py -m 3 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -m 3 -t $(word 1,$(runargs)); \
 					fi ;; \
 				g) \
 					# If 'g' is specified, run tests in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 2 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 2 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 2 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 2 -t $(word 1,$(runargs)); \
 					else \
-						cd scripts && python3 run_tests.py -m 2 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -m 2 -t $(word 1,$(runargs)); \
 					fi ;; \
 				s) \
 					# If 's' is specified, run tests and save waveforms. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 1 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 1 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 1 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 1 -t $(word 1,$(runargs)); \
 					else \
-						cd scripts && python3 run_tests.py -m 1 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -m 1 -t $(word 1,$(runargs)); \
 					fi ;; \
 				[0-9]*) \
 					# Default mode (command-line mode) with test number or range. \
 					if [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 2 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0 -t $$type_flag; \
+						cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 					else \
 						echo "Error: Invalid argument combination."; \
 						exit 1; \
