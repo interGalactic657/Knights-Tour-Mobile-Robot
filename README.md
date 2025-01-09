@@ -38,7 +38,7 @@ The project uses a Makefile to automate the testing, logging, and file managemen
 
 1. Clone the repository to your local machine:
    ```bash
-   git clone https://github.com/InterGalactic946/Knights-Tour-Mobile-Robot
+   git clone https://github.com/InterGalactic657/Knights-Tour-Mobile-Robot
    cd Knights-Tour-Mobile-Robot/
    ```
 
