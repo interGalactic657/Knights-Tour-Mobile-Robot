@@ -114,7 +114,7 @@ run:
 			else \
 				case "$(word 2,$(runargs))" in \
 				v) \
-					echo $runargs
+					echo $(runargs) \
 					# If 'v' is specified, view waveforms in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
 						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
