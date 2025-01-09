@@ -75,6 +75,7 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 #
 # Usage:
 #   make run                        - Runs all tests in CMD mode.
+#   make run a/m/e v/g/s/c          - Run all/main/extra/ tests/view waveforms in the specified mode.
 #   make run a/m/e v <args>         - View waveforms in GUI mode for specified tests.
 #   make run a/m/e g <args>         - Run tests in GUI mode.
 #   make run a/m/e s <args>         - Run tests and save waveforms.
@@ -136,6 +137,7 @@ run:
 				echo "Error: Invalid argument combination."; \
 				echo "Usage:"; \
 				echo "  make run                        # Run all tests in default mode."; \
+				echo "  make run a|m|e v|g|s|c          # Run (all) tests with specified mode."; \
 				echo "  make run a|m|e v|g|s|c <args>   # Run tests with specified mode."; \
 				exit 1; \
 				;; \
