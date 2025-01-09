@@ -43,7 +43,6 @@ logic_tests := 15 16 17 18 19 20 21 22 23 24 25 26 27 28
 #   make synthesis - Executes synthesis if the .vg
 #                    file is missing or out of date.
 #--------------------------------------------------------
-
 # Variables for directories and file patterns
 DC_SCRIPT := ./scripts/KnightsTour.dc
 PRE_SYNTH_DIR := ./designs/pre_synthesis
@@ -150,25 +149,9 @@ run:
 				esac; \
 			fi; \
 			;; \
-		v|g|s) \
-			if [ "$(word 1,$(runargs))" = "v" ]; then \
-				cd scripts && python3 run_tests.py -m 3 -t a; \
-			elif [ "$(word 1,$(runargs))" = "s" ]; then \
-				cd scripts && python3 run_tests.py -m 1 -t a; \
-			elif [ "$(word 1,$(runargs))" = "g" ]; then \
-				cd scripts && python3 run_tests.py -m 2 -t a; \
-			else \
-				echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s."; \
-				exit 1; \
-			fi ;; \
 		*) \
-			if [ "$(words $(runargs))" -eq 2 ]; then \
-				cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
-			elif [ "$(words $(runargs))" -eq 1 ]; then \
-				cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0; \
-			else \
-				echo "Error: Invalid argument combination."; \
-				exit 1; \
+			echo "Error: Invalid argument combination."; \
+			exit 1; \
 			fi; \
 			;; \
 		esac; \
@@ -304,7 +287,6 @@ log:
 #
 # If no files are found for the specified range, a warning message is displayed.
 #--------------------------------------------------------
-
 collect:
 	@if [ "$(words $(collectargs))" -eq 3 ]; then \
 		# Three arguments: m/e + range. \
