@@ -147,8 +147,7 @@ run:
 					elif [ "$(words $(runargs))" -eq 2 ]; then \
 						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 					else \
-						echo "Error: Invalid argument combination."; \
-						exit 1; \
+						cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
 					fi ;; \
 				*) \
 					# Invalid sub-mode error. \
@@ -158,6 +157,23 @@ run:
 				esac; \
 			fi; \
 			;; \
+		v|g|s) \
+			case "$(word 1,$(runargs))" in \
+			v) \
+				# If 'v' is specified, view all waveforms in GUI mode. \
+				cd scripts && python3 run_tests.py -m 3 -t a; \
+			s) \
+				# If 's' is specified, run all tests and save waveforms. \
+				cd scripts && python3 run_tests.py -m 1 -t a; \
+			g) \
+				# If 'g' is specified, run all tests in GUI mode. \
+				cd scripts && python3 run_tests.py -m 2 -t a; \
+			*) \
+				# Invalid sub-mode error. \
+				echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s"; \
+				exit 1; \
+				;; \
+			esac; \
 		*) \
 			# Default behavior if no 'a', 'm', or 'e' is specified. Handle as a test number/range. \
 			if [ "$(words $(runargs))" -eq 2 ]; then \
