@@ -79,8 +79,8 @@ def setup_directories(type):
     Args: 
         type (str): The type of test file to be run (main/extra).
 
-    Raises:
-        OSError: If a directory cannot be created.
+    Returns:
+        None
     """
     # Modifying the TYPE_DIR variable declared above.
     global OUTPUT_DIR, WAVES_DIR, LOGS_DIR, TRANSCRIPT_DIR, COMPILATION_DIR, LIBRARY_DIR
@@ -172,6 +172,9 @@ def validate_solution(log_file):
 
     Args:
         log_file (str): Path to the log file containing the Knight's Tour data.
+
+    Raises:
+        SystemExit: If validation fails, the program exits with an error.
 
     Returns:
         str: "success" if the log file coordinates match the computed solution, 
@@ -314,8 +317,9 @@ def validate_solution(log_file):
             return "success"
         else:
             return "error"
-    except ValueError:
-        return "unknown"
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
 
 def check_logs(test_num, logfile, mode):
     """Check the status of a log file based on the specified mode.
@@ -414,7 +418,7 @@ def compile_files(test_num, test_path, type):
                 compile_command = f"vlog -logfile {log_file} -work TEST_{test_num} -vopt -stats=none {all_files}"
             subprocess.run(compile_command, shell=True, stdout=log_fh, stderr=subprocess.STDOUT, check=True)
         except subprocess.CalledProcessError:
-            print(f"Compilation failed for {test_path}. Check the log file for details: {log_file}")
+            print(f"Compilation failed for {test_path}. Run 'make log c {type} {test_num}' for details.")
             sys.exit(1)  # Exit the program if compilation fails.
 
     # Check if the compilation was successful or not.
@@ -422,9 +426,9 @@ def compile_files(test_num, test_path, type):
 
     # Provide feedback on the compilation result.
     if result == "warning":
-        print(f"Compilation has warnings for {test_path}. Check the log file for details: {log_file}")
+        print(f"Compilation has warnings for {test_path}. Run 'make log c {type} {test_num}' for details.")
     elif result == "error":
-        print(f"Compilation failed for {test_path}. Check the log file for details: {log_file}")
+        print(f"Compilation failed for {test_path}. Run 'make log c {type} {test_num}' for details.")
         sys.exit(1)  # Exit the program if compilation fails.
 
 def get_gui_command(test_num, log_file, args):
@@ -542,14 +546,14 @@ def run_test(subdir, test_file, args):
         print(f"{test_name}: YAHOO!! All tests passed.")
     elif result == "error":
         if args.mode == 0:
-            print(f"{test_name}: Test failed. Saving waveforms for later debug...")
+            print(f"{test_name}: Test failed. Run 'make log t {args.type} {test_num}' for details. Saving waveforms for later debug...")
             debug_command = get_gui_command(test_num, log_file, args)
             with open(log_file, 'w') as log_fh:
                 subprocess.run(debug_command, shell=True, stdout=log_fh, stderr=subprocess.STDOUT, check=True)
         elif args.mode == 1:
-            print(f"{test_name}: Test failed. Debug logs saved to {log_file}.")
+            print(f"{test_name}: Test failed. Run 'make log t {args.type} {test_num}' for details.")
     elif result == "unknown":
-        print(f"{test_name}: Unknown status. Check the log file saved to {log_file}.")
+        print(f"{test_name}: Unknown status. Run 'make log t {args.type} {test_num}' for details.")
 
 def view_waveforms(test_number, type):
     """View previously saved waveforms for a specific test.

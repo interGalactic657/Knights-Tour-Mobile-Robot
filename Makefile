@@ -96,7 +96,7 @@ synthesis: ./scripts/KnightsTour.dc
 run:
 	@if [ "$(words $(runargs))" -eq 0 ]; then \
 		# No arguments: Default behavior. \
-		cd scripts && python3 run_tests.py -m 0 -t m & python3 run_tests.py -m 0 -t e & wait; \
+		cd scripts && python3 run_tests.py -m 0; \
 	elif [ "$(words $(runargs))" -ge 1 ]; then \
 		case "$(word 1,$(runargs))" in \
         e) \
