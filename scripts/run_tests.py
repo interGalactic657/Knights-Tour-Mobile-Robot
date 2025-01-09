@@ -532,11 +532,12 @@ def run_test(subdir, test_file, args):
     # Step 1: Compile the testbench.
     compile_files(test_num, test_path, args.type)
 
-    # Append main/extra to the name based on the type.
-    if args.type == "m":
-        test_name += "_main"
-    elif args.type == "e":
-        test_name += "_extra"
+    # Append main/extra to the name based on the type only when all tests are being run.
+    if args.child:
+        if args.type == "m":
+            test_name += "_main"
+        elif args.type == "e":
+            test_name += "_extra"
 
     # Step 2: Run the simulation and handle different modes.
     result = run_simulation(test_num, test_name, log_file, args)
@@ -555,25 +556,29 @@ def run_test(subdir, test_file, args):
     elif result == "unknown":
         print(f"{test_name}: Unknown status. Run 'make log t {args.type} {test_num}' for details.")
 
-def view_waveforms(test_number, type):
+def view_waveforms(test_number, args):
     """View previously saved waveforms for a specific test.
 
     Args:
         test_number (int): The test number to view waveforms for.
-        type (str): The type of test file to be run (main/extra).
+        args (argparse.Namespace): Parsed command-line arguments, including mode and test-specific settings.
 
     Returns:
         None: This function executes the simulation command to view waveforms.
     """
     # Change to the wave directory and view the saved waveforms.    
     os.chdir(WAVES_DIR)
+
+    # Get the test name of the specific test based on its number.
+    test_name = f"KnightsTour_tb_{test_number}"
     
-    # View the specifc type of waves based on the test type.
-    type_name = "main" if type == "m" else "extra"
+    # Only append the type name if viewing all waves.
+    if args.child:
+        test_name += "_main" if args.type == "m" else "_extra"
 
     # View the waves.
     with open(f"./transcript_{test_number}", 'w') as transcript:
-        print(f"KnightsTour_tb_{test_number}_{type_name}: Viewing saved waveforms...")
+        print(f"{test_name}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
         subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
 
@@ -589,7 +594,7 @@ def execute_tests(args):
         args (argparse.Namespace): Parsed command-line arguments.
 
     Returns:
-        None
+        None: This function executes all tests based on the passed args.
     """
     def get_all_test_numbers():
         """
@@ -671,7 +676,7 @@ def execute_tests(args):
 
         This function uses a ThreadPoolExecutor to run tests concurrently, improving the speed of I/O-bound operations.
         """
-        with ThreadPoolExecutor(max_workers=18) as executor:  # Increased worker count
+        with ThreadPoolExecutor(max_workers=28) as executor:  # Increased worker count
             # Filter tests based on the condition: skip if type is "e" and test number is 0.
             filtered_tests = [
                 (subdir, test_file) 
@@ -695,7 +700,7 @@ def execute_tests(args):
 
         This function uses a ThreadPoolExecutor to view waveforms concurrently, improving the speed of I/O-bound operations.
         """
-        with ThreadPoolExecutor(max_workers=18) as executor:  # Increased worker count
+        with ThreadPoolExecutor(max_workers=28) as executor:  # Increased worker count
             futures = [executor.submit(view_waveforms, i, args.type) for i in test_numbers]
             for future in futures:
                 try:
