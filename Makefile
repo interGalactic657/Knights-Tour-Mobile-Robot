@@ -114,7 +114,6 @@ run:
 			else \
 				case "$(word 2,$(runargs))" in \
 				v) \
-					echo $(runargs) \
 					# If 'v' is specified, view waveforms in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
 						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
@@ -144,9 +143,9 @@ run:
 				[0-9]*) \
 					# Default mode (command-line mode) with test number or range. \
 					if [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 2 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 					else \
 						echo "Error: Invalid argument combination."; \
 						exit 1; \
