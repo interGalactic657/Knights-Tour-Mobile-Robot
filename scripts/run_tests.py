@@ -69,6 +69,7 @@ def parse_arguments():
 
     return args
 
+
 def setup_directories(type):
     """Ensure necessary directories exist for logs, compilation, waves, etc.
 
@@ -106,6 +107,7 @@ def setup_directories(type):
             Path(directory).mkdir(parents=True, exist_ok=True)
         except OSError as e:
             print(f"Creating the required directories failed with error: {e}")
+
 
 def get_wave_command(test_num, type):
     """Generate the command for waveform signals based on the test number.
@@ -161,6 +163,7 @@ def get_wave_command(test_num, type):
 
     # Return the cached or newly generated waveform command.
     return wave_command
+
 
 def validate_solution(log_file):
     """
@@ -321,6 +324,7 @@ def validate_solution(log_file):
         print(f"Test validation failed with error: {e}")
         sys.exit(1)
 
+
 def check_logs(test_num, logfile, mode):
     """Check the status of a log file based on the specified mode.
 
@@ -387,6 +391,7 @@ def check_logs(test_num, logfile, mode):
     elif mode == "c":
         return check_compilation(logfile)
 
+
 def compile_files(test_num, test_path, type):
     """Compile the required files for the test simulation.
 
@@ -431,6 +436,7 @@ def compile_files(test_num, test_path, type):
         print(f"Compilation failed for {test_path}. Run 'make log c {type} {test_num}' for details.")
         sys.exit(1)  # Exit the program if compilation fails.
 
+
 def get_gui_command(test_num, log_file, args):
     """
     Generate the simulation command for GUI-based waveform viewing.
@@ -468,6 +474,7 @@ def get_gui_command(test_num, log_file, args):
         sim_command = sim_command[:-1] + " quit -f;'"
 
     return sim_command
+
 
 def run_simulation(test_num, test_name, log_file, args):
     """Run the simulation based on the selected mode.
@@ -508,6 +515,7 @@ def run_simulation(test_num, test_name, log_file, args):
 
     # Check simulation result and return status.
     return check_logs(test_num, log_file, "t")
+
 
 def run_test(subdir, test_file, args):
     """Run a specific testbench by compiling and executing the simulation.
@@ -556,6 +564,7 @@ def run_test(subdir, test_file, args):
     elif result == "unknown":
         print(f"{test_name}: Unknown status. Run 'make log t {args.type} {test_num}' for details.")
 
+
 def view_waveforms(test_number, args):
     """View previously saved waveforms for a specific test.
 
@@ -582,6 +591,7 @@ def view_waveforms(test_number, args):
             print(f"{test_name}: Viewing saved waveforms...")
         sim_command = f"vsim -view KnightsTour_tb_{test_number}.wlf -do KnightsTour_tb_{test_number}.do;"
         subprocess.run(sim_command, shell=True, stdout=transcript, stderr=subprocess.STDOUT, check=True)
+
 
 def execute_tests(args):
     """Execute tests based on parsed arguments.
@@ -771,6 +781,7 @@ def execute_tests(args):
             tests = collect_all_tests()
             run_parallel_tests(tests)  # Parallel execution for faster results.
 
+
 def print_mode_message(args, range_desc=None):
     """
     Prints an appropriate message based on the mode, test type, and range of tests.
@@ -786,87 +797,122 @@ def print_mode_message(args, range_desc=None):
         None
     """
     try:
-        # Messages for all tests (-a flag).
+        mode_labels = ["command-line", "saving", "GUI"]
+        # Handle messages for all tests (-a flag).
         if args.type == "a":
             if not range_desc and args.number is None:
                 if args.mode != 3:
-                    print(f"Running all tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                    print(f"Running all tests in {mode_labels[args.mode]} mode...")
                 else:
-                    print(f"Viewing waveforms for all tests...")
+                    print("Viewing waveforms for all tests...")
             elif args.number is None:
                 if args.mode != 3:
-                    print(f"Running all tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                    print(f"Running all tests {range_desc} in {mode_labels[args.mode]} mode...")
                 else:
                     print(f"Viewing waveforms for all tests {range_desc}...")
-        # Messages for specific test types ('main' or 'extra').
+        # Handle messages for specific test types ('main' or 'extra').
         elif args.type in {"m", "e"}:
             test_label = "main" if args.type == "m" else "extra"
             if not range_desc and args.number is None:
                 if args.mode != 3:
-                    print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                    print(f"Running all {test_label} tests in {mode_labels[args.mode]} mode...")
                 else:
-                    print(f"Viewing waveforms for {test_label} tests...")
+                    print(f"Viewing waveforms for all {test_label} tests...")
             elif args.number is None:
                 if args.mode != 3:
-                    print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
+                    print(f"Running {test_label} tests {range_desc} in {mode_labels[args.mode]} mode...")
                 else:
                     print(f"Viewing waveforms for {test_label} tests {range_desc}...")
     except Exception as e:
         print(f"Printing message failed with error: {e}")
         sys.exit(1)
 
-def main():
-    """Main function to parse arguments, set up directories, and execute tests.
 
-    This function is the entry point for the test execution process. It performs the following tasks:
-    - Parses the command-line arguments using `parse_arguments`.
-    - Spawns parallel execution for `main` and `extra` tests if `a` is set.
-    - Executes a specific test type based on `args.type` if `a` is not set.
-    - Prints a completion message once all tests are finished.
+def run_all_tests(args):
     """
-    # Parse the command-line arguments.
+    Executes all tests (both main and extra) in parallel.
+
+    Spawns separate child processes to run main and extra tests in parallel.
+    Ensures all processes complete successfully before proceeding.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+
+    Returns:
+        None
+    """
+    base_args = sys.argv[1:]  # Get command-line arguments excluding the script name.
+
+    # Prepare arguments for main and extra test child processes.
+    args_main = base_args + ["-t", "m", "--child"]
+    args_extra = base_args + ["-t", "e", "--child"]
+
+    # Execute main and extra tests in parallel using ProcessPoolExecutor.
+    with ProcessPoolExecutor(max_workers=24) as executor:
+        futures = [
+            executor.submit(subprocess.run, [sys.executable, __file__, *args_main]),
+            executor.submit(subprocess.run, [sys.executable, __file__, *args_extra])
+        ]
+        for future in futures:
+            future.result()  # Ensure all processes complete successfully.
+
+    # Print a completion message unless running in waveform viewing mode (mode 3).
+    if args.mode != 3:
+        print("All tests completed.")
+
+
+def run_specific_tests(args):
+    """
+    Executes specific tests based on the parsed arguments.
+
+    Handles the execution of a specific test type (main or extra). Prepares 
+    necessary directories and ensures proper completion of the tests.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+
+    Returns:
+        None
+    """
+    # Setup directories for logs, outputs, or other test requirements.
+    setup_directories(args.type)
+
+    # Execute the test based on parsed arguments.
+    execute_tests(args)
+
+    # Print a completion message unless this is a child process or mode 3 (waveform viewing).
+    if not args.child and args.mode != 3:
+        print("All tests completed.")
+
+
+def main():
+    """
+    Main function to parse arguments, print messages, and execute tests.
+
+    Acts as the entry point for the test execution process. It:
+    - Parses the command-line arguments.
+    - Determines whether to run all tests or specific tests.
+    - Delegates tasks to `run_all_tests` or `run_specific_tests`.
+
+    Returns:
+        None
+    """
+    # Parse command-line arguments.
     args = parse_arguments()
 
-    # Check if all tests need to be run.
+    # Generate a description for the range of tests, if applicable.
+    range_desc = f"from {args.range[0]} to {args.range[1]}" if args.range else None
+
+    # Print the mode message for the parent process.
+    if not args.child:
+        print_mode_message(args, range_desc)
+
+    # Execute all tests or specific tests based on the `type` argument.
     if args.type == "a":
-        # Print the "Running all tests..." message once.
-        range_desc = f"from {args.range[0]} to {args.range[1]}" if args.range else None
-        print_mode_message(args=args, range_desc=range_desc)
-
-        # Prepare arguments for child processes.
-        base_args = sys.argv[1:]
-        args_m = base_args + ["-t", "m", "--child"]  # Main tests.
-        args_e = base_args + ["-t", "e", "--child"]  # Extra tests.
-
-        # Use ProcessPoolExecutor to run the tasks in parallel as separate processes.
-        with ProcessPoolExecutor(max_workers=24) as executor:
-            futures = [
-                executor.submit(subprocess.run, [sys.executable, __file__, *args_m]),
-                executor.submit(subprocess.run, [sys.executable, __file__, *args_e])
-            ]
-            
-            # Wait for all processes to complete.
-            for future in futures:
-                future.result()
-
-            # Don't print this message if viewing waveforms.
-            if args.mode != 3:
-                print("All tests completed.")
+        run_all_tests(args)
     else:
-        # Only the parent prints initial messages.
-        if not args.child:  
-            range_desc = f"from {args.range[0]} to {args.range[1]}" if args.range else None
-            print_mode_message(args, range_desc)
+        run_specific_tests(args)
 
-        # Set up necessary directories for test execution (logs, transcripts, etc.).
-        setup_directories(args.type)
 
-        # Execute the tests based on the parsed arguments.
-        execute_tests(args)
-
-        # Only the parent prints the completion message and when it is not mode 3.
-        if not args.child and args.mode != 3:  
-            print("All tests completed.")
-            
 if __name__ == "__main__":
     main()
