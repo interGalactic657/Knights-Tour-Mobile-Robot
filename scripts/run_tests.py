@@ -806,7 +806,7 @@ def print_mode_message(args, range_desc=None):
                     print(f"Running all {test_label} tests in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
                 else:
                     print(f"Viewing waveforms for {test_label} tests...")
-            elif args.number is None and args.mode != 3:
+            elif args.number is None:
                 if args.mode != 3:
                     print(f"Running {test_label} tests {range_desc} in {['command-line', 'saving', 'GUI'][args.mode]} mode...")
                 else:
