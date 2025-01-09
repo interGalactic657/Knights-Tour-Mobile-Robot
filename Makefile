@@ -313,13 +313,14 @@ collect:
 		end=$(word 3,$(collectargs)); \
 		if [ "$$flag" = "m" ]; then \
 			dir="main"; \
+			target_dir="../KnightsTourMain"; \
 		elif [ "$$flag" = "e" ]; then \
 			dir="extra"; \
+			target_dir="../KnightsTourExtra"; \
 		else \
 			echo "Error: Invalid argument '$$flag'. Use 'm' for main or 'e' for extra."; \
 			exit 1; \
 		fi; \
-		target_dir="../KnightsTour"; \
 		mkdir -p $$target_dir; \
 		echo "Collecting test files from $$start to test $$end for '$$dir'..."; \
 		found=0; \
@@ -356,16 +357,18 @@ collect:
 		flag=$(word 1,$(collectargs)); \
 		if [ "$$flag" = "m" ]; then \
 			dir="main"; \
+			target_dir="../KnightsTourMain"; \
 		elif [ "$$flag" = "e" ]; then \
 			dir="extra"; \
+			target_dir="../KnightsTourExtra"; \
 		else \
 			echo "Error: Invalid argument '$$flag'. Use 'm' for main or 'e' for extra."; \
 			exit 1; \
 		fi; \
 		echo "Collecting all design files for '$$dir'..."; \
-		mkdir -p ../KnightsTour; \
-		cp ./designs/pre_synthesis/*.sv ../KnightsTour/; \
-		cp ./designs/pre_synthesis/$$dir/*.sv ../KnightsTour/; \
+		mkdir -p $$target_dir; \
+		cp ./designs/pre_synthesis/*.sv $$target_dir/; \
+		cp ./designs/pre_synthesis/$$dir/*.sv $$target_dir/; \
 		echo "All design files collected for '$$dir'."; \
 	else \
 		# Invalid usage: Display error and usage information. \
@@ -385,16 +388,16 @@ collect:
 # Description:
 # This target is used to clean up the generated files and directories that are created during the build or test process.
 # It removes the following directories:
-# - TESTS: Contains the work libraries of compiled test files.
-# - output: Contains logs and results from tests and synthesis.
-# - synthesis: Contains the output from the synthesis process.
-# - KnightsTour: A directory for collected files.
+# - main: Contains the main directory related to design files.
+# - extra: Contains the extra directory related to design files.
+# - KnightsTourMain/Extra: A directory where collected test files are stored.
 #
 # This is typically used to ensure that the build process starts with a clean slate, removing all files that might be left over from previous runs.
 #--------------------------------------------------------
 clean:
 	@echo "Cleaning up generated files..."
-	@rm -rf main/ 	       # Remove the main directory.
-	@rm -rf extra/ 	       # Remove the extra directory.
-	@rm -rf ../KnightsTour # Remove collected files.
+	@rm -rf main/        # Remove the main directory.
+	@rm -rf extra/       # Remove the extra directory.
+	@rm -rf ../KnightsTourMain # Remove main collected files.
+	@rm -rf ../KnightsTourExtra # Remove extra collected files.
 	@echo "Cleanup complete."
