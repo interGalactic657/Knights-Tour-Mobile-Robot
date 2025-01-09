@@ -109,12 +109,10 @@ run:
 		a|m|e) \
 			# If 'a', 'm', or 'e' is specified, set the type flag (-t a, -t m, -t e). \
 			if [ "$(words $(runargs))" -eq 1 ]; then \
-				# Run all tests of the specified type in default mode (mode 0). \
 				cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
 			else \
 				case "$(word 2,$(runargs))" in \
 				v) \
-					# If 'v' is specified, view waveforms in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
 						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 3 ]; then \
@@ -123,7 +121,6 @@ run:
 						cd scripts && python3 run_tests.py -m 3 -t $(word 1,$(runargs)); \
 					fi ;; \
 				g) \
-					# If 'g' is specified, run tests in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
 						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 2 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 3 ]; then \
@@ -132,7 +129,6 @@ run:
 						cd scripts && python3 run_tests.py -m 2 -t $(word 1,$(runargs)); \
 					fi ;; \
 				s) \
-					# If 's' is specified, run tests and save waveforms. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
 						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 1 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 3 ]; then \
@@ -141,7 +137,6 @@ run:
 						cd scripts && python3 run_tests.py -m 1 -t $(word 1,$(runargs)); \
 					fi ;; \
 				[0-9]*) \
-					# Default mode (command-line mode) with test number or range. \
 					if [ "$(words $(runargs))" -eq 3 ]; then \
 						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 					elif [ "$(words $(runargs))" -eq 2 ]; then \
@@ -150,7 +145,6 @@ run:
 						cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
 					fi ;; \
 				*) \
-					# Invalid sub-mode error. \
 					echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s, or a test number/range."; \
 					exit 1; \
 					;; \
@@ -158,24 +152,17 @@ run:
 			fi; \
 			;; \
 		v|g|s) \
-			case "$(word 1,$(runargs))" in \
-			v) \
-				# If 'v' is specified, view all waveforms in GUI mode. \
+			if [ "$(word 1,$(runargs))" = "v" ]; then \
 				cd scripts && python3 run_tests.py -m 3 -t a; \
-			s) \
-				# If 's' is specified, run all tests and save waveforms. \
+			elif [ "$(word 1,$(runargs))" = "s" ]; then \
 				cd scripts && python3 run_tests.py -m 1 -t a; \
-			g) \
-				# If 'g' is specified, run all tests in GUI mode. \
+			elif [ "$(word 1,$(runargs))" = "g" ]; then \
 				cd scripts && python3 run_tests.py -m 2 -t a; \
-			*) \
-				# Invalid sub-mode error. \
-				echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s"; \
+			else \
+				echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s."; \
 				exit 1; \
-				;; \
-			esac; \
+			fi ;; \
 		*) \
-			# Default behavior if no 'a', 'm', or 'e' is specified. Handle as a test number/range. \
 			if [ "$(words $(runargs))" -eq 2 ]; then \
 				cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
 			elif [ "$(words $(runargs))" -eq 1 ]; then \
@@ -187,7 +174,6 @@ run:
 			;; \
 		esac; \
 	else \
-		# Invalid usage: Display error and usage information. \
 		echo "Error: Invalid arguments. Usage:"; \
 		echo "  make run v|g|s <test_number>/<test_range>"; \
 		echo "  make run <test_number>/<test_range>"; \
