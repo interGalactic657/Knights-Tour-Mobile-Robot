@@ -100,66 +100,64 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 #--------------------------------------------------------
 run:
 	@if [ "$(words $(runargs))" -eq 0 ]; then \
-		# No arguments: Default behavior. \
+		# No arguments provided: Default behavior, run all tests. \
 		cd scripts && python3 run_tests.py -m 0; \
-	elif [ "$(words $(runargs))" -ge 1 ]; then \
-		case "$(word 1,$(runargs))" in \
-		a|m|e) \
-			# If 'a', 'm', or 'e' is specified, set the type flag (-t a, -t m, -t e). \
-			if [ "$(words $(runargs))" -eq 1 ]; then \
-				cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
-			else \
-				case "$(word 2,$(runargs))" in \
-				v) \
-					if [ "$(words $(runargs))" -eq 4 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
-					elif [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 3 -t $(word 1,$(runargs)); \
-					else \
-						cd scripts && python3 run_tests.py -m 3 -t $(word 1,$(runargs)); \
-					fi ;; \
-				g) \
-					if [ "$(words $(runargs))" -eq 4 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 2 -t $(word 1,$(runargs)); \
-					elif [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 2 -t $(word 1,$(runargs)); \
-					else \
-						cd scripts && python3 run_tests.py -m 2 -t $(word 1,$(runargs)); \
-					fi ;; \
-				s) \
-					if [ "$(words $(runargs))" -eq 4 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m 1 -t $(word 1,$(runargs)); \
-					elif [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m 1 -t $(word 1,$(runargs)); \
-					else \
-						cd scripts && python3 run_tests.py -m 1 -t $(word 1,$(runargs)); \
-					fi ;; \
-				[0-9]*) \
-					if [ "$(words $(runargs))" -eq 3 ]; then \
-						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
-					elif [ "$(words $(runargs))" -eq 2 ]; then \
-						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
-					else \
-						cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
-					fi ;; \
-				*) \
-					echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s, or a test number/range."; \
-					exit 1; \
-					;; \
-				esac; \
-			fi; \
-			;; \
-		*) \
-			echo "Error: Invalid argument combination."; \
-			exit 1; \
-			fi; \
-			;; \
-		esac; \
 	else \
-		echo "Error: Invalid arguments. Usage:"; \
-		echo "  make run v|g|s <test_number>/<test_range>"; \
-		echo "  make run <test_number>/<test_range>"; \
-		exit 1; \
+		# Parse arguments based on the first word. \
+		case "$(word 1,$(runargs))" in \
+			a|m|e) \
+				# Handle test types: all (a), main (m), or extra (e). \
+				if [ "$(words $(runargs))" -eq 1 ]; then \
+					# Run all tests of the specified type in default mode. \
+					cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
+				else \
+					case "$(word 2,$(runargs))" in \
+						v) mode=3 ;;  # View waveforms. \
+						g) mode=2 ;;  # GUI mode. \
+						s) mode=1 ;;  # Save waveforms. \
+						*) \
+							# Invalid sub-mode, show error. \
+							echo "Error: Invalid sub-mode for tests. Supported modes are v, g, or s."; \
+							exit 1; \
+							;; \
+					esac; \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						# Handle test ranges with sub-mode. \
+						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m $$mode -t $(word 1,$(runargs)); \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						# Handle specific test numbers with sub-mode. \
+						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m $$mode -t $(word 1,$(runargs)); \
+					else \
+						# Run all tests of the specified type with the sub-mode. \
+						cd scripts && python3 run_tests.py -m $$mode -t $(word 1,$(runargs)); \
+					fi; \
+				fi; \
+				;; \
+			[0-9]*) \
+				# Handle specific test numbers or ranges without specifying test type. \
+				if [ "$(words $(runargs))" -eq 2 ]; then \
+					# Single test number. \
+					cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0; \
+				elif [ "$(words $(runargs))" -eq 3 ]; then \
+					# Test range. \
+					cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
+				else \
+					# Invalid number of arguments for test numbers/ranges. \
+					echo "Error: Invalid argument format for test number or range."; \
+					exit 1; \
+				fi; \
+				;; \
+			*) \
+				# Invalid first argument, show usage guidance. \
+				echo "Error: Invalid argument combination."; \
+				echo "Usage:"; \
+				echo "  make run                        # Run all tests in default mode."; \
+				echo "  make run <test_number>          # Run a specific test."; \
+				echo "  make run <test_range>           # Run a range of tests."; \
+				echo "  make run a|m|e v|g|s <args>     # Run tests with specified mode."; \
+				exit 1; \
+				;; \
+		esac; \
 	fi;
 
 #--------------------------------------------------------
