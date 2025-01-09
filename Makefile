@@ -112,8 +112,7 @@ run:
 				# Run all tests of the specified type in default mode (mode 0). \
 				cd scripts && python3 run_tests.py -m 0 -t $(word 1,$(runargs)); \
 			else \
-				sub_mode="$(word 2,$(runargs))"; \
-				case "$$sub_mode" in \
+				case "$(word 2,$(runargs))" in \
 				v) \
 					# If 'v' is specified, view waveforms in GUI mode. \
 					if [ "$(words $(runargs))" -eq 4 ]; then \
