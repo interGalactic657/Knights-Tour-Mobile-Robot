@@ -74,17 +74,18 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 # Executes test cases based on the provided mode and arguments.
 #
 # Usage:
-#   make run                        - Runs all tests in default mode.
-#   make run a/m/e <test_range>     - Runs a range of tests (all, main, or extra).
+#   make run                        - Runs all tests in CMD mode.
 #   make run a/m/e v <args>         - View waveforms in GUI mode for specified tests.
 #   make run a/m/e g <args>         - Run tests in GUI mode.
 #   make run a/m/e s <args>         - Run tests and save waveforms.
+#   make run a/m/e c <args>         - Run tests in CMD mode.
 #
 # Arguments:
 #   a|m|e        - Specifies the test type: all (a), main (m), or extra (e).
 #   v            - View waveforms in GUI mode.
 #   g            - Run tests in GUI mode.
 #   s            - Save waveforms while running tests.
+#   c            - Run tests in CMD mode.
 #   <test_number> - The number of the test to execute.
 #   <test_range>  - A range of tests to execute, e.g., 1-10.
 #
@@ -110,37 +111,23 @@ run:
 						v) mode=3 ;;  # View waveforms. \
 						g) mode=2 ;;  # GUI mode. \
 						s) mode=1 ;;  # Save waveforms. \
-						[0-9]*) mode=0 ;;  # Specific test number or range in CMD mode. \
+						c) mode=0 ;;  # Specific test number or range in CMD mode. \
 						*) \
 							# Invalid sub-mode, show error. \
-							echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s, or a test number/range."; \
+							echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s, or c."; \
 							exit 1; \
 							;; \
 					esac; \
-					if [ "$(mode)" -eq 0 ]; then \
-						# Handle test numbers or ranges in CMD mode. \
-						if [ "$(words $(runargs))" -eq 3 ]; then \
-							# Test range. \
-							cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
-						elif [ "$(words $(runargs))" -eq 2 ]; then \
-							# Single test number. \
-							cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
-						else \
-							echo "Error: Invalid argument format for test number or range."; \
-							exit 1; \
-						fi; \
+					# Handle tests with sub-modes (v, g, s, c). \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						# Test range with sub-mode. \
+						cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m $$mode -t $(word 1,$(runargs)); \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						# Specific test number with sub-mode. \
+						cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m $$mode -t $(word 1,$(runargs)); \
 					else \
-						# Handle tests with sub-modes (v, g, s). \
-						if [ "$(words $(runargs))" -eq 4 ]; then \
-							# Test range with sub-mode. \
-							cd scripts && python3 run_tests.py -r $(word 3,$(runargs)) $(word 4,$(runargs)) -m $$mode -t $(word 1,$(runargs)); \
-						elif [ "$(words $(runargs))" -eq 3 ]; then \
-							# Specific test number with sub-mode. \
-							cd scripts && python3 run_tests.py -n $(word 3,$(runargs)) -m $$mode -t $(word 1,$(runargs)); \
-						else \
-							# Run all tests of the specified type with the sub-mode. \
-							cd scripts && python3 run_tests.py -m $$mode -t $(word 1,$(runargs)); \
-						fi; \
+						# Run all tests of the specified type with the sub-mode. \
+						cd scripts && python3 run_tests.py -m $$mode -t $(word 1,$(runargs)); \
 					fi; \
 				fi; \
 				;; \
@@ -149,8 +136,7 @@ run:
 				echo "Error: Invalid argument combination."; \
 				echo "Usage:"; \
 				echo "  make run                        # Run all tests in default mode."; \
-				echo "  make run a|m|e <test_range>     # Run a range of tests."; \
-				echo "  make run a|m|e v|g|s <args>     # Run tests with specified mode."; \
+				echo "  make run a|m|e v|g|s|c <args>   # Run tests with specified mode."; \
 				exit 1; \
 				;; \
 		esac; \
