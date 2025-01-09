@@ -75,61 +75,86 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 # Executes test cases based on the provided mode and arguments.
 #
 # Usage:
-#   make run                 - Runs all tests in CMD mode (in parallel) by default.
-#   make run <test_number>    - Runs a specific test by number.
-#   make run <test_range>     - Runs a range of tests.
-#   make run a/m/e g <args>   - Run all/main/extra tests in GUI mode.
-#   make run a/m/e s <args>   - Run all/main/extra tests in GUI mode and save waveforms.
-#   make run a/m/e v <args>   - View all/main/extra waveforms in GUI mode.
+#   make run                        - Runs all tests in default mode.
+#   make run <test_number>          - Runs a specific test by number.
+#   make run <test_range>           - Runs a range of tests.
+#   make run a/m/e g <args>         - Run all/main/extra tests in GUI mode.
+#   make run a/m/e s <args>         - Run all/main/extra tests in GUI mode and save waveforms.
+#   make run a/m/e v <args>         - View all/main/extra waveforms in GUI mode.
 #
 # Arguments:
-#   a - Run all tests.
-#   m - Run main tests.
-#   e - Run extra tests.
+#   v - View waveforms in GUI mode.
 #   g - Run tests in GUI mode.
 #   s - Run tests and save waveforms.
-#   v - View waveforms in GUI mode.
 #   <test_number> - The number of the test to execute.
 #   <test_range>  - A range of tests to execute, e.g., 1-10.
+#
+# Description:
+# This target determines the behavior based on the number and type of
+# arguments passed (`runargs`). It invokes a Python script with the
+# appropriate mode flags:
+#   - Mode 0: Default mode.
+#   - Mode 1: Save waveforms.
+#   - Mode 2: GUI mode.
+#   - Mode 3: View waveforms in GUI mode.
+# It provides usage guidance and error handling for invalid inputs.
 #--------------------------------------------------------
+
 run:
 	@if [ "$(words $(runargs))" -eq 0 ]; then \
-		# Default behavior: Run all tests in CMD mode. \
+		# No arguments: Default behavior. \
 		cd scripts && python3 run_tests.py -m 0; \
-	else \
+	elif [ "$(words $(runargs))" -ge 1 ]; then \
 		mode="$(word 1,$(runargs))"; \
 		case "$$mode" in \
 		a|m|e) \
+			# If 'a', 'm', or 'e' is specified, set the type flag (-t a, -t m, -t e). \
 			type_flag=$$mode; \
 			if [ "$(words $(runargs))" -eq 1 ]; then \
-				# Run all tests of the specified type in CMD mode. \
+				# Run all tests of the specified type in default mode (mode 0). \
 				cd scripts && python3 run_tests.py -m 0 -t $$type_flag; \
 			else \
 				sub_mode="$(word 2,$(runargs))"; \
 				case "$$sub_mode" in \
 				v) \
-					# View waveforms in GUI mode. \
-					cd scripts && python3 run_tests.py -m 3 -t $$type_flag $(runargs); \
-					;; \
-				g) \
-					# Run tests in GUI mode. \
-					cd scripts && python3 run_tests.py -m 2 -t $$type_flag $(runargs); \
-					;; \
-				s) \
-					# Run tests and save waveforms. \
-					cd scripts && python3 run_tests.py -m 1 -t $$type_flag $(runargs); \
-					;; \
-				[0-9]*) \
-					# Run specific test number or range in CMD mode. \
-					if [ "$(words $(runargs))" -eq 2 ]; then \
-						cd scripts && python3 run_tests.py -n "$(word 2,$(runargs))" -m 0 -t $$type_flag; \
+					# If 'v' is specified, view waveforms in GUI mode. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 3 -t $$type_flag; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 3 -t $$type_flag; \
 					else \
-						echo "Error: Invalid arguments for test number or range."; \
+						cd scripts && python3 run_tests.py -m 3 -t $$type_flag; \
+					fi ;; \
+				g) \
+					# If 'g' is specified, run tests in GUI mode. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 2 -t $$type_flag; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 2 -t $$type_flag; \
+					else \
+						cd scripts && python3 run_tests.py -m 2 -t $$type_flag; \
+					fi ;; \
+				s) \
+					# If 's' is specified, run tests and save waveforms. \
+					if [ "$(words $(runargs))" -eq 4 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 1 -t $$type_flag; \
+					elif [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 1 -t $$type_flag; \
+					else \
+						cd scripts && python3 run_tests.py -m 1 -t $$type_flag; \
+					fi ;; \
+				[0-9]*) \
+					# Default mode (command-line mode) with test number or range. \
+					if [ "$(words $(runargs))" -eq 3 ]; then \
+						cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0 -t $$type_flag; \
+					elif [ "$(words $(runargs))" -eq 2 ]; then \
+						cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0 -t $$type_flag; \
+					else \
+						echo "Error: Invalid argument combination."; \
 						exit 1; \
-					fi; \
-					;; \
+					fi ;; \
 				*) \
-					# Invalid sub-mode. \
+					# Invalid sub-mode error. \
 					echo "Error: Invalid sub-mode for tests. Supported modes are v, g, s, or a test number/range."; \
 					exit 1; \
 					;; \
@@ -137,19 +162,24 @@ run:
 			fi; \
 			;; \
 		*) \
-			# Invalid mode. \
-			echo "Error: Invalid mode specified. Supported modes are:"; \
-			echo "  a - Run all tests."; \
-			echo "  m - Run main tests."; \
-			echo "  e - Run extra tests."; \
-			echo "  v - View waveforms in GUI mode."; \
-			echo "  g - Run tests in GUI mode."; \
-			echo "  s - Run tests and save waveforms."; \
-			echo "  <test_number>/<test_range> - Run specific tests."; \
-			exit 1; \
+			# Default behavior if no 'a', 'm', or 'e' is specified. Handle as a test number/range. \
+			if [ "$(words $(runargs))" -eq 2 ]; then \
+				cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0; \
+			elif [ "$(words $(runargs))" -eq 1 ]; then \
+				cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0; \
+			else \
+				echo "Error: Invalid argument combination."; \
+				exit 1; \
+			fi; \
 			;; \
 		esac; \
-	fi
+	else \
+		# Invalid usage: Display error and usage information. \
+		echo "Error: Invalid arguments. Usage:"; \
+		echo "  make run v|g|s <test_number>/<test_range>"; \
+		echo "  make run <test_number>/<test_range>"; \
+		exit 1; \
+	fi;
 
 #--------------------------------------------------------
 # Log Target
