@@ -298,25 +298,30 @@ log:
 # This target handles two scenarios:
 # 1. Collecting test files for a specified range of test numbers (if three arguments are provided).
 #    - Test files are collected from their respective subdirectories (`simple`, `move`, `logic`).
-#    - For `logic` tests, the `m|e` flag determines whether `logic/main` or `logic/extra` is used.
+#    - For `logic` tests, the `main` or `extra` subdirectory is determined by the flag.
 # 2. Collecting all design files (if only the flag is provided).
 #    - Design files are copied from the base directory and either `main` or `extra` based on the flag.
 #
 # If no files are found for the specified range, a warning message is displayed.
 #--------------------------------------------------------
+
 collect:
 	@if [ "$(words $(collectargs))" -eq 3 ]; then \
 		# Three arguments: m/e + range. \
 		flag=$(word 1,$(collectargs)); \
 		start=$(word 2,$(collectargs)); \
 		end=$(word 3,$(collectargs)); \
-		if [ "$$flag" != "m" ] && [ "$$flag" != "e" ]; then \
+		if [ "$$flag" = "m" ]; then \
+			dir="main"; \
+		elif [ "$$flag" = "e" ]; then \
+			dir="extra"; \
+		else \
 			echo "Error: Invalid argument '$$flag'. Use 'm' for main or 'e' for extra."; \
 			exit 1; \
 		fi; \
 		target_dir="../KnightsTour"; \
 		mkdir -p $$target_dir; \
-		echo "Collecting test files from $$start to test $$end for '$$flag'..."; \
+		echo "Collecting test files from $$start to test $$end for '$$dir'..."; \
 		found=0; \
 		for num in $$(seq $$start $$end); do \
 			# Determine the subdirectory based on test number. \
@@ -325,7 +330,7 @@ collect:
 			elif echo "$(move_tests)" | grep -qw $$num; then \
 				subdir="move"; \
 			elif echo "$(logic_tests)" | grep -qw $$num; then \
-				subdir="logic/$$flag"; \
+				subdir="logic/$$dir"; \
 			else \
 				echo "Warning: Test number $$num is not mapped to any subdirectory. Skipping."; \
 				continue; \
@@ -341,27 +346,31 @@ collect:
 			fi; \
 		done; \
 		# Collect corresponding design files. \
-		echo "Collecting design files for '$$flag'..."; \
+		echo "Collecting design files for '$$dir'..."; \
 		cp ./designs/pre_synthesis/*.sv ../KnightsTour/; \
-		cp ./designs/pre_synthesis/$$flag/*.sv ../KnightsTour/; \
+		cp ./designs/pre_synthesis/$$dir/*.sv ../KnightsTour/; \
 		# If no files were found in the range, print a message. \
 		if [ $$found -eq 1 ]; then \
-			echo "All test files collected for '$$flag'."; \
+			echo "All test files collected for '$$dir'."; \
 		else \
 			echo "No test files were found for the range $$start-$$end."; \
 		fi; \
 	elif [ "$(words $(collectargs))" -eq 1 ]; then \
 		# One argument: m/e only. \
 		flag=$(word 1,$(collectargs)); \
-		if [ "$$flag" != "m" ] && [ "$$flag" != "e" ]; then \
+		if [ "$$flag" = "m" ]; then \
+			dir="main"; \
+		elif [ "$$flag" = "e" ]; then \
+			dir="extra"; \
+		else \
 			echo "Error: Invalid argument '$$flag'. Use 'm' for main or 'e' for extra."; \
 			exit 1; \
 		fi; \
-		echo "Collecting all design files for '$$flag'..."; \
+		echo "Collecting all design files for '$$dir'..."; \
 		mkdir -p ../KnightsTour; \
 		cp ./designs/pre_synthesis/*.sv ../KnightsTour/; \
-		cp ./designs/pre_synthesis/$$flag/*.sv ../KnightsTour/; \
-		echo "All design files collected for '$$flag'."; \
+		cp ./designs/pre_synthesis/$$dir/*.sv ../KnightsTour/; \
+		echo "All design files collected for '$$dir'."; \
 	else \
 		# Invalid usage: Display error and usage information. \
 		echo "Error: Invalid arguments. Usage:"; \
