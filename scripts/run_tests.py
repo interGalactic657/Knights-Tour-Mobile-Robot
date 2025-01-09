@@ -831,7 +831,9 @@ def main():
             for future in futures:
                 future.result()
 
-            print("All tests completed.")
+            # Don't print this message if viewing waveforms.
+            if args.mode != 3:
+                print("All tests completed.")
     else:
         # Only the parent prints initial messages.
         if not args.child:  
@@ -844,8 +846,8 @@ def main():
         # Execute the tests based on the parsed arguments.
         execute_tests(args)
 
-        # Only the parent prints the completion message.
-        if not args.child:  
+        # Only the parent prints the completion message and when it is not mode 3.
+        if not args.child and args.mode != 3:  
             print("All tests completed.")
             
 if __name__ == "__main__":
