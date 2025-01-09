@@ -99,7 +99,6 @@ $(VG_FILE): $(DC_SCRIPT) $(SV_FILES)
 #   - Mode 3: View waveforms in GUI mode.
 # It provides usage guidance and error handling for invalid inputs.
 #--------------------------------------------------------
-
 run:
 	@if [ "$(words $(runargs))" -eq 0 ]; then \
 		# No arguments: Default behavior. \
@@ -305,7 +304,6 @@ log:
 #
 # For the second case (no range), all design files are copied from the `pre_synthesis` folder to the target directory.
 #--------------------------------------------------------
-
 collect:
 	@if [ "$(words $(collectargs))" -eq 2 ]; then \
 		start=$(word 1,$(collectargs)); \
@@ -367,7 +365,6 @@ collect:
 #
 # This is typically used to ensure that the build process starts with a clean slate, removing all files that might be left over from previous runs.
 #--------------------------------------------------------
-
 clean:
 	@echo "Cleaning up generated files..."
 	@rm -rf main/ 	       # Remove the main directory.
