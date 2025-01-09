@@ -105,7 +105,7 @@ run:
 		# No arguments: Default behavior. \
 		cd scripts && python3 run_tests.py -m 0; \
 	elif [ "$(words $(runargs))" -ge 1 ]; then \
-		case "$(word 1,$(runargs))"; in \
+		case "$(word 1,$(runargs))" in \
 		a|m|e) \
 			# If 'a', 'm', or 'e' is specified, set the type flag (-t a, -t m, -t e). \
 			if [ "$(words $(runargs))" -eq 1 ]; then \
