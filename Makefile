@@ -119,10 +119,10 @@ run:
 							# Handle specific test numbers or ranges without specifying test type. \
 							if [ "$(words $(runargs))" -eq 2 ]; then \
 								# Single test number. \
-								cd scripts && python3 run_tests.py -n $(word 1,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
+								cd scripts && python3 run_tests.py -n $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 							elif [ "$(words $(runargs))" -eq 3 ]; then \
 								# Test range. \
-								cd scripts && python3 run_tests.py -r $(word 1,$(runargs)) $(word 2,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
+								cd scripts && python3 run_tests.py -r $(word 2,$(runargs)) $(word 3,$(runargs)) -m 0 -t $(word 1,$(runargs)); \
 							else \
 								# Invalid number of arguments for test numbers/ranges. \
 								echo "Error: Invalid argument format for test number or range."; \
