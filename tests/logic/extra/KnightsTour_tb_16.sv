@@ -80,7 +80,7 @@ module KnightsTour_tb();
     // Test the KnightsTour starting at coordinate (2,0)  //
     ///////////////////////////////////////////////////////
     // Send a command to start the KnightsTour from (2,0).
-    SendCmd(.cmd_to_send(16'h7020), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
+    SendCmd(.cmd_to_send(16'h7024), .cmd(cmd), .clk(clk), .send_cmd(send_cmd), .cmd_sent(cmd_sent));
 
     // Wait till the Knight found out its position on the board.
     ChkOffset(.clk(clk), .tour_go(iDUT.tour_go), .target_xx(3'h2), .actual_xx(iPHYS.xx), .target_yy(3'h0), .actual_yy(iPHYS.yy));
